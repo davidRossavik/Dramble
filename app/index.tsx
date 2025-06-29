@@ -1,13 +1,10 @@
 import { useRouter } from "expo-router";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Animatable from 'react-native-animatable';
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
-import Button from '@/components/Button';
 
 const logoImage = require('@/assets/images/textLogo.png');
-const redButtonImage = require('@/assets/images/redButton.png');
-const blackButtonImage = require('@/assets/images/blackButton.png');
 
 export default function Index() {
 
@@ -18,21 +15,24 @@ export default function Index() {
   return (
     <BackgroundWrapper>
       <View style={styles.container}>
-
         <Image source={logoImage} style={styles.logoImage} />
 
-        <Animatable.View animation={'slideInRight'} duration={1500}>
-          <Button imageSource={redButtonImage} imageStyle={styles.redButton} onPress={navigateToStartGame} />
+        <Animatable.View animation="slideInRight" duration={1200}>
+          <Pressable style={styles.redButton} onPress={navigateToStartGame}>
+            <Text style={styles.buttonText}>Start spill</Text>
+          </Pressable>
         </Animatable.View>
-        
-        <Animatable.View animation={'slideInRight'} duration={2000}>
-          <Button imageSource={blackButtonImage} imageStyle={styles.blackButton} onPress={navigateToJoinGame} />
+
+        <Animatable.View animation="slideInRight" duration={1600}>
+          <Pressable style={styles.blackButton} onPress={navigateToJoinGame}>
+            <Text style={styles.buttonText}>Bli med i spill</Text>
+          </Pressable>
         </Animatable.View>
-        
       </View>
     </BackgroundWrapper>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -48,15 +48,24 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   redButton: {
-    width: 180,
-    height: 180,
-    resizeMode: 'contain',
+    backgroundColor: '#FF3B30',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 100,
+    marginTop: 20,
+    alignItems: 'center',
   },
   blackButton: {
-    width: 180,
-    height: 180,
-    resizeMode: 'contain',
+    backgroundColor: '#000000',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 100,
     marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
-
