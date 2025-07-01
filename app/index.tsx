@@ -1,6 +1,8 @@
+import { Team } from "@/utils/types";
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Animatable from 'react-native-animatable';
+import { createGame } from "../utils/games";
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
 
@@ -8,9 +10,41 @@ const logoImage = require('@/assets/images/textLogo.png');
 
 export default function Index() {
 
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
   const router = useRouter();
-  const navigateToStartGame = () => {router.push('/startGame')};
-  const navigateToJoinGame= () => {router.push('/joinGame')};
+
+  const navigateToStartGame = async () => {
+    const code = generateId(); // f.eks. "XKW32P"
+
+    const teams: Team[] = [
+      {
+        teamName: "Team Rød",
+        leader: "Host",
+        players: [
+          {
+            id: crypto.randomUUID(), // eller generateId(),
+            name: "Host"
+          }
+        ]
+      }
+    ];
+
+    const { data, error } = await createGame(code, teams);
+
+    if (error) {
+      alert("Feil ved opprettelse av spill: " + error);
+      return;
+    }
+
+    // Naviger videre med spill-id og kode
+    router.push({
+      pathname: '/startGame', 
+      params: { gameId: data.id, code }
+    });
+  };
+
+
+  const navigateToJoinGame = () => {router.push('/joinGame')};
 
   return (
     <BackgroundWrapper>
