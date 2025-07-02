@@ -109,3 +109,20 @@ export async function createGame(code:string, teams: Team[]) {
 
     return { data, error: null };
 }
+
+
+
+export async function getGameByCode(code: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('id, code, teams')
+    .eq('code', code)
+    .single();
+
+  if (error) {
+    console.error("Feil ved henting av spill:", error.message);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+}
