@@ -126,3 +126,89 @@ export async function getGameByCode(code: string) {
 
   return { data, error: null };
 }
+
+
+
+
+export async function addTeamToGame(gameId: string, newTeam: Team) {
+  const { data: game, error } = await supabase
+    .from('games')
+    .select('teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error || !game) {
+    console.error('Kunne ikke hente spill:', error?.message);
+    return { error: 'Fant ikke spillet' };
+  }
+
+  const updatedTeams = [...(game.teams ?? []), newTeam];
+
+  const { error: updateError } = await supabase
+    .from('games')
+    .update({ teams: updatedTeams })
+    .eq('id', gameId);
+
+  if (updateError) {
+    console.error('Feil ved oppdatering:', updateError.message);
+    return { error: 'Kunne ikke legge til lag' };
+  }
+
+  return { error: null };
+}
+
+
+
+export async function removePlayerFromTeam(gameId: string, teamName: string, playerId: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error || !data) return { error: 'Fant ikke spillet' };
+
+  const updatedTeams = (data.teams as Team[]).map((team) => {
+    if (team.teamName === teamName) {
+      return {
+        ...team,
+        players: team.players.filter((p) => p.id !== playerId),
+      };
+    }
+    return team;
+  });
+
+  const { error: updateError } = await supabase
+    .from('games')
+    .update({ teams: updatedTeams })
+    .eq('id', gameId);
+
+  return { error: updateError };
+}
+
+
+
+
+export async function removeTeam(gameId: string, teamName: string) {
+  // Hent nåværende teams fra databasen
+  const { data, error } = await supabase
+    .from('games')
+    .select('teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error || !data) {
+    return { error: 'Fant ikke spillet' };
+  }
+
+  // Typesikker transformasjon av teams
+  const updatedTeams = (data.teams as Team[]).filter((team) => team.teamName !== teamName);
+
+  // Oppdater raden i Supabase med de nye teamene
+  const { error: updateError } = await supabase
+    .from('games')
+    .update({ teams: updatedTeams })
+    .eq('id', gameId);
+
+  return { error: updateError };
+}

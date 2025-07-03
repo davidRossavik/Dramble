@@ -1,10 +1,15 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
-import { addPlayerToTeam, getGameByCode } from '@/utils/games';
+import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
+import { subscribeToGameUpdates } from '@/utils/realtime';
 import { Team } from '@/utils/types';
+import { supabase } from "../supabase";
+
+
 
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
@@ -13,6 +18,56 @@ export default function GameLobby() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [gameId, setGameId] = useState<string>('');
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
+  const [localTeamName, setLocalTeamName] = useState('');
+  const [playerName, setPlayerName] = useState('');
+
+
+
+  useEffect(() => {
+    const loadTeamInfo = async () => {
+      const storedCode = await AsyncStorage.getItem('gameCode');
+      const storedTeam = await AsyncStorage.getItem('teamName');
+      const storedPlayer = await AsyncStorage.getItem('playerName');
+
+      if (!storedCode || !storedTeam || !storedPlayer) {
+        // Noe mangler – send tilbake til forsiden eller vis feilmelding
+        router.replace('/');
+        return;
+      }
+
+      setLocalTeamName(storedTeam);
+      setPlayerName(storedPlayer);
+    };
+
+    loadTeamInfo();
+  }, []);
+
+
+  useEffect(() => {
+  if (localTeamName && teams.length > 0) {
+    const found = teams.find(t => t.teamName === localTeamName);
+    if (!found) {
+      alert('Laget ditt ble fjernet av hosten 😢');
+      router.replace('/');
+      }
+    }
+  }, [teams, localTeamName]);
+
+
+
+  useEffect(() => {
+    if (!code) return;
+
+    const channel = subscribeToGameUpdates(code as string, (updatedTeams) => {
+      setTeams(updatedTeams);
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [code]);
+
+
 
   // Henter lagene fra Supabase
   const fetchTeams = async () => {
@@ -23,6 +78,8 @@ export default function GameLobby() {
     }
   };
 
+
+
   useEffect(() => {
     if (code) fetchTeams();
   }, [code]);
@@ -31,14 +88,38 @@ export default function GameLobby() {
     const name = newPlayers[teamName]?.trim();
     if (!name) return;
 
+    const team = teams.find(t => t.teamName === teamName);
+    if (!team) return;
+
+    const nameTaken = team.players.some(p => p.name.toLowerCase() === name.toLowerCase());
+    if (nameTaken) {
+      alert('Det finnes allerede en spiller med det navnet på laget');
+    return;
+    }
+
     await addPlayerToTeam(gameId, teamName, {
       id: crypto.randomUUID(),
       name,
     });
 
     setNewPlayers(prev => ({ ...prev, [teamName]: '' }));
-    fetchTeams(); // Oppdater visningen
   };
+
+
+
+  const handleRemovePlayer = async (teamName: string, playerId: string) => {
+    if (!gameId) return;
+      const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
+    if (error) console.log("Feil ved fjerning:", error);
+  };
+
+  const handleRemoveTeam = async (teamName: string) => {
+    if (!gameId) return;
+      const { error } = await removeTeam(gameId, teamName);
+    if (error) console.log("Feil ved fjerning av lag:", error);
+  };
+
+
 
   return (
     <BackgroundWrapper>
@@ -50,8 +131,15 @@ export default function GameLobby() {
             <Text style={styles.teamName}>{team.teamName} (Leder: {team.leader})</Text>
             
             {team.players.map(player => (
-              <Text key={player.id} style={styles.playerName}>• {player.name}</Text>
+              <View key={player.id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text>• {player.name}</Text>
+                <Button title="Fjern" onPress={() => handleRemovePlayer(team.teamName, player.id)} />
+              </View>
             ))}
+
+            {playerName === "Host" && (
+              <Button title="Fjern lag" onPress={() => handleRemoveTeam(team.teamName)} color="red" />
+            )}
 
             <TextInput
               placeholder="Ny spiller"
@@ -68,6 +156,8 @@ export default function GameLobby() {
     </BackgroundWrapper>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {

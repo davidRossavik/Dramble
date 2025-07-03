@@ -1,7 +1,9 @@
 import { Team } from "@/utils/types";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Animatable from 'react-native-animatable';
+
 import { createGame } from "../utils/games";
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
@@ -15,6 +17,10 @@ export default function Index() {
 
   const navigateToStartGame = async () => {
     const code = generateId(); // f.eks. "XKW32P"
+
+    await AsyncStorage.setItem('gameCode', code);
+    await AsyncStorage.setItem('teamName', "Team Rød");
+    await AsyncStorage.setItem('playerName', "Host");
 
     const teams: Team[] = [
       {
