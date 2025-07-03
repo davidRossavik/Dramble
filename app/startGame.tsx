@@ -93,7 +93,7 @@ export default function GameLobby() {
 
     const nameTaken = team.players.some(p => p.name.toLowerCase() === name.toLowerCase());
     if (nameTaken) {
-      alert('Det finnes allerede en spiller med det navnet på laget');
+      alert('Det finnes allerede en spiller med det navnet på lage');
     return;
     }
 
