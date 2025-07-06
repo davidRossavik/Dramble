@@ -1,16 +1,23 @@
 import { useRouter } from "expo-router";
+import { useState } from 'react';
 import { Image, StyleSheet, View } from "react-native";
 import * as Animatable from 'react-native-animatable';
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
 import Button from '@/components/Button';
+import InfoModal from '@/components/InfoModal';
 
 const logoImage = require('@/assets/images/textLogo.png');
 const redButtonImage = require('@/assets/images/redButton.png');
 const blackButtonImage = require('@/assets/images/blackButton.png');
+const infoButtonImage = require('@/assets/images/infoButton.png');
 
 export default function Index() {
 
+  const [modalVisible, setModalVisible] = useState(false); // InfoModal
+  const pressedInfoModal = () => {setModalVisible(true)};
+
+  // Navigation // 
   const router = useRouter();
   const navigateToStartGame = () => {router.push('/startGame')};
   const navigateToJoinGame= () => {router.push('/joinGame')};
@@ -29,6 +36,9 @@ export default function Index() {
           <Button imageSource={blackButtonImage} imageStyle={styles.blackButton} onPress={navigateToJoinGame} />
         </Animatable.View>
         
+        <Button imageSource={infoButtonImage} onPress={pressedInfoModal} imageStyle={styles.infoButton} />
+        <InfoModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+          
       </View>
     </BackgroundWrapper>
   );
@@ -57,6 +67,14 @@ const styles = StyleSheet.create({
     height: 180,
     resizeMode: 'contain',
     marginTop: 20,
+  },
+  infoButton: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+    position: 'absolute',
+    left: 110,
+    top: 5,
   },
 });
 

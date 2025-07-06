@@ -5,15 +5,17 @@ type Props = {
     imageStyle?: ImageStyle | ImageStyle[];
     onPress?: () => void;
     label?: string;
-    textStyle?: TextStyle;
+    textStyle?: TextStyle | TextStyle[];
     style?: ViewStyle | ViewStyle[];
+    stayPressed?: boolean;
+    disabled?: boolean;
 };
 
-export default function Button({imageSource, onPress, imageStyle, label, textStyle, style}: Props) {
+export default function Button({imageSource, onPress, imageStyle, label, textStyle, style, stayPressed, disabled}: Props) {
     return (
         <Pressable
         onPress={onPress}
-        style={({pressed}) => [styles.button, pressed && styles.buttonPressed, style]}>
+        style={({pressed}) => [styles.button, style, (pressed || stayPressed) && styles.buttonPressed, stayPressed && styles.buttonActiveBorder, disabled && styles.buttonDisabled]}>
             {imageSource && <Image source={imageSource} style={imageStyle} />}
             {label && <Text style={[styles.label, textStyle]}>{label}</Text>}
         </Pressable>
@@ -40,5 +42,13 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    buttonActiveBorder: {
+        borderWidth: 3,
+        borderColor: 'yellow',
+        borderRadius: 10,
+    },
+    buttonDisabled: {
+        opacity: 0.5,
     },
 });
