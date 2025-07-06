@@ -1,4 +1,5 @@
 import Slider from '@react-native-community/slider';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -10,7 +11,20 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 export default function questionPage() {
 
     const [value, setValue] = useState(0); // Slider
-    const [selectedButton, setSelectedButton] = useState<string | null>(null);
+    const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
+
+    const router = useRouter();
+    const handleConfirmedBet = () => {
+        if (!selectedButton) return;
+
+        router.push({
+            pathname: 'resultPage',
+            params: {
+                guess: selectedButton,
+                amount: value.toString(),
+            },
+        });
+    };
 
     // PASSABLE VALUES // 
     const drinkCountLabel = 20;
@@ -36,9 +50,9 @@ export default function questionPage() {
             {/* Buttons / Choose Person */}
             <View style={styles.buttonContainer}>
                 <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button1]} label={person1}
-                        onPress= {() => setSelectedButton("button1")} stayPressed={selectedButton === "button1"} />
+                        onPress= {() => setSelectedButton(person1)} stayPressed={selectedButton === person1} />
                 <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button2]} label={person2}
-                        onPress={() => setSelectedButton("button2")} stayPressed={selectedButton === "button2"} />
+                        onPress={() => setSelectedButton(person2)} stayPressed={selectedButton === person2} />
             </View>
 
             {/* Slider */}
@@ -56,7 +70,7 @@ export default function questionPage() {
             {/* Continue-Button */}
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Button style={[styles.buttonBase, styles.exitButton]} label={"Lås inn"} textStyle={[styles.baseText, styles.buttonText]}
-                        disabled={selectedButton === null} />
+                        disabled={selectedButton === null} onPress={handleConfirmedBet} />
             </View>
             
 

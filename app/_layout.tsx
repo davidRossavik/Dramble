@@ -36,5 +36,12 @@ export default function RootLayout() {
       presentation: 'card',
     }} />
 
+    <Stack.Screen name="resultPage" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
+
   </Stack>
 }
