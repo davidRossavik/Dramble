@@ -18,16 +18,18 @@ export default function questionPage() {
         if (!selectedButton) return;
 
         router.push({
-            pathname: 'resultPage',
+            pathname: '/chooseWinner',
             params: {
                 guess: selectedButton,
-                amount: value.toString(),
-            },
+                amount: value,
+                p1: person1,
+                p2: person2,
+            }
         });
-    };
-
+    }
     // PASSABLE VALUES // 
-    const drinkCountLabel = 20;
+    const maxDrinkCount = 20;
+    const drinkCountLabel = maxDrinkCount - value;
     const person1 = "Mads";
     const person2 = "Trym";
     const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
@@ -58,7 +60,7 @@ export default function questionPage() {
             {/* Slider */}
             <View style={{width: '100%', height: 70}}>
                 <Slider style={styles.slider} 
-                minimumValue={0} maximumValue={drinkCountLabel} step={1} value={value}
+                minimumValue={0} maximumValue={maxDrinkCount} step={1} value={value}
                 onValueChange={(val) => setValue(val)}
                 minimumTrackTintColor="#81AF24"
                 maximumTrackTintColor="#00471E"
