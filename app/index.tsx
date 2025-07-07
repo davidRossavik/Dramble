@@ -2,8 +2,8 @@ import { Team } from "@/utils/types";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import * as Animatable from 'react-native-animatable';
 
