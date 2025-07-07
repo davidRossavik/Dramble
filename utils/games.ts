@@ -130,10 +130,10 @@ export async function getGameByCode(code: string) {
 
 
 
-export async function addTeamToGame(gameId: string, newTeam: Team) {
+export async function addTeamToGame(gameId: string, newTeam: Team, slurker: number) {
   const { data: game, error } = await supabase
     .from('games')
-    .select('teams')
+    .select('teams, balances')
     .eq('id', gameId)
     .single();
 
@@ -142,11 +142,16 @@ export async function addTeamToGame(gameId: string, newTeam: Team) {
     return { error: 'Fant ikke spillet' };
   }
 
+
+  const updatedBalances = {
+    ...(game.balances ?? {}), [newTeam.teamName]:slurker,
+  };
+
   const updatedTeams = [...(game.teams ?? []), newTeam];
 
   const { error: updateError } = await supabase
     .from('games')
-    .update({ teams: updatedTeams })
+    .update({ teams: updatedTeams, balances:updatedBalances })
     .eq('id', gameId);
 
   if (updateError) {

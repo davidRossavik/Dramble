@@ -42,7 +42,7 @@ export default function JoinGame() {
         }],
     };
 
-    await addTeamToGame(gameId, newTeam);
+    await addTeamToGame(gameId, newTeam, 100);
 
     await AsyncStorage.setItem('gameCode', code);
     await AsyncStorage.setItem('teamName', defaultTeamName); 
