@@ -19,7 +19,7 @@ export default function questionPage() {
     const drinkCountLabel = maxDrinkCount - value;
     const person1 = "Mads";
     const person2 = "Trym";
-    // const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+    // const challengeTitle = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
     // INPASSABLE VALUES //
 
 
@@ -29,7 +29,8 @@ export default function questionPage() {
         return validChallenges[Math.floor(Math.random() * validChallenges.length)];
     }, []);
 
-    const challengeTextLabel = randomChallenge.title + ": " + person1 + " vs " + person2;
+    const challengeTitle = randomChallenge.title + ": " + person1 + " vs " + person2;
+    const challengeDescrription = randomChallenge.description;
     // Velger random 1v1 Challenge //
     
 
@@ -50,7 +51,7 @@ export default function questionPage() {
     }
     // Dytter verdier til neste vindu //
 
-    
+
     return (
         <BackgroundWrapper>
             
@@ -62,7 +63,8 @@ export default function questionPage() {
 
             {/* Challenge */}
             <View style={styles.challengeContainer}>
-                <Text style={[styles.baseText, styles.challengeText]}>{challengeTextLabel}</Text>
+                <Text style={[styles.baseText, styles.challengeText]}>{challengeTitle}</Text>
+                <Text style={[styles.baseText, styles.buttonText]}>{challengeDescrription}</Text>
             </View>
 
             {/* Buttons / Choose Person */}
@@ -153,6 +155,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         paddingTop: 80,
+        gap: 40,
     },
     buttonContainer: {
         flex: 1,
