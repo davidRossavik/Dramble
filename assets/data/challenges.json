@@ -1,0 +1,78 @@
+[
+    {
+        "title": "",
+        "description": "",
+        "category": "",
+        "type": "",
+        "odds": ""
+    },
+
+
+
+    {
+        "title": "Sokkekamp",
+        "description": "Førstemann som klarer å ta av sokken til den andre vinner",
+        "category": "challenge",
+        "type": "1v1",
+        "odds": "2"
+    },
+    {
+        "title": "Russisk shot-roulette",
+        "description": "En shot er vodka, resten er vann. Velg en spiller fra annet lag til å trekke først.",
+        "category": "challenge",
+        "type": "1v1",
+        "odds": "3"
+    },
+    {
+        "title": "Klesstafett",
+        "description": "Førstemann som klarer å ta på seg 5 plagg fra andre personer vinner",
+        "category": "challenge",
+        "type": "1v1",
+        "odds": "3"
+    },
+
+
+
+    {
+        "title": "Hva har du i lomma bro?",
+        "description": "Lagene sender en fra laget som må finne noe sykt rart i lomma. Beste Bidrag vinner.",
+        "category": "challenge",
+        "type": "Team-vs-Team",
+        "odds": "2"
+    },
+    {
+        "title": "Løgn eller sannhet",
+        "description": "Hvert lag sier 2 sanne og 1 falsk påstand om medlemmene. Vinnerlaget gjetter flest riktige",
+        "category": "",
+        "type": "Team-vs-Team",
+        "odds": "2"
+    },
+    {
+        "title": "LagKapteinens gamble",
+        "description": "Hvert lag setter en innstats per person. Hver person går opp og svarer på et quiz-spørsmål. Rett = motstander drikker innsatsen. Feil = eget lag gjør det",
+        "category": "quiz",
+        "type": "Team-vs-Team",
+        "bettable": "false", /// ????
+        "odds": "3"
+    },
+
+
+
+    {
+        "title": "Taus Allianse / Slurkepotten / The Quiet Bet",
+        "description": "Laget skal sammen drikke nøyaktig X antall slurker. Hver spiller bestemmer selv hvor mange slurker de vil ta uten å kommunisere med andre - i hemmelighet. Treffer de er potten stor!",
+        "category": "",
+        "type": "Team-vs-itself",
+        "odds": "5"
+    },
+    {
+        "title": "Hovedstadskaos",
+        "despcription": "Nevn så mange hovedsteder dere klarer på 15 sekunder.",
+        "category": "knowledge",
+        "type": "team-vs-itself",
+        "odds": "3"
+    }
+
+
+
+]
