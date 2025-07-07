@@ -10,6 +10,14 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 
 export default function questionPage() {
 
+    // INPASSABLE VALUES // 
+    const maxDrinkCount = 20;
+    const drinkCountLabel = maxDrinkCount - value;
+    const person1 = "Mads";
+    const person2 = "Trym";
+    const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+    // INPASSABLE VALUES //
+
     const [value, setValue] = useState(0); // Slider
     const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
 
@@ -27,13 +35,6 @@ export default function questionPage() {
             }
         });
     }
-    // PASSABLE VALUES // 
-    const maxDrinkCount = 20;
-    const drinkCountLabel = maxDrinkCount - value;
-    const person1 = "Mads";
-    const person2 = "Trym";
-    const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
-
 
     return (
         <BackgroundWrapper>

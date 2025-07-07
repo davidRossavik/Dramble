@@ -7,6 +7,10 @@ import Button from '@/components/Button';
 
 export default function chooseWinner() {
 
+    // INPASSABLE VALUES //
+    const host = true;
+    // INPASSABLE VALUES //
+
     const { guess, amount, p1, p2 } = useLocalSearchParams(); // parametre fra questionPage
     const [selectedButton, setSelectedButton] = useState<string | null>(null); //markSelectedButton
 
@@ -38,21 +42,25 @@ export default function chooseWinner() {
                 <Text style={[styles.baseText, styles.statsText]}>Antall slurker: {amount}</Text>
             </View>
 
-            <View style={styles.chooseWinnerContainer}>
-                <Text style={[styles.baseText, styles.challengeText]}> Velg Vinner</Text>
-            </View>
+            {host && (
+                <>
+                    <View style={styles.chooseWinnerContainer}>
+                        <Text style={[styles.baseText, styles.challengeText]}> Velg Vinner</Text>
+                    </View>
 
-            <View style={styles.buttonContainer}>
-                <Button style={[styles.buttonBase, styles.button1]} label={player1}
-                        onPress= {() => setSelectedButton(player1)} stayPressed={selectedButton === player1} />
-                <Button style={[styles.buttonBase, styles.button2]} label={player2} 
-                        onPress= {() => setSelectedButton(player2)} stayPressed={selectedButton === player2} />
-            </View>
+                    <View style={styles.buttonContainer}>
+                        <Button style={[styles.buttonBase, styles.button1]} label={player1}
+                                onPress= {() => setSelectedButton(player1)} stayPressed={selectedButton === player1} />
+                        <Button style={[styles.buttonBase, styles.button2]} label={player2} 
+                                onPress= {() => setSelectedButton(player2)} stayPressed={selectedButton === player2} />
+                    </View>
 
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' , marginBottom: 80}}>
-                <Button style={[styles.buttonBase, styles.exitButton]} label="Lås inn"
-                        disabled={selectedButton === null} onPress={handleConfirmedWinner}  />
-            </View>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' , marginBottom: 80}}>
+                        <Button style={[styles.buttonBase, styles.exitButton]} label="Lås inn"
+                                disabled={selectedButton === null} onPress={handleConfirmedWinner}  />
+                    </View>
+                </>
+            )}
 
         </BackgroundWrapper>
     )
@@ -82,6 +90,7 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         marginRight: 20,
         marginLeft: 20,
+        marginBottom: 20,
 
         borderWidth: 5,
         borderColor: '#FFD700',
