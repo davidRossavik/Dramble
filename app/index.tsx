@@ -1,7 +1,13 @@
+import { Team } from "@/utils/types";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
+
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useState } from 'react';
-import { Image, StyleSheet, View } from "react-native";
+
 import * as Animatable from 'react-native-animatable';
+
+import { createGame } from "../utils/games";
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
 import Button from '@/components/Button';
@@ -12,28 +18,69 @@ const redButtonImage = require('@/assets/images/redButton.png');
 const blackButtonImage = require('@/assets/images/blackButton.png');
 const infoButtonImage = require('@/assets/images/infoButton.png');
 
+
 export default function Index() {
+
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const [modalVisible, setModalVisible] = useState(false); // InfoModal
   const pressedInfoModal = () => {setModalVisible(true)};
 
   // Navigation // 
   const router = useRouter();
-  const navigateToStartGame = () => {router.push('/startGame')};
-  const navigateToJoinGame= () => {router.push('/joinGame')};
+
+  const navigateToStartGame = async () => {
+    const code = generateId(); // f.eks. "XKW32P"
+
+    await AsyncStorage.setItem('gameCode', code);
+    await AsyncStorage.setItem('teamName', "Team Rød");
+    await AsyncStorage.setItem('playerName', "Host");
+
+    const teams: Team[] = [
+      {
+        teamName: "Team Rød",
+        leader: "Host",
+        players: [
+          {
+            id: crypto.randomUUID(), // eller generateId(),
+            name: "Host"
+          }
+        ]
+      }
+    ];
+
+    const { data, error } = await createGame(code, teams);
+
+    if (error) {
+      alert("Feil ved opprettelse av spill: " + error);
+      return;
+    }
+
+    // Naviger videre med spill-id og kode
+    router.push({
+      pathname: '/startGame', 
+      params: { gameId: data.id, code }
+    });
+  };
+
+
+  const navigateToJoinGame = () => {router.push('/joinGame')};
 
   return (
     <BackgroundWrapper>
       <View style={styles.container}>
-
         <Image source={logoImage} style={styles.logoImage} />
 
-        <Animatable.View animation={'slideInRight'} duration={1500}>
-          <Button imageSource={redButtonImage} imageStyle={styles.redButton} onPress={navigateToStartGame} />
+        <Animatable.View animation="slideInRight" duration={1200}>
+          <Pressable style={styles.redButton} onPress={navigateToStartGame}>
+            <Text style={styles.buttonText}>Start spill</Text>
+          </Pressable>
         </Animatable.View>
-        
-        <Animatable.View animation={'slideInRight'} duration={2000}>
-          <Button imageSource={blackButtonImage} imageStyle={styles.blackButton} onPress={navigateToJoinGame} />
+
+        <Animatable.View animation="slideInRight" duration={1600}>
+          <Pressable style={styles.blackButton} onPress={navigateToJoinGame}>
+            <Text style={styles.buttonText}>Bli med i spill</Text>
+          </Pressable>
         </Animatable.View>
         
         <Button imageSource={infoButtonImage} onPress={pressedInfoModal} imageStyle={styles.infoButton} />
@@ -43,6 +90,7 @@ export default function Index() {
     </BackgroundWrapper>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -58,15 +106,25 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   redButton: {
-    width: 180,
-    height: 180,
-    resizeMode: 'contain',
+    backgroundColor: '#FF3B30',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 100,
+    marginTop: 20,
+    alignItems: 'center',
   },
   blackButton: {
-    width: 180,
-    height: 180,
-    resizeMode: 'contain',
+    backgroundColor: '#000000',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 100,
     marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   infoButton: {
     width: 50,
@@ -77,4 +135,3 @@ const styles = StyleSheet.create({
     top: 5,
   },
 });
-

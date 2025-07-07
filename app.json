@@ -37,6 +37,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "splash": {
+      "image": "./assets/images/textLogo.png",  
+      "resizeMode": "contain",                
+      "backgroundColor": "#000000"            
     }
   }
 }
