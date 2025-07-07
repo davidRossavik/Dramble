@@ -1,8 +1,9 @@
 import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
+import challenges from '@/assets/data/challenges.json';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 
@@ -10,17 +11,29 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 
 export default function questionPage() {
 
+    const [value, setValue] = useState(0); // Slider
+    const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
+
     // INPASSABLE VALUES // 
     const maxDrinkCount = 20;
     const drinkCountLabel = maxDrinkCount - value;
     const person1 = "Mads";
     const person2 = "Trym";
-    const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+    // const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
     // INPASSABLE VALUES //
 
-    const [value, setValue] = useState(0); // Slider
-    const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
 
+    // Velger random 1v1 Challenge // 
+    const randomChallenge = useMemo(() => {
+        const validChallenges = challenges.filter(c => c.type === "1v1");
+        return validChallenges[Math.floor(Math.random() * validChallenges.length)];
+    }, []);
+
+    const challengeTextLabel = randomChallenge.title + ": " + person1 + " vs " + person2;
+    // Velger random 1v1 Challenge //
+    
+
+    // Dytter verdier til neste vindu //
     const router = useRouter();
     const handleConfirmedBet = () => {
         if (!selectedButton) return;
@@ -35,7 +48,9 @@ export default function questionPage() {
             }
         });
     }
+    // Dytter verdier til neste vindu //
 
+    
     return (
         <BackgroundWrapper>
             
