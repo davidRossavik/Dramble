@@ -1,38 +1,62 @@
 import Slider from '@react-native-community/slider';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 
+const drinkCount = require('@/assets/images/drinkCount.png');
 
 export default function questionPage() {
 
-    const [value, setValue] = useState(0);
+    const [value, setValue] = useState(0); // Slider
+    const [selectedButton, setSelectedButton] = useState<string | null>(null);
+
+    // PASSABLE VALUES // 
+    const drinkCountLabel = 20;
+    const person1 = "Mads";
+    const person2 = "Trym";
+    const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+
 
     return (
         <BackgroundWrapper>
-            <View style={styles.text}>
-                <Text style={styles.challengetext}> Hvem kan chugge raskest av Mads og Trym?</Text>
-            </View>
-            <View style={styles.box}>
-                <Button textStyle={styles.textStyle} style={styles.button1} label="Mads" />
-                <Button textStyle={styles.textStyle} style={styles.button2} label="Trym" />
+            
+            {/* DrinkCount */}
+            <View style={styles.drinkCountContainer}>
+                <Text style={[styles.baseText, styles.drinkCountText]}>{drinkCountLabel}</Text>
+                <Image source={drinkCount} style={styles.drinkCountPic} />
             </View>
 
+            {/* Challenge */}
+            <View style={styles.challengeContainer}>
+                <Text style={[styles.baseText, styles.challengeText]}>{challengeTextLabel}</Text>
+            </View>
+
+            {/* Buttons / Choose Person */}
+            <View style={styles.buttonContainer}>
+                <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button1]} label={person1}
+                        onPress= {() => setSelectedButton("button1")} stayPressed={selectedButton === "button1"} />
+                <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button2]} label={person2}
+                        onPress={() => setSelectedButton("button2")} stayPressed={selectedButton === "button2"} />
+            </View>
+
+            {/* Slider */}
             <View style={{width: '100%', height: 70}}>
                 <Slider style={styles.slider} 
-                minimumValue={0} maximumValue={20} step={1} value={value}
+                minimumValue={0} maximumValue={drinkCountLabel} step={1} value={value}
                 onValueChange={(val) => setValue(val)}
                 minimumTrackTintColor="#81AF24"
                 maximumTrackTintColor="#00471E"
                 thumbTintColor='#FF4500'
                 />
-                <Text style={styles.label}>{value.toFixed(0)}</Text> 
+                <Text style={[styles.baseText, styles.sliderText]}>{value.toFixed(0)}</Text> 
             </View>
             
+            {/* Continue-Button */}
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Button style={styles.button3} label={"Lås inn"} textStyle={styles.textStyle}/>
+                <Button style={[styles.buttonBase, styles.exitButton]} label={"Lås inn"} textStyle={[styles.baseText, styles.buttonText]}
+                        disabled={selectedButton === null} />
             </View>
             
 
@@ -41,37 +65,64 @@ export default function questionPage() {
 }
 
 const styles = StyleSheet.create({
-    text: {
+    // TEXT //
+    baseText: {
+        fontWeight: 'bold',
+        color: '#FAF0DE',
+        textAlign: 'center',
+    },
+    drinkCountText: {
+        fontSize: 25,
+    },
+    challengeText: {
+        fontSize: 30,
+    },
+    buttonText: {
+        fontSize: 20,
+    },
+    sliderText: {
+        fontSize: 25,
+        marginBottom: 20,
+    },
+
+    // BUTTONS //
+    buttonBase: {
+        width: 170,
+        height: 100,
+        borderRadius: 5,
+    },
+    button1: {
+        backgroundColor: '#EEB90E',
+    },
+    button2: {
+        backgroundColor: '#D41E1D',
+    },
+    exitButton: {
+        width: 280,
+        height: 80,
+        backgroundColor: '#EEB90E',
+    },
+
+
+    // VIEWSTYLES // 
+    drinkCountContainer: {
+        position: 'absolute',
+        top: 60,
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    drinkCountPic: { // drink-Image
+        width: 80,
+        height: 80,
+    },
+    challengeContainer: {
         flex: 2,
         justifyContent: 'center',
         alignItems: 'center',
         paddingTop: 80,
     },
-    challengetext: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: '#FAF0DE',
-        textAlign: 'center',
-    },
-    button1: {
-        width: 170,
-        height: 100,
-        backgroundColor: '#EEB90E',
-        borderRadius: 5,
-    },
-    button2: {
-        width: 170,
-        height: 100,
-        backgroundColor: '#D41E1D',
-        borderRadius: 5,
-    },
-    button3: {
-        width: 280,
-        height: 80,
-        backgroundColor: '#EEB90E',
-        borderRadius: 5,
-    },
-    box: {
+    buttonContainer: {
         flex: 1,
         flexDirection: 'row',
         justifyContent: 'center',
@@ -79,23 +130,9 @@ const styles = StyleSheet.create({
         gap: 20,
         marginBottom: 50,
     },
-    textStyle: {
-        color: '#FAF0DE',
-        fontSize: 20,
-        textAlign: 'center',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    slider: {
+    slider: { // Slider
         width: '80%',
         height: 40,
         alignSelf: 'center',
-    },
-    label: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        color: '#FAF0DE',
-        textAlign: 'center',
-        marginBottom: 20,
     },
 });

@@ -1,18 +1,32 @@
 import { Team } from "@/utils/types";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
+
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from 'react';
+
 import * as Animatable from 'react-native-animatable';
 
 import { createGame } from "../utils/games";
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
+import Button from '@/components/Button';
+import InfoModal from '@/components/InfoModal';
 
 const logoImage = require('@/assets/images/textLogo.png');
+const redButtonImage = require('@/assets/images/redButton.png');
+const blackButtonImage = require('@/assets/images/blackButton.png');
+const infoButtonImage = require('@/assets/images/infoButton.png');
+
 
 export default function Index() {
 
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const [modalVisible, setModalVisible] = useState(false); // InfoModal
+  const pressedInfoModal = () => {setModalVisible(true)};
+
+  // Navigation // 
   const router = useRouter();
 
   const navigateToStartGame = async () => {
@@ -68,6 +82,10 @@ export default function Index() {
             <Text style={styles.buttonText}>Bli med i spill</Text>
           </Pressable>
         </Animatable.View>
+        
+        <Button imageSource={infoButtonImage} onPress={pressedInfoModal} imageStyle={styles.infoButton} />
+        <InfoModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+          
       </View>
     </BackgroundWrapper>
   );
@@ -107,5 +125,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  infoButton: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
+    position: 'absolute',
+    left: 110,
+    top: 5,
   },
 });
