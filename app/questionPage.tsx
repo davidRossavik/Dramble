@@ -1,7 +1,9 @@
 import Slider from '@react-native-community/slider';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
+import challenges from '@/assets/data/challenges.json';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 
@@ -10,13 +12,44 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 export default function questionPage() {
 
     const [value, setValue] = useState(0); // Slider
-    const [selectedButton, setSelectedButton] = useState<string | null>(null);
+    const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
 
-    // PASSABLE VALUES // 
-    const drinkCountLabel = 20;
+    // INPASSABLE VALUES // 
+    const maxDrinkCount = 20;
+    const drinkCountLabel = maxDrinkCount - value;
     const person1 = "Mads";
     const person2 = "Trym";
-    const challengeTextLabel = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+    // const challengeTitle = "Hvem kan chugge raskest av " + person1 + " og " + person2 + " ?";
+    // INPASSABLE VALUES //
+
+
+    // Velger random 1v1 Challenge // 
+    const randomChallenge = useMemo(() => {
+        const validChallenges = challenges.filter(c => c.type === "1v1");
+        return validChallenges[Math.floor(Math.random() * validChallenges.length)];
+    }, []);
+
+    const challengeTitle = randomChallenge.title + ": " + person1 + " vs " + person2;
+    const challengeDescrription = randomChallenge.description;
+    // Velger random 1v1 Challenge //
+    
+
+    // Dytter verdier til neste vindu //
+    const router = useRouter();
+    const handleConfirmedBet = () => {
+        if (!selectedButton) return;
+
+        router.push({
+            pathname: '/chooseWinner',
+            params: {
+                guess: selectedButton,
+                amount: value,
+                p1: person1,
+                p2: person2,
+            }
+        });
+    }
+    // Dytter verdier til neste vindu //
 
 
     return (
@@ -30,21 +63,22 @@ export default function questionPage() {
 
             {/* Challenge */}
             <View style={styles.challengeContainer}>
-                <Text style={[styles.baseText, styles.challengeText]}>{challengeTextLabel}</Text>
+                <Text style={[styles.baseText, styles.challengeText]}>{challengeTitle}</Text>
+                <Text style={[styles.baseText, styles.buttonText]}>{challengeDescrription}</Text>
             </View>
 
             {/* Buttons / Choose Person */}
             <View style={styles.buttonContainer}>
                 <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button1]} label={person1}
-                        onPress= {() => setSelectedButton("button1")} stayPressed={selectedButton === "button1"} />
+                        onPress= {() => setSelectedButton(person1)} stayPressed={selectedButton === person1} />
                 <Button textStyle={[styles.baseText, styles.buttonText]} style={[styles.buttonBase, styles.button2]} label={person2}
-                        onPress={() => setSelectedButton("button2")} stayPressed={selectedButton === "button2"} />
+                        onPress={() => setSelectedButton(person2)} stayPressed={selectedButton === person2} />
             </View>
 
             {/* Slider */}
             <View style={{width: '100%', height: 70}}>
                 <Slider style={styles.slider} 
-                minimumValue={0} maximumValue={drinkCountLabel} step={1} value={value}
+                minimumValue={0} maximumValue={maxDrinkCount} step={1} value={value}
                 onValueChange={(val) => setValue(val)}
                 minimumTrackTintColor="#81AF24"
                 maximumTrackTintColor="#00471E"
@@ -56,7 +90,7 @@ export default function questionPage() {
             {/* Continue-Button */}
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Button style={[styles.buttonBase, styles.exitButton]} label={"Lås inn"} textStyle={[styles.baseText, styles.buttonText]}
-                        disabled={selectedButton === null} />
+                        disabled={selectedButton === null} onPress={handleConfirmedBet} />
             </View>
             
 
@@ -121,6 +155,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         paddingTop: 80,
+        gap: 40,
     },
     buttonContainer: {
         flex: 1,
