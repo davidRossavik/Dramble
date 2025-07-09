@@ -16,7 +16,7 @@ export async function updateGameStatus(gameId: string, status: 'waiting' | 'play
   return { error: null };
 }
 
-
+//bruker ikke denne
 export async function setInitialChallenge(gameId: string) {
   const testChallenge = {
     id: 'test_1',
@@ -37,7 +37,7 @@ export async function setInitialChallenge(gameId: string) {
   return { error: null };
 }
 
-
+//kjøres når hosten trykker på start spill første gang
 export async function initializeGame(gameId: string) {
   const challenges = getRandomChallenges(10);
 

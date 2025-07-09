@@ -6,7 +6,7 @@ import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-nat
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
-import { setInitialChallenge, updateGameStatus } from '@/utils/status';
+import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
 import { supabase } from '../supabase';
 
@@ -54,7 +54,7 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('./singleChallengeScreen');
+            router.replace('./challengeScreen');
           }
         }
       )
@@ -196,8 +196,8 @@ export default function GameLobby() {
             color="green"
             onPress={async () => {
               await updateGameStatus(gameId, 'playing');
-              await setInitialChallenge(gameId);
-              router.push('./singleChallengeScreen');
+              await initializeGame(gameId);
+              router.push('./challengeScreen');  
             }}
           />
         </View>

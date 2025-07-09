@@ -115,7 +115,7 @@ export async function createGame(code:string, teams: Team[]) {
 export async function getGameByCode(code: string) {
   const { data, error } = await supabase
     .from('games')
-    .select('id, code, teams, challenge, challenge_state')
+    .select('*')
     .eq('code', code)
     .single();
 
