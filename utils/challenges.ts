@@ -1,4 +1,4 @@
-import challenges from '@/data/challenges.json';
+import challenges from '@/assets/data/challenges.json';
 
 export function getRandomChallenges(n: number) {
   const filtered = challenges.filter(c => c.title && c.description);

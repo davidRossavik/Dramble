@@ -54,7 +54,7 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('./challengeScreen1v1');
+            router.replace('./questionPage');
           }
         }
       )
@@ -197,7 +197,7 @@ export default function GameLobby() {
             onPress={async () => {
               await initializeGame(gameId);
               await updateGameStatus(gameId, 'playing');
-              router.push('./challengeScreen1v1');  
+              router.push('./questionPage');  
             }}
           />
         </View>
