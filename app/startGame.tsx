@@ -54,7 +54,7 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('./challengeScreen');
+            router.replace('./challengeScreen1v1');
           }
         }
       )
@@ -195,9 +195,9 @@ export default function GameLobby() {
             title="Start spill"
             color="green"
             onPress={async () => {
-              await updateGameStatus(gameId, 'playing');
               await initializeGame(gameId);
-              router.push('./challengeScreen');  
+              await updateGameStatus(gameId, 'playing');
+              router.push('./challengeScreen1v1');  
             }}
           />
         </View>

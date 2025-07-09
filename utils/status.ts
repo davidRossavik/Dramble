@@ -16,6 +16,17 @@ export async function updateGameStatus(gameId: string, status: 'waiting' | 'play
   return { error: null };
 }
 
+
+export async function updateChallengeState(gameId: string, state: 'betting' | 'playing' | 'finished') {
+  const { error } = await supabase
+    .from('games')
+    .update({ challenge_state: state })
+    .eq('id', gameId);
+
+  if (error) console.error('Feil ved oppdatering av challenge_state:', error.message);
+}
+
+
 //bruker ikke denne
 export async function setInitialChallenge(gameId: string) {
   const testChallenge = {
@@ -45,10 +56,12 @@ export async function initializeGame(gameId: string) {
     .from('games')
     .update({
       challenges,
-      currentChallengeIndex: 0,
+      current_challenge_index: 0,
       challenge_state: 'betting'
     })
     .eq('id', gameId);
+    console.log("Starter initializeGame for", gameId);
+    console.log("Valgte utfordringer:", challenges);
 
   if (error) {
     console.error('Feil ved start:', error.message);
