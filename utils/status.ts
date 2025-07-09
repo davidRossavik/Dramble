@@ -1,4 +1,6 @@
 import { supabase } from "../supabase";
+import { getRandomChallenges } from './challenges';
+
 
 export async function updateGameStatus(gameId: string, status: 'waiting' | 'playing' | 'finished') {
   const { error } = await supabase
@@ -16,14 +18,15 @@ export async function updateGameStatus(gameId: string, status: 'waiting' | 'play
 
 
 export async function setInitialChallenge(gameId: string) {
-  const initialChallenge = {
-    id: 'challenge_1',
-    step: 'intro',
-  };
+  const testChallenge = {
+    id: 'test_1',
+    text: '1v1: Steinsaks–papir mellom to lagledere. Vinneren slipper å drikke.',
+    type: '1v1',
+    };
 
   const { error } = await supabase
     .from('games')
-    .update({ challenge: initialChallenge })
+    .update({ challenge: testChallenge , challenge_status: "betting"})
     .eq('id', gameId);
 
   if (error) {
@@ -32,4 +35,24 @@ export async function setInitialChallenge(gameId: string) {
   }
 
   return { error: null };
+}
+
+
+export async function initializeGame(gameId: string) {
+  const challenges = getRandomChallenges(10);
+
+  const { error } = await supabase
+    .from('games')
+    .update({
+      challenges,
+      currentChallengeIndex: 0,
+      challenge_state: 'betting'
+    })
+    .eq('id', gameId);
+
+  if (error) {
+    console.error('Feil ved start:', error.message);
+  }
+
+  return { error };
 }

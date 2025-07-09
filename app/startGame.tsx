@@ -54,7 +54,7 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('/questionPage');
+            router.replace('./singleChallengeScreen');
           }
         }
       )
@@ -149,7 +149,7 @@ export default function GameLobby() {
         {teams.map(team => (
           <View key={team.teamName} style={styles.teamBox}>
             <Text style={styles.teamName}>
-              {team.teamName} (Leder: {team.leader})
+              {team.teamName} {/*(Leder: {team.leader})*/} 
             </Text>
 
             {team.players.map(player => (
@@ -197,7 +197,7 @@ export default function GameLobby() {
             onPress={async () => {
               await updateGameStatus(gameId, 'playing');
               await setInitialChallenge(gameId);
-              router.push('/questionPage');
+              router.push('./singleChallengeScreen');
             }}
           />
         </View>

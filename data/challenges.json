@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Sokkekamp",
+    "description": "Førstemann som klarer å ta av sokken til den andre vinner",
+    "category": "challenge",
+    "type": "1v1",
+    "odds": "2"
+  },
+  {
+    "title": "Taus Allianse",
+    "description": "Alle i laget skal drikke eksakt X slurker - uten å kommunisere. Treffer de, vinner de!",
+    "category": "",
+    "type": "Team-vs-itself",
+    "odds": "5"
+  }
+]
