@@ -21,13 +21,13 @@ const infoButtonImage = require('@/assets/images/infoButton.png');
 
 export default function Index() {
 
-  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
-
-  const [modalVisible, setModalVisible] = useState(false); // InfoModal
+  // InfoModal //
+  const [modalVisible, setModalVisible] = useState(false);
   const pressedInfoModal = () => {setModalVisible(true)};
 
   // Navigation // 
   const router = useRouter();
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const navigateToStartGame = async () => {
     const code = generateId(); // f.eks. "XKW32P"
@@ -42,7 +42,7 @@ export default function Index() {
         leader: "Host",
         players: [
           {
-            id: crypto.randomUUID(), // eller generateId(),
+            id: generateId(), // crypto.randomUUID()
             name: "Host"
           }
         ]
@@ -63,8 +63,8 @@ export default function Index() {
     });
   };
 
-
   const navigateToJoinGame = () => {router.push('/joinGame')};
+  // Navigation //
 
   return (
     <BackgroundWrapper>
