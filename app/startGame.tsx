@@ -18,6 +18,9 @@ export default function GameLobby() {
   // David la til
   const x_button = require('@/assets/images/X-button.png');
   const remove_button = require('@/assets/images/removeButton.png');
+  const add_button = require('@/assets/images/addButton.png');
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
 
   // State og referanser //
   const [teams, setTeams] = useState<Team[]>([]);
@@ -140,7 +143,7 @@ export default function GameLobby() {
     }
 
     await addPlayerToTeam(gameId, teamName, {
-      id: crypto.randomUUID(),
+      id: generateId(), // eller crypto.randomUUID()
       name,
     });
 
@@ -166,8 +169,11 @@ export default function GameLobby() {
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
+
+        {/* Spillkode */}
         <Text style={styles.codeText}>SPILLKODE: {code}</Text>
 
+        {/* Lagnavn Og Øverste Kolonne */}
         {teams.map(team => (
           <View key={team.teamName} style={styles.teamBox}>
             <View style={styles.teamHeader}>
@@ -178,13 +184,11 @@ export default function GameLobby() {
               </View>
               {playerName === 'Host' && (<Button1 imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
             </View>
-
+            
+            {/* Lagmedlemmer */}
             <View style={styles.teamContent}>
               {team.players.map(player => (
-                <View
-                  key={player.id}
-                  style={{ flexDirection: 'row', paddingVertical: 5}}
-                >
+                <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5}} >
                   <View style={styles.centeredTextWrapper}>
                     <Text style={styles.playerName}> {player.name}</Text>
                   </View>
@@ -192,28 +196,31 @@ export default function GameLobby() {
                 </View>
               ))}
 
-              <TextInput
-                placeholder="Ny spiller"
-                value={newPlayers[team.teamName] || ''}
-                onChangeText={text =>
-                  setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
-                }
-                style={styles.input}
-              />
-              <Button
-                title="Legg til spiller"
-                onPress={() => handleAddPlayer(team.teamName)}
-              />
+              {/* Legg Til Spiller */}
+              <View style={{flexDirection: 'row'}}>
+                <View style={styles.centeredTextWrapper}>
+                  <TextInput
+                    placeholder="Legg til spiller..."
+                    placeholderTextColor="rgba(240, 227, 192, 0.6)"
+                    value={newPlayers[team.teamName] || ''}
+                    onChangeText={text =>
+                      setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
+                    }
+                    style={[styles.input, {color: 'rgba(240, 227, 192, 0.6)'}]}
+                  />
+                </View>
+                <Button1 imageSource={add_button} imageStyle={styles.remove_button} onPress={() => handleAddPlayer(team.teamName)} />
+              </View>
+
             </View>
           </View>
         ))}
       </ScrollView>
-
+      
+      {/* Start Spill */}
       {playerName === 'Host' && (
         <View style={{ padding: 20 }}>
-          <Button
-            title="Start spill"
-            color="green"
+          <Button title="Start spill" color="green"
             onPress={async () => {
               await updateGameStatus(gameId, 'playing');
               await setInitialChallenge(gameId);
@@ -227,17 +234,12 @@ export default function GameLobby() {
 }
 
 const styles = StyleSheet.create({
+
+  // Containers //
   container: {
     padding: 20,
     paddingBottom: 80,
-    marginTop: 50,
-  },
-  codeText: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    textAlign: 'center',
-    color: '#D49712',
+    marginTop: 70,
   },
   teamBox: {
     // padding: 15,
@@ -263,6 +265,26 @@ const styles = StyleSheet.create({
   teamContent: {
     padding: 15,
   },
+  input: {
+    flex: 1,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 10,
+    marginBottom: 5,
+    width: 260
+  },
+  centeredTextWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Containers //
+
+
+  // Text //
   teamName: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -275,33 +297,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#F0E3C0',
   },
-  buttonLabel: {
-    fontSize: 25,
+  codeText: {
+    fontSize: 30,
     fontWeight: 'bold',
-    color: '#F0E3C0',
+    marginBottom: 30,
+    textAlign: 'center',
+    color: '#D49712',
   },
-  input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 10,
-    marginBottom: 5,
-  },
+  // Text //
+
+
+  // Buttons //
   x_button: {
     width: 35,
     height: 35,
     resizeMode: 'contain',
   },
   remove_button: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     resizeMode: 'contain',
   },
-  centeredTextWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // Buttons //
 });
