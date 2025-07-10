@@ -7,7 +7,7 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
-import { setInitialChallenge, updateGameStatus } from '@/utils/status';
+import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
 import { supabase } from '../supabase';
 
@@ -70,7 +70,7 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('/questionPage');
+            router.replace('./questionPage');
           }
         }
       )
@@ -178,6 +178,7 @@ export default function GameLobby() {
         {/* Lagnavn Og Øverste Kolonne */}
         {teams.map(team => (
           <View key={team.teamName} style={styles.teamBox}>
+
             <View style={styles.teamHeader}>
               <View style={styles.centeredTextWrapper}>
                 <Text style={styles.teamName}>
@@ -224,9 +225,9 @@ export default function GameLobby() {
         <View style={styles.startGameContainer}>
           <Button label="Start spill" style={styles.startGame_button}
             onPress={async () => {
+              await initializeGame(gameId);
               await updateGameStatus(gameId, 'playing');
-              await setInitialChallenge(gameId);
-              router.push('/questionPage');
+              router.push('./questionPage');  
             }}
           /> 
         </View>

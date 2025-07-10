@@ -35,7 +35,7 @@ export default function JoinGame() {
 
     const newTeam = {
         teamName: defaultTeamName,
-        leader: cleanName,
+        slurks: 100, //hardkode for testing
         players: [{
             id: generateId(), // Eller crypto.randomUUID
             name: cleanName,

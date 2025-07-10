@@ -39,7 +39,7 @@ export default function Index() {
     const teams: Team[] = [
       {
         teamName: "Team Rød",
-        leader: "Host",
+        slurks: 100,
         players: [
           {
             id: generateId(), // crypto.randomUUID()
