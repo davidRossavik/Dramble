@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
-import Button1 from '@/components/Button';
+import Button from '@/components/Button';
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
 import { setInitialChallenge, updateGameStatus } from '@/utils/status';
@@ -184,7 +184,7 @@ export default function GameLobby() {
                   {team.teamName} (Leder: {team.leader})
                 </Text>
               </View>
-              {playerName === 'Host' && (<Button1 imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
+              {playerName === 'Host' && (<Button imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
             </View>
             
             {/* Lagmedlemmer */}
@@ -194,7 +194,7 @@ export default function GameLobby() {
                   <View style={styles.centeredTextWrapper}>
                     <Text style={styles.playerName}> {player.name}</Text>
                   </View>
-                  <Button1 imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
+                  <Button imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
                 </View>
               ))}
 
@@ -211,7 +211,7 @@ export default function GameLobby() {
                     style={[styles.input, {color: 'rgba(240, 227, 192, 0.6)'}]}
                   />
                 </View>
-                <Button1 imageSource={add_button} imageStyle={styles.remove_button} onPress={() => handleAddPlayer(team.teamName)} />
+                <Button imageSource={add_button} imageStyle={styles.remove_button} onPress={() => handleAddPlayer(team.teamName)} />
               </View>
 
             </View>
@@ -222,7 +222,7 @@ export default function GameLobby() {
       {/* Start Spill */}
       {playerName === 'Host' && (
         <View style={styles.startGameContainer}>
-          <Button1 label="Start spill" style={styles.startGame_button}
+          <Button label="Start spill" style={styles.startGame_button}
             onPress={async () => {
               await updateGameStatus(gameId, 'playing');
               await setInitialChallenge(gameId);
