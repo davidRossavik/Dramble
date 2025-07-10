@@ -14,12 +14,14 @@ import { supabase } from '../supabase';
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  // David la til
+
+  // Bilder // 
   const x_button = require('@/assets/images/X-button.png');
   const remove_button = require('@/assets/images/removeButton.png');
   const add_button = require('@/assets/images/addButton.png');
-  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Bilder // 
 
 
   // State og referanser //

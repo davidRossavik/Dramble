@@ -12,7 +12,7 @@ export default function JoinGame() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const handleJoin = async () => {
     if (!code.trim()) {
@@ -37,7 +37,7 @@ export default function JoinGame() {
         teamName: defaultTeamName,
         leader: cleanName,
         players: [{
-            id: crypto.randomUUID(),
+            id: generateId(), // Eller crypto.randomUUID
             name: cleanName,
         }],
     };
@@ -61,16 +61,18 @@ export default function JoinGame() {
         <Text style={styles.title}>Bli med i spill</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, {color: '#F0E3C0'}]}
           placeholder="Spillkode"
+          placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
           value={code}
           onChangeText={setCode}
           autoCapitalize="characters"
         />
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, {color: '#F0E3C0'}]}
           placeholder="Ditt navn"
+          placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
           value={name}
           onChangeText={setName}
         />
@@ -91,30 +93,32 @@ const styles = StyleSheet.create({
     padding: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 30,
   },
   title: {
-    fontSize: 22,
+    fontSize: 30,
     fontWeight: 'bold',
+    color: '#F0E3C0',
   },
   input: {
     width: '80%',
     padding: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    fontSize: 18,
+    borderWidth: 2,
+    borderColor: '#D49712',
+    borderRadius: 15,
+    fontSize: 25,
+    backgroundColor: '#073510'
   },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: '#D49712',
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 100,
   },
   buttonText: {
-    color: '#fff',
+    color: '#F0E3C0',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 25,
   },
   errorText: {
     color: 'red',
