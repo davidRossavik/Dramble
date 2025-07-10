@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button1 from '@/components/Button';
@@ -221,14 +221,14 @@ export default function GameLobby() {
       
       {/* Start Spill */}
       {playerName === 'Host' && (
-        <View style={{ padding: 20 }}>
-          <Button title="Start spill" color="green"
+        <View style={styles.startGameContainer}>
+          <Button1 label="Start spill" style={styles.startGame_button}
             onPress={async () => {
               await updateGameStatus(gameId, 'playing');
               await setInitialChallenge(gameId);
               router.push('/questionPage');
             }}
-          />
+          /> 
         </View>
       )}
     </BackgroundWrapper>
@@ -283,6 +283,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  startGameContainer: {
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent'
+  },
   // Containers //
 
 
@@ -319,6 +327,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+  startGame_button: {
+    width: 250,
+    height: 50,
+    backgroundColor: '#66A05E',
+    borderRadius: 5,
+    marginBottom: 20,
   },
   // Buttons //
 });
