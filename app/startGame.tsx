@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button1 from '@/components/Button';
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
 import { setInitialChallenge, updateGameStatus } from '@/utils/status';
@@ -13,6 +14,10 @@ import { supabase } from '../supabase';
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
+
+  // David la til
+  const x_button = require('@/assets/images/X-button.png');
+  const remove_button = require('@/assets/images/removeButton.png');
 
   // State og referanser //
   const [teams, setTeams] = useState<Team[]>([]);
@@ -161,47 +166,45 @@ export default function GameLobby() {
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.codeText}>Spillkoden er: {code}</Text>
+        <Text style={styles.codeText}>SPILLKODE: {code}</Text>
 
         {teams.map(team => (
           <View key={team.teamName} style={styles.teamBox}>
-            <Text style={styles.teamName}>
-              {team.teamName} (Leder: {team.leader})
-            </Text>
-
-            {team.players.map(player => (
-              <View
-                key={player.id}
-                style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-              >
-                <Text>• {player.name}</Text>
-                <Button
-                  title="Fjern"
-                  onPress={() => handleRemovePlayer(team.teamName, player.id)}
-                />
+            <View style={styles.teamHeader}>
+              <View style={styles.centeredTextWrapper}>
+                <Text style={styles.teamName}>
+                  {team.teamName} (Leder: {team.leader})
+                </Text>
               </View>
-            ))}
+              {playerName === 'Host' && (<Button1 imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
+            </View>
 
-            {playerName === 'Host' && (
-              <Button
-                title="Fjern lag"
-                onPress={() => handleRemoveTeam(team.teamName)}
-                color="red"
+            <View style={styles.teamContent}>
+              {team.players.map(player => (
+                <View
+                  key={player.id}
+                  style={{ flexDirection: 'row', paddingVertical: 5}}
+                >
+                  <View style={styles.centeredTextWrapper}>
+                    <Text style={styles.playerName}> {player.name}</Text>
+                  </View>
+                  <Button1 imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
+                </View>
+              ))}
+
+              <TextInput
+                placeholder="Ny spiller"
+                value={newPlayers[team.teamName] || ''}
+                onChangeText={text =>
+                  setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
+                }
+                style={styles.input}
               />
-            )}
-
-            <TextInput
-              placeholder="Ny spiller"
-              value={newPlayers[team.teamName] || ''}
-              onChangeText={text =>
-                setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
-              }
-              style={styles.input}
-            />
-            <Button
-              title="Legg til spiller"
-              onPress={() => handleAddPlayer(team.teamName)}
-            />
+              <Button
+                title="Legg til spiller"
+                onPress={() => handleAddPlayer(team.teamName)}
+              />
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -230,25 +233,52 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   codeText: {
-    fontSize: 20,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
+    color: '#D49712',
   },
   teamBox: {
-    backgroundColor: '#f3f3f3',
-    borderRadius: 10,
-    padding: 15,
+    // padding: 15,
     marginBottom: 20,
+    backgroundColor: '#073510',
+    borderRadius: 35,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    borderWidth: 3,
+    borderColor: '#D49712',
+    overflow: 'hidden',
+  },
+  teamHeader: {
+    backgroundColor: '#094314',
+    alignItems: 'center',
+    width: '100%',
+    padding: 18,
+    flexDirection: 'row',
+  },
+  teamContent: {
+    padding: 15,
   },
   teamName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#F0E3C0',
+    marginLeft: 20,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 20,
     marginLeft: 10,
+    fontWeight: 'bold',
+    color: '#F0E3C0',
+  },
+  buttonLabel: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#F0E3C0',
   },
   input: {
     borderColor: '#ccc',
@@ -258,5 +288,20 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: 10,
     marginBottom: 5,
+  },
+  x_button: {
+    width: 35,
+    height: 35,
+    resizeMode: 'contain',
+  },
+  remove_button: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  centeredTextWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
