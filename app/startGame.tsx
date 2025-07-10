@@ -14,14 +14,17 @@ export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
 
+  // State og referanser //
   const [teams, setTeams] = useState<Team[]>([]);
   const [gameId, setGameId] = useState<string>('');
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
   const [localTeamName, setLocalTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
   const statusChannelRef = useRef<any>(null);
+  // State og Referanser //
 
 
+  // Last inn lagret info fra AsyncStorage ved første lasting //
   useEffect(() => {
     const loadTeamInfo = async () => {
       const storedCode = await AsyncStorage.getItem('gameCode');
@@ -39,7 +42,10 @@ export default function GameLobby() {
 
     loadTeamInfo();
   }, []);
+  // Last inn lagret info fra AsyncStorage ved første lasting //
 
+
+  // Setter opp sanntids-abonnement //
   const subscribeToGameStatus = (id: string) => {
     const channel = supabase
       .channel(`game-status-${id}`)
@@ -62,8 +68,12 @@ export default function GameLobby() {
 
     return channel;
   };
+  // Setter opp sanntids-abonnement //
+
 
   // Henter lagene fra Supabase + gameId + setter opp status-lytter
+  
+  // OPPDATERER AKTIVE LAG//
   const fetchTeams = async () => {
     const { data, error } = await getGameByCode(code);
     if (data) {
@@ -74,11 +84,11 @@ export default function GameLobby() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // Henter lag og gameId fra database når spillkoden blir tilgjengelig
     if (code) fetchTeams();
   }, [code]);
 
-  useEffect(() => {
+  useEffect(() => { // Sjekker at ditt lag fortsatt finnes i spillet
     if (localTeamName && teams.length > 0) {
       const found = teams.find(t => t.teamName === localTeamName);
       if (!found) {
@@ -88,7 +98,7 @@ export default function GameLobby() {
     }
   }, [teams, localTeamName]);
 
-  useEffect(() => {
+  useEffect(() => { // Setter opp sanntids-abonnement for oppdateringer i laglisten
     if (!code) return;
 
     const channel = subscribeToGameUpdates(code as string, (updatedTeams) => {
@@ -100,14 +110,17 @@ export default function GameLobby() {
     };
   }, [code]);
 
-  useEffect(() => {
+  useEffect(() => { // Fjerner sanntids-abonnement på spillstatus når komponenten avmonteres
     return () => {
       if (statusChannelRef.current) {
         supabase.removeChannel(statusChannelRef.current);
       }
     };
   }, []);
+  // OPPDATERER AKTIVE LAG //
 
+
+  // LEGG TIL SPILLER //
   const handleAddPlayer = async (teamName: string) => {
     const name = newPlayers[teamName]?.trim();
     if (!name) return;
@@ -128,7 +141,10 @@ export default function GameLobby() {
 
     setNewPlayers(prev => ({ ...prev, [teamName]: '' }));
   };
+  // LEGG TIL SPILLER //
 
+
+  // FJERN SPILLER //
   const handleRemovePlayer = async (teamName: string, playerId: string) => {
     if (!gameId) return;
     const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
@@ -140,6 +156,7 @@ export default function GameLobby() {
     const { error } = await removeTeam(gameId, teamName);
     if (error) console.log("Feil ved fjerning av lag:", error);
   };
+  // FJERN SPILLER //
 
   return (
     <BackgroundWrapper>
@@ -210,6 +227,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 80,
+    marginTop: 50,
   },
   codeText: {
     fontSize: 20,
