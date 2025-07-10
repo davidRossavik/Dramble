@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button from '@/components/Button';
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
 import { initializeGame, updateGameStatus } from '@/utils/status';
@@ -13,15 +14,27 @@ import { supabase } from '../supabase';
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
+
+  // Bilder // 
+  const x_button = require('@/assets/images/X-button.png');
+  const remove_button = require('@/assets/images/removeButton.png');
+  const add_button = require('@/assets/images/addButton.png');
+  // Bilder // 
+
+
+  // State og referanser //
   const [teams, setTeams] = useState<Team[]>([]);
   const [gameId, setGameId] = useState<string>('');
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
   const [localTeamName, setLocalTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
   const statusChannelRef = useRef<any>(null);
+  // State og Referanser //
 
 
+  // Last inn lagret info fra AsyncStorage ved første lasting //
   useEffect(() => {
     const loadTeamInfo = async () => {
       const storedCode = await AsyncStorage.getItem('gameCode');
@@ -39,7 +52,10 @@ export default function GameLobby() {
 
     loadTeamInfo();
   }, []);
+  // Last inn lagret info fra AsyncStorage ved første lasting //
 
+
+  // Setter opp sanntids-abonnement //
   const subscribeToGameStatus = (id: string) => {
     const channel = supabase
       .channel(`game-status-${id}`)
@@ -62,8 +78,12 @@ export default function GameLobby() {
 
     return channel;
   };
+  // Setter opp sanntids-abonnement //
+
 
   // Henter lagene fra Supabase + gameId + setter opp status-lytter
+  
+  // OPPDATERER AKTIVE LAG//
   const fetchTeams = async () => {
     const { data, error } = await getGameByCode(code);
     if (data) {
@@ -74,11 +94,11 @@ export default function GameLobby() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // Henter lag og gameId fra database når spillkoden blir tilgjengelig
     if (code) fetchTeams();
   }, [code]);
 
-  useEffect(() => {
+  useEffect(() => { // Sjekker at ditt lag fortsatt finnes i spillet
     if (localTeamName && teams.length > 0) {
       const found = teams.find(t => t.teamName === localTeamName);
       if (!found) {
@@ -88,7 +108,7 @@ export default function GameLobby() {
     }
   }, [teams, localTeamName]);
 
-  useEffect(() => {
+  useEffect(() => { // Setter opp sanntids-abonnement for oppdateringer i laglisten
     if (!code) return;
 
     const channel = subscribeToGameUpdates(code as string, (updatedTeams) => {
@@ -100,14 +120,17 @@ export default function GameLobby() {
     };
   }, [code]);
 
-  useEffect(() => {
+  useEffect(() => { // Fjerner sanntids-abonnement på spillstatus når komponenten avmonteres
     return () => {
       if (statusChannelRef.current) {
         supabase.removeChannel(statusChannelRef.current);
       }
     };
   }, []);
+  // OPPDATERER AKTIVE LAG //
 
+
+  // LEGG TIL SPILLER //
   const handleAddPlayer = async (teamName: string) => {
     const name = newPlayers[teamName]?.trim();
     if (!name) return;
@@ -122,13 +145,16 @@ export default function GameLobby() {
     }
 
     await addPlayerToTeam(gameId, teamName, {
-      id: crypto.randomUUID(),
+      id: generateId(), // eller crypto.randomUUID()
       name,
     });
 
     setNewPlayers(prev => ({ ...prev, [teamName]: '' }));
   };
+  // LEGG TIL SPILLER //
 
+
+  // FJERN SPILLER //
   const handleRemovePlayer = async (teamName: string, playerId: string) => {
     if (!gameId) return;
     const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
@@ -140,66 +166,70 @@ export default function GameLobby() {
     const { error } = await removeTeam(gameId, teamName);
     if (error) console.log("Feil ved fjerning av lag:", error);
   };
+  // FJERN SPILLER //
 
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.codeText}>Spillkoden er: {code}</Text>
 
+        {/* Spillkode */}
+        <Text style={styles.codeText}>SPILLKODE: {code}</Text>
+
+        {/* Lagnavn Og Øverste Kolonne */}
         {teams.map(team => (
           <View key={team.teamName} style={styles.teamBox}>
-            <Text style={styles.teamName}>
-              {team.teamName} {/*(Leder: {team.leader})*/} 
-            </Text>
 
-            {team.players.map(player => (
-              <View
-                key={player.id}
-                style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-              >
-                <Text>• {player.name}</Text>
-                <Button
-                  title="Fjern"
-                  onPress={() => handleRemovePlayer(team.teamName, player.id)}
-                />
+            <View style={styles.teamHeader}>
+              <View style={styles.centeredTextWrapper}>
+                <Text style={styles.teamName}>
+                  {team.teamName} (Leder: {team.leader})
+                </Text>
               </View>
-            ))}
+              {playerName === 'Host' && (<Button imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
+            </View>
+            
+            {/* Lagmedlemmer */}
+            <View style={styles.teamContent}>
+              {team.players.map(player => (
+                <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5}} >
+                  <View style={styles.centeredTextWrapper}>
+                    <Text style={styles.playerName}> {player.name}</Text>
+                  </View>
+                  <Button imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
+                </View>
+              ))}
 
-            {playerName === 'Host' && (
-              <Button
-                title="Fjern lag"
-                onPress={() => handleRemoveTeam(team.teamName)}
-                color="red"
-              />
-            )}
+              {/* Legg Til Spiller */}
+              <View style={{flexDirection: 'row'}}>
+                <View style={styles.centeredTextWrapper}>
+                  <TextInput
+                    placeholder="Legg til spiller..."
+                    placeholderTextColor="rgba(240, 227, 192, 0.6)"
+                    value={newPlayers[team.teamName] || ''}
+                    onChangeText={text =>
+                      setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
+                    }
+                    style={[styles.input, {color: 'rgba(240, 227, 192, 0.6)'}]}
+                  />
+                </View>
+                <Button imageSource={add_button} imageStyle={styles.remove_button} onPress={() => handleAddPlayer(team.teamName)} />
+              </View>
 
-            <TextInput
-              placeholder="Ny spiller"
-              value={newPlayers[team.teamName] || ''}
-              onChangeText={text =>
-                setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
-              }
-              style={styles.input}
-            />
-            <Button
-              title="Legg til spiller"
-              onPress={() => handleAddPlayer(team.teamName)}
-            />
+            </View>
           </View>
         ))}
       </ScrollView>
-
+      
+      {/* Start Spill */}
       {playerName === 'Host' && (
-        <View style={{ padding: 20 }}>
-          <Button
-            title="Start spill"
-            color="green"
+        <View style={styles.startGameContainer}>
+          <Button label="Start spill" style={styles.startGame_button}
             onPress={async () => {
               await initializeGame(gameId);
               await updateGameStatus(gameId, 'playing');
               router.push('./questionPage');  
             }}
-          />
+          /> 
         </View>
       )}
     </BackgroundWrapper>
@@ -207,32 +237,39 @@ export default function GameLobby() {
 }
 
 const styles = StyleSheet.create({
+
+  // Containers //
   container: {
     padding: 20,
     paddingBottom: 80,
-  },
-  codeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    textAlign: 'center',
+    marginTop: 70,
   },
   teamBox: {
-    backgroundColor: '#f3f3f3',
-    borderRadius: 10,
-    padding: 15,
+    // padding: 15,
     marginBottom: 20,
+    backgroundColor: '#073510',
+    borderRadius: 35,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    borderWidth: 3,
+    borderColor: '#D49712',
+    overflow: 'hidden',
   },
-  teamName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  teamHeader: {
+    backgroundColor: '#094314',
+    alignItems: 'center',
+    width: '100%',
+    padding: 18,
+    flexDirection: 'row',
   },
-  playerName: {
-    fontSize: 16,
-    marginLeft: 10,
+  teamContent: {
+    padding: 15,
   },
   input: {
+    flex: 1,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
@@ -240,5 +277,64 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: 10,
     marginBottom: 5,
+    width: 260
   },
+  centeredTextWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startGameContainer: {
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent'
+  },
+  // Containers //
+
+
+  // Text //
+  teamName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#F0E3C0',
+    marginLeft: 20,
+  },
+  playerName: {
+    fontSize: 20,
+    marginLeft: 10,
+    fontWeight: 'bold',
+    color: '#F0E3C0',
+  },
+  codeText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
+    color: '#D49712',
+  },
+  // Text //
+
+
+  // Buttons //
+  x_button: {
+    width: 35,
+    height: 35,
+    resizeMode: 'contain',
+  },
+  remove_button: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  startGame_button: {
+    width: 250,
+    height: 50,
+    backgroundColor: '#66A05E',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  // Buttons //
 });

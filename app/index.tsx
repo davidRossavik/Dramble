@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import * as Animatable from 'react-native-animatable';
 
@@ -21,13 +21,13 @@ const infoButtonImage = require('@/assets/images/infoButton.png');
 
 export default function Index() {
 
-  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
-
-  const [modalVisible, setModalVisible] = useState(false); // InfoModal
+  // InfoModal //
+  const [modalVisible, setModalVisible] = useState(false);
   const pressedInfoModal = () => {setModalVisible(true)};
 
-  // Navigation // 
+  // Navigation //
   const router = useRouter();
+  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const navigateToStartGame = async () => {
     const code = generateId(); // f.eks. "XKW32P"
@@ -42,7 +42,7 @@ export default function Index() {
         slurks: 100,
         players: [
           {
-            id: crypto.randomUUID(), // eller generateId(),
+            id: generateId(), // crypto.randomUUID()
             name: "Host"
           }
         ]
@@ -63,8 +63,8 @@ export default function Index() {
     });
   };
 
-
   const navigateToJoinGame = () => {router.push('/joinGame')};
+  // Navigation //
 
   return (
     <BackgroundWrapper>
@@ -107,18 +107,18 @@ const styles = StyleSheet.create({
   },
   redButton: {
     backgroundColor: '#FF3B30',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
+    paddingVertical: Platform.OS === 'web' ? 20 : 28,
+    paddingHorizontal: Platform.OS === 'web' ? 40 : 60,
     borderRadius: 100,
     marginTop: 20,
     alignItems: 'center',
   },
   blackButton: {
     backgroundColor: '#000000',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
+    paddingVertical: Platform.OS === 'web' ? 20 : 28,
+    paddingHorizontal: Platform.OS === 'web' ? 40 : 60,
     borderRadius: 100,
-    marginTop: 20,
+    marginTop: Platform.OS === 'web' ? 20 : 40,
     alignItems: 'center',
   },
   buttonText: {
@@ -132,6 +132,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     position: 'absolute',
     left: 110,
-    top: 5,
+    top: Platform.OS === 'web' ? 5 : 130,
   },
 });
