@@ -182,7 +182,7 @@ export default function GameLobby() {
             <View style={styles.teamHeader}>
               <View style={styles.centeredTextWrapper}>
                 <Text style={styles.teamName}>
-                  {team.teamName} (Leder: {team.leader})
+                  {team.teamName} 
                 </Text>
               </View>
               {playerName === 'Host' && (<Button imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
