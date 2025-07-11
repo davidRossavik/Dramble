@@ -73,7 +73,7 @@ export default function Index() {
 
         <Animatable.View animation="slideInRight" duration={1200}>
           <Pressable style={styles.redButton} onPress={navigateToStartGame}>
-            <Text style={styles.buttonText}>Start spill</Text>
+            <Text style={styles.buttonText}>Start spill (trym)</Text>
           </Pressable>
         </Animatable.View>
 
