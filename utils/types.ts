@@ -7,6 +7,6 @@ export type Player = {
 
 export type Team = {
   teamName: string;
-  sips: number;
+  slurks: number;
   players: Player[];
 };

@@ -39,7 +39,7 @@ export async function resolveBet(gameId: string, challengeIndex: number, winner:
     const delta = isCorrect ? bet.amount : -bet.amount;
 
     // Oppdaterer slurker for laget vha. hjelpefunksjon
-    const {error: updateError } = await updateTeamSips(bet.team_id, delta);
+    const {error: updateError } = await updateTeamSlurks(bet.team_id, delta);
 
     if (updateError) {
       console.error('Feil ved oppdatering for team ${bet.team_id}: ', updateError.message);
@@ -53,11 +53,11 @@ export async function resolveBet(gameId: string, challengeIndex: number, winner:
     - enkel funksjon for å oppdatere slurker for ett lag 
 */
 
-export async function updateTeamSips(teamId: string, delta: number) {
+export async function updateTeamSlurks(teamId: string, delta: number) {
   // hent laget
   const { data: teamData, error: fetchError } = await supabase 
     .from('teams')
-    .select('sips')
+    .select('slurks')
     .eq('id', teamId)
     .single();
   
@@ -67,12 +67,12 @@ export async function updateTeamSips(teamId: string, delta: number) {
   }
 
   // Kalkulere ny slurke-verdi (max 0)
-  const newSips = Math.max(0, teamData.sips + delta);
+  const newSlurks = Math.max(0, teamData.slurks + delta);
 
   // Oppdatere slurker på laget
   const { error: updateError } = await supabase 
     .from('teams')
-    .update({sips: newSips })
+    .update({sips: newSlurks })
     .eq('id', teamId);
 
   if (updateError) {
