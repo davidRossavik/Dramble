@@ -73,6 +73,11 @@ export default function RootLayout() {
       animation: 'fade',
       presentation: 'card',
     }} />
-
+   <Stack.Screen name="flaks" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
   </Stack>
 }
