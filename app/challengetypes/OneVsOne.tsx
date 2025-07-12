@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 
 type Props = {
     challenge: Challenge
+    gameId: string
 }
 
 export default function OneVsOne({ challenge }:Props) {
