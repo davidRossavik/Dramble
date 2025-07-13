@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import { addTeamToGame, getGameByCode } from '@/utils/games';
+import { getRandomTeamName } from '@/utils/nameGenerator';
 
 export default function JoinGame() {
   const [code, setCode] = useState('');
@@ -31,10 +32,13 @@ export default function JoinGame() {
     const gameId = data.id;
     const existingTeams = data.teams ?? [];
 
-    const defaultTeamName = `Lag ${existingTeams.length + 1}`;
+    // Random Lagnavn-generator //
+    const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
+    const randomTeamName = getRandomTeamName(existingNames);
+    // Random Lagnavn-generator //
 
     const newTeam = {
-        teamName: defaultTeamName,
+        teamName: randomTeamName,
         slurks: 100, //hardkode for testing
         players: [{
             id: generateId(), // Eller crypto.randomUUID
@@ -45,7 +49,7 @@ export default function JoinGame() {
     await addTeamToGame(gameId, newTeam, 100);
 
     await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', defaultTeamName); 
+    await AsyncStorage.setItem('teamName', randomTeamName); 
     await AsyncStorage.setItem('playerName', cleanName); 
 
     setError('');
