@@ -1,18 +1,20 @@
 import { supabase } from '@/supabase';
 import { Challenge } from '@/utils/types'; // hvis du har laget typen Challenge
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
-import OneVsOne from './challengetypes/OneVsOne';
-import TeamVsItself from './challengetypes/TeamVsItself';
-import TeamVsTeam from './challengetypes/TeamVsTeam';
+import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import PlayingView from './stateViews/PlayingView';
+
 
 export default function ChallengeScreen() {
   const { challenge: challengeParam, gameId } = useLocalSearchParams();
   const router = useRouter();
   const [challengeState, setChallengeState] = useState<'betting' | 'playing' | 'finished'>('betting');
+  const [isHost, setIsHost] = useState(false);
+
 
   if (typeof challengeParam !== 'string') {
     return <Text>Ugyldig challenge-data</Text>;
@@ -21,6 +23,15 @@ export default function ChallengeScreen() {
   if (typeof gameId !== 'string') {
     return <Text>Ugyldig challenge-data</Text>;
   }
+
+  useEffect(() => {
+  const getHostStatus = async () => {
+    const value = await AsyncStorage.getItem('isHost');
+    setIsHost(value === 'true');
+  };
+
+  getHostStatus();
+  }, []);
   
   let parsedChallenge: Challenge;
   try {
@@ -28,6 +39,7 @@ export default function ChallengeScreen() {
   } catch (err) {
     return <Text>Feil i challenge-formatet</Text>;
   }
+
 
   //henter og sette challenge staten
   useEffect(() => {
@@ -67,7 +79,7 @@ export default function ChallengeScreen() {
             const newindex = payload.new.current_challenge_index;
             const newstate = payload.new.challenge_state;
 
-            if (newstate && newstate !== challengeState) {
+            if (newstate) {
                 setChallengeState(newstate);
             }
 
@@ -75,16 +87,27 @@ export default function ChallengeScreen() {
                 return;
             }
             
-            const challenges = payload.new.challenges;
-            const nextChallenge = challenges[newindex];
+            const { data, error } = await supabase
+              .from('games')
+              .select('challenges')
+              .eq('id', gameId)
+              .single();
+
+            if (error || !data) {
+              console.error("Feil ved henting av challenges:", error);
+              return;
+            }
+
+            const freshChallenges = data.challenges;
+            const nextChallenge = freshChallenges[newindex];
 
             if (!nextChallenge) return;
 
             router.replace({
-                pathname: '/challengeScreen',
+                pathname: './challengeScreen',
                 params: {
                   challenge: JSON.stringify(nextChallenge),
-                  gameId,
+                  gameId: gameId.toString(),
                 },
             });
             }
@@ -98,26 +121,26 @@ export default function ChallengeScreen() {
 
 
 
-  if (challengeState === 'betting') {
-  switch (parsedChallenge.type) {
-    case '1v1':
-      return <OneVsOne challenge={parsedChallenge} gameId={gameId} />;
-    case 'Team-vs-Team':
-      return <TeamVsTeam challenge={parsedChallenge} gameId={gameId} />;
-    case 'Team-vs-itself':
-      return <TeamVsItself challenge={parsedChallenge} gameId={gameId} />;
-    default:
-      return <Text>Ukjent challenge-type</Text>;
-  }
+if (challengeState === 'betting') {
+  return (
+    <BettingPhaseView
+      challenge={parsedChallenge}
+      gameId={gameId}
+      isHost={isHost}
+    />
+  );
 }
+
 
 if (challengeState === 'playing') {
   return <PlayingView challenge={parsedChallenge} gameId={gameId} />;
 }
 
+
 if (challengeState === 'finished') {
   return <FinishedView challenge={parsedChallenge} gameId={gameId} />;
 }
+
 
 return <Text>Laster...</Text>;
 

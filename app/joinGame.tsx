@@ -47,6 +47,7 @@ export default function JoinGame() {
     await AsyncStorage.setItem('gameCode', code);
     await AsyncStorage.setItem('teamName', defaultTeamName); 
     await AsyncStorage.setItem('playerName', cleanName); 
+    await AsyncStorage.setItem('isHost', 'false');
 
     setError('');
     router.push(`/startGame?code=${code.trim().toUpperCase()}`);

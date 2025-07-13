@@ -35,6 +35,7 @@ export default function Index() {
     await AsyncStorage.setItem('gameCode', code);
     await AsyncStorage.setItem('teamName', "Team Rød");
     await AsyncStorage.setItem('playerName', "Host");
+    await AsyncStorage.setItem('isHost', 'true');
 
     const teams: Team[] = [
       {

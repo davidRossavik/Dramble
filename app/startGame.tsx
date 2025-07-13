@@ -90,6 +90,7 @@ export default function GameLobby() {
                 pathname: '/challengeScreen',
                 params: {
                   challenge: JSON.stringify(firstChallenge),
+                  gameId: id.toString(),
               },
             });
           };
@@ -270,7 +271,8 @@ export default function GameLobby() {
               router.push({
                 pathname: '/challengeScreen',
                 params: {
-                  challenge: JSON.stringify(firstChallenge) // må serialiseres
+                  challenge: JSON.stringify(firstChallenge), // må serialiseres
+                  gameId: gameId.toString(),
               }
             });
           }}
