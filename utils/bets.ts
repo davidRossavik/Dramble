@@ -13,6 +13,21 @@ export async function submitBet(gameId: string, teamId: string, challengeIndex: 
   return { error };
 }
 
+/*        GETBET-FUNKSJON
+    - Henter bet for gitt game- og teamId og challengeIndex
+    - Kan brukes til å vise hvor mange slurker et gitt team har bettet
+    - KAN FJERNES ETTERHVERT OM IKKE BRUKES
+*/
+
+export async function getBet(gameId: string, teamId: string, challengeIndex: number) {
+  const { data, error } = await supabase.from('bets').select('*').eq('gameId', gameId).eq('teamId', teamId).eq('challengeIndex', challengeIndex);
+  if (error) {
+    console.error('Feil ved innhentning av bets: ', error);
+    return [];
+  }
+  return data;
+}
+
 
 /* 
               RESOLVEBET-FUNKSJON
@@ -49,17 +64,13 @@ export async function resolveBet(gameId: string, challengeIndex: number, winner:
 }
 
 /* 
-  updateTeamSips - Hjelpefunksjon til resolveBet
+  updateTeamSlurks - Hjelpefunksjon til resolveBet
     - enkel funksjon for å oppdatere slurker for ett lag 
 */
 
 export async function updateTeamSlurks(teamId: string, delta: number) {
   // hent laget
-  const { data: teamData, error: fetchError } = await supabase 
-    .from('teams')
-    .select('slurks')
-    .eq('id', teamId)
-    .single();
+  const { data: teamData, error: fetchError } = await supabase .from('teams').select('slurks').eq('id', teamId).single();
   
   if (fetchError || !teamData) {
     console.error('Kunne ikke hente laget: ', fetchError?.message);
@@ -70,16 +81,14 @@ export async function updateTeamSlurks(teamId: string, delta: number) {
   const newSlurks = Math.max(0, teamData.slurks + delta);
 
   // Oppdatere slurker på laget
-  const { error: updateError } = await supabase 
-    .from('teams')
-    .update({sips: newSlurks })
-    .eq('id', teamId);
+  const { error: updateError } = await supabase.from('teams').update({slurks: newSlurks }).eq('id', teamId);
 
   if (updateError) {
     console.error('Feil ved oppdatering av slurker: ', updateError);
   }
-
   return { error: updateError };
-
 }
+
+
+
 
