@@ -6,7 +6,7 @@ export const funnyTeamNames = [
   "ChugLife",
   "Rægerakettene",
   "ShotSharks",
-  "Øllympisk Mester",
+  "Øllympiske Mestre",
   "Drita Divas",
   "Fizz Fighters",
   "Fernet Foreningen",
