@@ -70,8 +70,34 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            router.replace('./questionPage');
-          }
+            // Hent første challenge fra Supabase
+            const fetchFirstChallenge = async () => {
+              const { data, error } = await supabase
+                .from('games')
+                .select('challenges')
+                .eq('id', id)
+                .single();
+
+              if (error) {
+                console.log('Feil ved henting av challenge for lagleder:', error);
+                return;
+              }
+
+              const challengeList = data.challenges;
+              const firstChallenge = challengeList[0];
+
+              router.replace({
+                pathname: '/challengeScreen',
+                params: {
+                  challenge: JSON.stringify(firstChallenge),
+                  gameId: id.toString(),
+              },
+            });
+          };
+
+          fetchFirstChallenge();
+        }
+
         }
       )
       .subscribe();
@@ -227,8 +253,29 @@ export default function GameLobby() {
             onPress={async () => {
               await initializeGame(gameId);
               await updateGameStatus(gameId, 'playing');
-              router.push('./questionPage');  
-            }}
+
+              const { data, error } = await supabase
+                .from('games')
+                .select('challenges')
+                .eq('id', gameId)
+                .single()
+
+              if (error) {
+                console.log("feil ved henting av challenge: ", error)
+                return;
+              }
+              const challangeList = data.challenges;
+              const currentIndex = 0;
+              const firstChallenge = challangeList[currentIndex];
+
+              router.push({
+                pathname: '/challengeScreen',
+                params: {
+                  challenge: JSON.stringify(firstChallenge), // må serialiseres
+                  gameId: gameId.toString(),
+              }
+            });
+          }}
           /> 
         </View>
       )}

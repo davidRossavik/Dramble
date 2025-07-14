@@ -69,14 +69,14 @@
         "title": "Hovedstadskaos",
         "despcription": "Nevn så mange hovedsteder dere klarer på 15 sekunder.",
         "category": "knowledge",
-        "type": "team-vs-itself",
+        "type": "Team-vs-itself",
         "odds": "3"
     },
     {
         "title": "Ord i Kjeften (Alias)",
         "description": "En person får et ord hvis betydning de må forklare uten å bruke selve ordet. Motstanderlaget skal gjette hva det er. Laget som skal beskrive må vedde på om de klarer det på under 20 sekund",
         "category": "knowledge",
-        "type": "team-vs-itself",
+        "type": "Team-vs-itself",
         "odds": "2"
     }
 

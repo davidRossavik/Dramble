@@ -37,6 +37,7 @@ export default function Index() {
     await AsyncStorage.setItem('gameCode', code);
     await AsyncStorage.setItem('teamName', teamName);
     await AsyncStorage.setItem('playerName', "Host");
+    await AsyncStorage.setItem('isHost', 'true');
 
     const teams: Team[] = [
       {
@@ -75,7 +76,7 @@ export default function Index() {
 
         <Animatable.View animation="slideInRight" duration={1200}>
           <Pressable style={styles.redButton} onPress={navigateToStartGame}>
-            <Text style={styles.buttonText}>Start spill</Text>
+            <Text style={styles.buttonText}>Start spill (trym)</Text>
           </Pressable>
         </Animatable.View>
 
