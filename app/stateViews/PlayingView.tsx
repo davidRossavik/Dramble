@@ -1,44 +1,50 @@
-import { supabase } from '@/supabase';
 import { Challenge } from '@/utils/types';
 import { useState } from 'react';
-import { Button, Text, View } from 'react-native';
+import { Button, StyleSheet, Text, View } from 'react-native';
 
-export default function PlayingView({challenge, gameId,}: {
+type Props = {
   challenge: Challenge;
   gameId: string;
-}) {
+  onNextPhaseRequested: () => void;
+};
+
+export default function PlayingView({ challenge, gameId, onNextPhaseRequested }: Props) {
   const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
 
-  const handleSetWinner = (team: string) => {
-    setSelectedWinner(team);
-  };
-
-  const handleNext = async () => {
-    // Her kan du evt. lagre vinneren til Supabase (ikke vist her)
-    const { error } = await supabase
-      .from('games')
-      .update({ challenge_state: 'finished' })
-      .eq('id', gameId);
-
-    if (error) {
-      console.error('Feil ved oppdatering av challenge_state:', error);
-    }
-  };
-
   return (
-    <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 20, marginBottom: 10 }}>🔔 Challenge pågår!</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Challenge pågår!</Text>
 
-      <Button title="Lag A vant" onPress={() => handleSetWinner('Lag A')} />
-      <Button title="Lag B vant" onPress={() => handleSetWinner('Lag B')} />
+      <View style={styles.buttons}>
+        <Button title="Lag A vant" onPress={() => setSelectedWinner('Lag A')} />
+        <Button title="Lag B vant" onPress={() => setSelectedWinner('Lag B')} />
+      </View>
 
-      {selectedWinner && (
-        <Text style={{ marginVertical: 10 }}>
-          Valgt vinner: {selectedWinner}
-        </Text>
-      )}
+      <Text>{selectedWinner && `Valgt: ${selectedWinner}`}</Text>
 
-      <Button title="Neste" onPress={handleNext} />
+      <Button
+        title="Neste"
+        onPress={onNextPhaseRequested}
+        disabled={!selectedWinner}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 20,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+});
