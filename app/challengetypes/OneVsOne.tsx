@@ -1,54 +1,31 @@
-import { Challenge } from '@/utils/types';
+import { Challenge, Team } from '@/utils/types';
 import { StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   challenge: Challenge;
   gameId: string;
+  teams: Team[];
 };
 
-export default function OneVsOne({ challenge }: Props) {
-  const { title, description, category, type, odds } = challenge;
+export default function OneVsOne({ challenge, gameId, teams }: Props) {
+  if (teams.length < 2) {
+    return <Text style={styles.warning}>Venter på lagtrekning...</Text>;
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      
-      <View style={styles.detailsContainer}>
-        <Text style={styles.detailText}>Kategori: {category}</Text>
-        <Text style={styles.detailText}>Type: {type}</Text>
-        <Text style={styles.detailText}>Odds: {odds}</Text>
-      </View>
+      <Text style={styles.title}>{challenge.title}</Text>
+      <Text style={styles.teamText}>{teams[0].teamName}</Text>
+      <Text style={styles.vs}>VS</Text>
+      <Text style={styles.teamText}>{teams[1].teamName}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  description: {
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#555',
-    lineHeight: 22,
-  },
-  detailsContainer: {
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 8,
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
+  container: { alignItems: 'center', marginTop: 40 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  teamText: { fontSize: 20, marginVertical: 8 },
+  vs: { fontSize: 18, marginVertical: 4 },
+  warning: { textAlign: 'center', marginTop: 40, color: 'orange' },
 });

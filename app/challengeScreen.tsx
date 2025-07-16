@@ -87,13 +87,18 @@ export default function ChallengeScreen() {
 
   // Animasjon og oppdatering
   const transitionTo = (newState: ChallengeState, newChallenge: Challenge) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
     Animated.timing(opacity, {
       toValue: 0,
       duration: 150,
       useNativeDriver: false,
     }).start(() => {
+      // Nå er vi midt i fade-out, oppdater challenge og state
       setChallenge(newChallenge);
       setDisplayState(newState);
+
       Animated.timing(opacity, {
         toValue: 1,
         duration: 150,
@@ -103,6 +108,7 @@ export default function ChallengeScreen() {
       });
     });
   };
+
 
   const handlePhaseAdvance = async () => {
     if (isTransitioning) return;
@@ -151,8 +157,9 @@ export default function ChallengeScreen() {
     // Nå venter vi på at realtime skal kalle transitionTo()
   };
 
+
   // Ikke vis noe mens vi bytter eller laster
-  if (isTransitioning || !challenge) {
+  if (!challenge) {  
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Laster utfordring...</Text>

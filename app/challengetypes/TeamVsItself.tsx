@@ -1,55 +1,32 @@
-import { Challenge } from '@/utils/types';
+import { Challenge, Team } from '@/utils/types';
 import { StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   challenge: Challenge;
   gameId: string;
+  teams: Team[];
 };
 
-export default function TeamVsItself({ challenge }: Props) {
-  // Destrukturer for bedre lesbarhet
-  const { title, description, category, type, odds } = challenge;
+export default function TeamVsItself({ challenge, gameId, teams }: Props) {
+  if (teams.length < 1) {
+    return <Text style={styles.warning}>Venter på lagtrekning...</Text>;
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      
-      {/* Metadata seksjon */}
-      <View style={styles.metaContainer}>
-        <Text style={styles.metaText}>Type: {type} (Team-vs-Itself)</Text>
-        <Text style={styles.metaText}>Kategori: {category}</Text>
-        <Text style={styles.metaText}>Odds: {odds}</Text>
-      </View>
+      <Text style={styles.title}>{challenge.title}</Text>
+      <Text style={styles.description}>
+        Dette laget skal konkurrere mot seg selv:
+      </Text>
+      <Text style={styles.teamText}>{teams[0].teamName}</Text>
     </View>
   );
 }
 
-// Grunnleggende styling
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    marginBottom: 12,
-    lineHeight: 22, // Bedre lesbarhet for lengre tekst
-  },
-  metaContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee', // Lys grå linje for separasjon
-  },
-  metaText: {
-    fontSize: 14,
-    color: '#666', // Mørk grå for mindre viktig tekst
-    marginBottom: 4,
-  },
+  container: { alignItems: 'center', marginTop: 40 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  description: { fontSize: 16, textAlign: 'center', marginBottom: 12 },
+  teamText: { fontSize: 20, marginVertical: 8 },
+  warning: { textAlign: 'center', marginTop: 40, color: 'orange' },
 });
