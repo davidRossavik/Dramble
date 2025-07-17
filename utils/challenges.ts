@@ -1,9 +1,9 @@
 import challenges from '@/assets/data/challenges.json';
 import { supabase } from '@/supabase';
-import { Team } from './types';
+import { Challenge, Team } from './types';
 
 export async function getRandomChallengesWithPlayers(gameId: string, n: number = 10): Promise<Challenge[]> {
-  const base = getRandomChallenges(n);
+  const base = getRandomChallenges(n) as Challenge[];
 
   const updated = await Promise.all(
     base.map(async (challenge) => {
@@ -11,7 +11,7 @@ export async function getRandomChallengesWithPlayers(gameId: string, n: number =
         const players = await getRandomPlayersFromGame(gameId, 2);
         return {... challenge, participants: players};
       }
-      return challenge;
+      return {... challenge, participants: undefined};
     })
   );
 
