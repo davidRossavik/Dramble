@@ -1,5 +1,8 @@
 import { Challenge } from '@/utils/types';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
+import BackgroundWrapper from '@/components/BackgroundWrapper';
 
 type Props = {
   challenge: Challenge;
@@ -9,8 +12,11 @@ type Props = {
 export default function OneVsOne({ challenge }: Props) {
   const { title, description, category, type, odds } = challenge;
 
+  const [value, setValue] = useState(0); // Slider
+  const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
+
   return (
-    <View style={styles.container}>
+    <BackgroundWrapper>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       
@@ -19,7 +25,7 @@ export default function OneVsOne({ challenge }: Props) {
         <Text style={styles.detailText}>Type: {type}</Text>
         <Text style={styles.detailText}>Odds: {odds}</Text>
       </View>
-    </View>
+    </BackgroundWrapper>
   );
 }
 
