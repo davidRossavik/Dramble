@@ -9,11 +9,14 @@ type Props = {
   gameId: string;
 };
 
-export default function OneVsOne({ challenge }: Props) {
+export default function OneVsOne({ challenge, gameId }: Props) {
   const { title, description, category, type, odds } = challenge;
 
   const [value, setValue] = useState(0); // Slider
   const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
+
+  // Hente spillere //
+  const [player1, player2] = challenge.participants ?? ['?', '?'];
 
   return (
     <BackgroundWrapper>
@@ -22,6 +25,7 @@ export default function OneVsOne({ challenge }: Props) {
       
       <View style={styles.detailsContainer}>
         <Text style={styles.detailText}>Kategori: {category}</Text>
+        <Text style={styles.detailText}>{player1} VS {player2}</Text>
         <Text style={styles.detailText}>Type: {type}</Text>
         <Text style={styles.detailText}>Odds: {odds}</Text>
       </View>

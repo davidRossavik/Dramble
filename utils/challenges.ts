@@ -2,6 +2,25 @@ import challenges from '@/assets/data/challenges.json';
 import { supabase } from '@/supabase';
 import { Team } from './types';
 
+export async function getRandomChallengesWithPlayers(gameId: string, n: number = 10): Promise<Challenge[]> {
+  const base = getRandomChallenges(n);
+
+  const updated = await Promise.all(
+    base.map(async (challenge) => {
+      if (challenge.type === '1v1') {
+        const players = await getRandomPlayersFromGame(gameId, 2);
+        return {... challenge, participants: players};
+      }
+      return challenge;
+    })
+  );
+
+  return updated;
+}
+
+
+// getRandomChallenges og getRandomPLayersfromGame er nå hjelpefunksjoner til den over!
+
 export function getRandomChallenges(n: number) {
   const filtered = challenges.filter(c => c.title && c.description);
   const shuffled = shuffleArray(filtered); // Shuffle med Fisher–Yates
@@ -20,7 +39,7 @@ export async function getRandomPlayersFromGame(gameId: string, count = 2): Promi
     .flatMap(team => team.players.map(player => player.name));
   
   if (allPlayers.length < count) {
-    console.warn('Kun ${appPlayers.length} spillere tilgjengelig, men ${count} ønsket');
+    console.warn(`Kun ${allPlayers.length} spillere tilgjengelig, men ${count} ønsket`);
     return allPlayers;
   }
 

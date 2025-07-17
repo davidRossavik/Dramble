@@ -53,6 +53,15 @@ export default function RootLayout() {
       presentation: 'card',
     }} />
 
+
+    <Stack.Screen name="OneVsOne" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
+
+    {/* Disse har vi ikke med per nå */}
     <Stack.Screen name="questionPage" options={{
       title: '',
       headerTransparent: true,
