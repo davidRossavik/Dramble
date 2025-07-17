@@ -9,11 +9,12 @@ import { StyleSheet, Text, View } from 'react-native';
 type Props = {
   challenge: Challenge;
   gameId: string;
+  challengeIndex: number;
   isHost: boolean;
   onNextPhaseRequested: () => void;
 };
 
-export default function BettingPhaseView({ challenge, gameId, isHost, onNextPhaseRequested }: Props) {
+export default function BettingPhaseView({ challenge, gameId, challengeIndex, isHost, onNextPhaseRequested }: Props) {
   const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
 
   // Hent og trekk lag kun én gang
@@ -53,11 +54,11 @@ export default function BettingPhaseView({ challenge, gameId, isHost, onNextPhas
   const renderBettingComponent = () => {
     switch (challenge.type) {
       case '1v1':
-        return <OneVsOne challenge={challenge} gameId={gameId} teams={selectedTeams} />;
+        return <OneVsOne challenge={challenge} gameId={gameId} challengeIndex={challengeIndex} teams={selectedTeams} />;
       case 'Team-vs-Team':
-        return <TeamVsTeam challenge={challenge} gameId={gameId} teams={selectedTeams} />;
+        return <TeamVsTeam challenge={challenge} gameId={gameId} challengeIndex={challengeIndex} teams={selectedTeams} />;
       case 'Team-vs-itself':
-        return <TeamVsItself challenge={challenge} gameId={gameId} teams={selectedTeams} />;
+        return <TeamVsItself challenge={challenge} gameId={gameId} challengeIndex={challengeIndex} teams={selectedTeams} />;
       default:
         return <Text style={styles.errorText}>Ukjent challenge-type</Text>;
     }

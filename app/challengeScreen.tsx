@@ -16,6 +16,7 @@ export default function ChallengeScreen() {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [challengeIndex, setChallengeIndex] = useState<number>(0);
   const opacity = useRef(new Animated.Value(1)).current;
 
   if (typeof gameId !== 'string') {
@@ -43,7 +44,7 @@ export default function ChallengeScreen() {
       if (!error && data) {
         const newChallenge = data.challenges?.[data.current_challenge_index];
         if (newChallenge) {
-          transitionTo(data.challenge_state, newChallenge);
+          transitionTo(data.challenge_state, newChallenge, data.current_challenge_index);
         }
       } else {
         console.error('Feil ved henting av spilldata:', error);
@@ -72,7 +73,7 @@ export default function ChallengeScreen() {
 
           if (challenges && challenges[index]) {
             const nextChallenge = challenges[index];
-            transitionTo(newState, nextChallenge);
+            transitionTo(newState, nextChallenge,index);
           } else {
             console.warn('Ingen challenge funnet for index:', index);
           }
@@ -86,7 +87,7 @@ export default function ChallengeScreen() {
   }, [gameId]);
 
   // Animasjon og oppdatering
-  const transitionTo = (newState: ChallengeState, newChallenge: Challenge) => {
+  const transitionTo = (newState: ChallengeState, newChallenge: Challenge, index:number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
 
@@ -97,6 +98,7 @@ export default function ChallengeScreen() {
     }).start(() => {
       // Nå er vi midt i fade-out, oppdater challenge og state
       setChallenge(newChallenge);
+      setChallengeIndex(index);
       setDisplayState(newState);
 
       Animated.timing(opacity, {
@@ -173,6 +175,7 @@ export default function ChallengeScreen() {
         <BettingPhaseView
           challenge={challenge}
           gameId={gameId}
+          challengeIndex={challengeIndex}
           isHost={isHost}
           onNextPhaseRequested={handlePhaseAdvance}
         />
