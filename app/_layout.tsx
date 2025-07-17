@@ -54,7 +54,7 @@ export default function RootLayout() {
     }} />
 
 
-    <Stack.Screen name="OneVsOne" options={{
+    <Stack.Screen name="challengeScreen" options={{
       title: '',
       headerTransparent: true,
       animation: 'fade',
