@@ -17,5 +17,6 @@ export type Challenge = {
   category: string;
   type: '1v1' | 'Team-vs-Team' | 'Team-vs-itself';
   odds: string;
+  participants?: string[];
 };
 
