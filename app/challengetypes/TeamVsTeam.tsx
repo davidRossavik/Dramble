@@ -1,74 +1,182 @@
-import { Challenge } from '@/utils/types';
-import { StyleSheet, Text, View } from 'react-native';
+import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button from '@/components/Button';
+import { submitBet } from '@/utils/bets';
+import { Challenge, Team } from '@/utils/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
+import { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+
+const drinkCount = require('@/assets/images/drinkCount.png');
 
 type Props = {
   challenge: Challenge;
   gameId: string;
+  challengeIndex: number;
+  teams: Team[];
 };
 
-export default function TeamVsTeam({ challenge }: Props) {
-  const { title, description, category, type, odds } = challenge;
+export default function TeamVsTeamBettingScreen({
+  challenge,
+  gameId,
+  challengeIndex,
+  teams,
+}: Props) {
+  const [value, setValue] = useState(0);
+  const [selectedButton, setSelectedButton] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  const maxDrinkCount = 20;
+  const drinkCountLabel = maxDrinkCount - value;
+
+  // Unngå crash hvis teams mangler
+  if (!teams || teams.length < 2) {
+    return (
+      <BackgroundWrapper>
+        <Text style={{ color: 'white', fontSize: 20 }}>Venter på lagdata...</Text>
+      </BackgroundWrapper>
+    );
+  }
+
+  const team1 = teams[0].teamName;
+  const team2 = teams[1].teamName;
+  const challengeTitle = `${challenge.title}: ${team1} vs ${team2}`;
+  const challengeDescription = challenge.description;
+
+  // Hent teamId fra lagret data
+  useEffect(() => {
+    AsyncStorage.getItem('teamId').then((id) => {
+      if (id) setTeamId(id);
+    });
+  }, []);
+
+  const handleConfirmedBet = async () => {
+    if (!selectedButton || !teamId) return;
+    await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
+    alert('Du har låst inn ditt bet!');
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      
-      <View style={styles.metaContainer}>
-        <Text style={styles.metaText}>Type: {type} (Team vs Team)</Text>
-        <Text style={styles.metaText}>Kategori: {category}</Text>
-        <Text style={styles.metaText}>Odds: {odds}</Text>
+    <BackgroundWrapper>
+      <View style={styles.drinkCountContainer}>
+        <Text style={[styles.baseText, styles.drinkCountText]}>{drinkCountLabel}</Text>
+        <Image source={drinkCount} style={styles.drinkCountPic} />
       </View>
 
-      {/* Team-spesifikk info */}
-      <View style={styles.teamInfo}>
-        <Text style={styles.teamText}>Lag A vs Lag B</Text>
-        <Text style={styles.teamHint}>Velg vinner i spillfasen</Text>
+      <View style={styles.challengeContainer}>
+        <Text style={[styles.baseText, styles.challengeText]}>{challengeTitle}</Text>
+        <Text style={[styles.baseText, styles.buttonText]}>{challengeDescription}</Text>
       </View>
-    </View>
+
+      <View style={styles.buttonContainer}>
+        <Button
+          textStyle={[styles.baseText, styles.buttonText]}
+          style={[styles.buttonBase, styles.button1]}
+          label={team1}
+          onPress={() => setSelectedButton(team1)}
+          stayPressed={selectedButton === team1}
+        />
+        <Button
+          textStyle={[styles.baseText, styles.buttonText]}
+          style={[styles.buttonBase, styles.button2]}
+          label={team2}
+          onPress={() => setSelectedButton(team2)}
+          stayPressed={selectedButton === team2}
+        />
+      </View>
+
+      <View style={{ width: '100%', height: 70 }}>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={maxDrinkCount}
+          step={1}
+          value={value}
+          onValueChange={(val) => setValue(val)}
+          minimumTrackTintColor="#81AF24"
+          maximumTrackTintColor="#00471E"
+          thumbTintColor="#FF4500"
+        />
+        <Text style={[styles.baseText, styles.sliderText]}>{value.toFixed(0)}</Text>
+      </View>
+
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Button
+          style={[styles.buttonBase, styles.exitButton]}
+          label={'Lås inn'}
+          textStyle={[styles.baseText, styles.buttonText]}
+          disabled={selectedButton === null}
+          onPress={handleConfirmedBet}
+        />
+      </View>
+    </BackgroundWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 18,
+  baseText: {
     fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  description: {
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#555',
-  },
-  metaContainer: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  metaText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  teamInfo: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-  },
-  teamText: {
-    fontWeight: 'bold',
+    color: '#FAF0DE',
     textAlign: 'center',
-    marginBottom: 4,
   },
-  teamHint: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#777',
+  drinkCountText: {
+    fontSize: 25,
+  },
+  challengeText: {
+    fontSize: 30,
+  },
+  buttonText: {
+    fontSize: 20,
+  },
+  sliderText: {
+    fontSize: 25,
+    marginBottom: 20,
+  },
+  buttonBase: {
+    width: 170,
+    height: 100,
+    borderRadius: 5,
+  },
+  button1: {
+    backgroundColor: '#16A085',
+  },
+  button2: {
+    backgroundColor: '#8E44AD',
+  },
+  exitButton: {
+    width: 280,
+    height: 80,
+    backgroundColor: '#EEB90E',
+  },
+  drinkCountContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  drinkCountPic: {
+    width: 80,
+    height: 80,
+  },
+  challengeContainer: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 80,
+    gap: 40,
+  },
+  buttonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 50,
+  },
+  slider: {
+    width: '80%',
+    height: 40,
+    alignSelf: 'center',
   },
 });

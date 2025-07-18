@@ -1,16 +1,21 @@
-import { Challenge } from '@/utils/types';
+
+import { Challenge, Team } from '@/utils/types';
 import Slider from '@react-native-community/slider';
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
+import { submitBet } from '@/utils/bets';
 
 type Props = {
   challenge: Challenge;
   gameId: string;
   isHost?: boolean;
   onNextPhaseRequest?: () => void;
+  challengeIndex: number;
+  teams: Team[]; // Kan fjernes
 };
 
 // Bilder //
@@ -18,11 +23,12 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 // Bilder //
 
 
-export default function OneVsOne({ challenge, gameId }: Props) {
+export default function OneVsOne({ challenge, gameId, challengeIndex, teams }: Props) {
   const { title, description, category, type, odds } = challenge;
 
   const [value, setValue] = useState(0); // Slider
   const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
+  const [teamId, setTeamId] = useState<string | null>(null);
 
   // INPASSABLE VALUES (SKAL ENDRES) //
   const maxDrinkCount = 20;
@@ -33,7 +39,18 @@ export default function OneVsOne({ challenge, gameId }: Props) {
   const [player1, player2] = challenge.participants ?? ['?', '?'];
 
   // Tar seg av confirmed-bets //
-  const handleConfirmedBet = () => {console.log('Bet bekreftet')};
+  const handleConfirmedBet = async () => {
+  if (!selectedButton || !teamId) return;
+  await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
+  alert('Du har låst inn ditt bet!');
+  };
+  
+  // Hent teamId fra AsyncStorage
+  useEffect(() => {
+    AsyncStorage.getItem('teamName').then((id) => {
+      if (id) setTeamId(id);
+    });
+  });
 
   return (
     <BackgroundWrapper>
@@ -89,11 +106,18 @@ export default function OneVsOne({ challenge, gameId }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    marginBottom: 20,
+  baseText: {
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
   },
-  title: {
+  drinkCountText: {
+    fontSize: 25,
+  },
+  challengeText: {
+    fontSize: 30,
+  },
+  buttonText: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,

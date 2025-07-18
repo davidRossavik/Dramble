@@ -88,7 +88,3 @@ export async function updateTeamSlurks(teamId: string, delta: number) {
   }
   return { error: updateError };
 }
-
-
-
-

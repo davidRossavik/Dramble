@@ -1,55 +1,198 @@
-import { Challenge } from '@/utils/types';
-import { StyleSheet, Text, View } from 'react-native';
+import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button from '@/components/Button';
+import { submitBet } from '@/utils/bets';
+import { Challenge, Team } from '@/utils/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
+import { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+
+const drinkCount = require('@/assets/images/drinkCount.png');
 
 type Props = {
   challenge: Challenge;
   gameId: string;
+  challengeIndex: number;
+  teams: Team[];
 };
 
-export default function TeamVsItself({ challenge }: Props) {
-  // Destrukturer for bedre lesbarhet
-  const { title, description, category, type, odds } = challenge;
+export default function TeamVsItselfBettingScreen({
+  challenge,
+  gameId,
+  challengeIndex,
+  teams,
+}: Props) {
+  const [value, setValue] = useState(0);
+  const [selectedButton, setSelectedButton] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  const maxDrinkCount = 20;
+  const drinkCountLabel = maxDrinkCount - value;
+
+  const performingTeam = teams[0]; // Den som skal utføre utfordringen
+
+  useEffect(() => {
+    AsyncStorage.getItem('teamId').then((id) => {
+      if (id) setTeamId(id);
+    });
+  }, []);
+
+  const isBettingTeam = teamId !== performingTeam.teamName;
+
+  const handleConfirmedBet = async () => {
+    if (!selectedButton || !teamId) return;
+    await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
+    alert('Du har låst inn ditt bet!');
+  };
+
+  if (!isBettingTeam) {
+    return (
+      <BackgroundWrapper>
+        <View style={styles.centered}>
+          <Text style={[styles.baseText, styles.challengeText]}>
+            {performingTeam.teamName} skal utføre utfordringen:
+          </Text>
+          <Text style={[styles.baseText, styles.buttonText, { marginVertical: 20 }]}>
+            {challenge.description}
+          </Text>
+          <Text style={[styles.baseText, styles.buttonText]}>
+            Dere får ikke vedde på egen utfordring.
+          </Text>
+        </View>
+      </BackgroundWrapper>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
-      
-      {/* Metadata seksjon */}
-      <View style={styles.metaContainer}>
-        <Text style={styles.metaText}>Type: {type} (Team-vs-Itself)</Text>
-        <Text style={styles.metaText}>Kategori: {category}</Text>
-        <Text style={styles.metaText}>Odds: {odds}</Text>
+    <BackgroundWrapper>
+      <View style={styles.drinkCountContainer}>
+        <Text style={[styles.baseText, styles.drinkCountText]}>{drinkCountLabel}</Text>
+        <Image source={drinkCount} style={styles.drinkCountPic} />
       </View>
-    </View>
+
+      <View style={styles.challengeContainer}>
+        <Text style={[styles.baseText, styles.challengeText]}>
+          Tror du {performingTeam.teamName} klarer dette?
+        </Text>
+        <Text style={[styles.baseText, styles.buttonText]}>{challenge.description}</Text>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <Button
+          textStyle={[styles.baseText, styles.buttonText]}
+          style={[styles.buttonBase, styles.button1]}
+          label="Klarer"
+          onPress={() => setSelectedButton('Klarer')}
+          stayPressed={selectedButton === 'Klarer'}
+        />
+        <Button
+          textStyle={[styles.baseText, styles.buttonText]}
+          style={[styles.buttonBase, styles.button2]}
+          label="Klarer ikke"
+          onPress={() => setSelectedButton('Klarer ikke')}
+          stayPressed={selectedButton === 'Klarer ikke'}
+        />
+      </View>
+
+      <View style={{ width: '100%', height: 70 }}>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={maxDrinkCount}
+          step={1}
+          value={value}
+          onValueChange={(val) => setValue(val)}
+          minimumTrackTintColor="#81AF24"
+          maximumTrackTintColor="#00471E"
+          thumbTintColor="#FF4500"
+        />
+        <Text style={[styles.baseText, styles.sliderText]}>{value.toFixed(0)}</Text>
+      </View>
+
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Button
+          style={[styles.buttonBase, styles.exitButton]}
+          label="Lås inn"
+          textStyle={[styles.baseText, styles.buttonText]}
+          disabled={selectedButton === null}
+          onPress={handleConfirmedBet}
+        />
+      </View>
+    </BackgroundWrapper>
   );
 }
 
-// Grunnleggende styling
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
+  baseText: {
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+  },
+  drinkCountText: {
+    fontSize: 25,
+  },
+  challengeText: {
+    fontSize: 30,
+  },
+  buttonText: {
+    fontSize: 20,
+  },
+  sliderText: {
+    fontSize: 25,
     marginBottom: 20,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  buttonBase: {
+    width: 170,
+    height: 100,
+    borderRadius: 5,
   },
-  description: {
-    fontSize: 16,
-    marginBottom: 12,
-    lineHeight: 22, // Bedre lesbarhet for lengre tekst
+  button1: {
+    backgroundColor: '#1ABC9C',
   },
-  metaContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee', // Lys grå linje for separasjon
+  button2: {
+    backgroundColor: '#C0392B',
   },
-  metaText: {
-    fontSize: 14,
-    color: '#666', // Mørk grå for mindre viktig tekst
-    marginBottom: 4,
+  exitButton: {
+    width: 280,
+    height: 80,
+    backgroundColor: '#EEB90E',
+  },
+  drinkCountContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  drinkCountPic: {
+    width: 80,
+    height: 80,
+  },
+  challengeContainer: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 80,
+    gap: 40,
+  },
+  buttonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 50,
+  },
+  slider: {
+    width: '80%',
+    height: 40,
+    alignSelf: 'center',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    gap: 30,
   },
 });
