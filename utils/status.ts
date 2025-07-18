@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import { getRandomChallenges } from './challenges';
+import { getRandomChallengesWithPlayers } from './challenges';
 
 
 export async function updateGameStatus(gameId: string, status: 'waiting' | 'playing' | 'finished') {
@@ -50,7 +50,7 @@ export async function setInitialChallenge(gameId: string) {
 
 //kjøres når hosten trykker på start spill første gang
 export async function initializeGame(gameId: string) {
-  const challenges = getRandomChallenges(10);
+  const challenges = await getRandomChallengesWithPlayers(gameId, 10);
 
   const { error } = await supabase
     .from('games')

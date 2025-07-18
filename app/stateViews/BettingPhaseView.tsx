@@ -41,7 +41,7 @@ export default function BettingPhaseView({ challenge, gameId, isHost, onNextPhas
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    marginBottom: 20,
   },
   startButton: {
     marginTop: 20,
