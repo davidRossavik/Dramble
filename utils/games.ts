@@ -2,39 +2,11 @@ import { supabase } from "../supabase";
 import { Player, Team } from "./types";
 
 
-//henter alle rader med spill i "games" tabellen
-export async function getAllGames() {
-    const{data, error} = await supabase.from("games").select("*");
-    if (error) {
-        console.log("feil ved innhenting av games data: ", error.message)
-        return [];
-    }
-
-    return data;
-}
 
 
 
-export async function getTeamForPlayer(gameId: string, playerId: string) {
-  const { data: game, error } = await supabase
-    .from('games')
-    .select('teams')
-    .eq('id', gameId)
-    .single();
 
-  if (error || !game) {
-    console.error("Kunne ikke hente spill:", error);
-    return null;
-  }
 
-  for (const team of game.teams as Team[]) {
-    if (team.players.some(p => p.id === playerId)) {
-      return team;
-    }
-  }
-
-  return null;
-}
 
 
 

@@ -1,7 +1,25 @@
 import { supabase } from '@/supabase';
 import { getBettingResults } from '@/utils/bets';
 import { getSelectedTeamsForChallenge, getWinnerForChallenge } from '@/utils/games';
-import { Runde, RundeState } from '@/utils/types';
+import { Runde, RundeState, Team } from '@/utils/types';
+
+/**
+ * Velger lag automatisk basert på challenge type
+ */
+export function selectTeamsForChallenge(teams: Team[], challengeType: string): Team[] {
+  const shuffled = [...teams].sort(() => Math.random() - 0.5);
+  
+  switch (challengeType) {
+    case '1v1':
+      return shuffled.slice(0, 2);
+    case 'Team-vs-Team':
+      return shuffled.slice(0, 2);
+    case 'Team-vs-itself':
+      return shuffled.slice(0, 1);
+    default:
+      return [];
+  }
+}
 
 /**
  * Henter alt nødvendig data for en runde i parallell
@@ -80,18 +98,61 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
       throw new Error(`Feil ved øking av challenge index: ${rpcError?.message}`);
     }
 
-    // Oppdater til betting state med ny index
+    // Hent spilldata for å velge lag automatisk
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('teams, challenges')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      throw new Error(`Feil ved henting av spilldata: ${gameError?.message}`);
+    }
+
+    const teams = game.teams || [];
+    const challenges = game.challenges || [];
+    const newChallenge = challenges[newIndex];
+
+    if (!newChallenge) {
+      throw new Error(`Ingen challenge funnet for index: ${newIndex}`);
+    }
+
+    // Velg lag basert på challenge type
+    const teamsToSelect = selectTeamsForChallenge(teams, newChallenge.type);
+
+    // Hent eksisterende selected_teams og oppdater for ny runde
+    const { data: existingData } = await supabase
+      .from('games')
+      .select('selected_teams')
+      .eq('id', gameId)
+      .single();
+
+    const existingSelectedTeams = existingData?.selected_teams || [];
+    const updatedSelectedTeams = [...existingSelectedTeams];
+    
+    // Sørg for at array er lang nok
+    while (updatedSelectedTeams.length <= newIndex) {
+      updatedSelectedTeams.push([]);
+    }
+    
+    // Sett valgte lag for den nye runden
+    updatedSelectedTeams[newIndex] = teamsToSelect;
+
+    // Oppdater til betting state med ny index og valgte lag
     const { error: updateError } = await supabase
       .from('games')
       .update({
         challenge_state: 'betting',
         current_challenge_index: newIndex,
+        selected_teams: JSON.stringify(updatedSelectedTeams)
       })
       .eq('id', gameId);
 
     if (updateError) {
       throw new Error(`Feil ved oppdatering til neste runde: ${updateError.message}`);
     }
+
+    console.log(`Gått til runde ${newIndex}, valgte lag:`, teamsToSelect);
   } catch (error) {
     console.error('Feil ved advanceToNextRound:', error);
     throw error;
@@ -111,12 +172,8 @@ export function isRundeReady(runde: Runde | null, isTransitioning: boolean): boo
     return false;
   }
 
-  // For betting-fase: sjekk at selectedTeams er valgt
-  if (runde.state === 'betting' && runde.selectedTeams.length === 0) {
-    return false;
-  }
-
-  // For playing-fase: sjekk at selectedTeams er valgt
+  // For playing-fase: sjekk bare at selectedTeams er valgt
+  // Vinner velges underveis i playing-fasen, så den er ikke påkrevd i starten
   if (runde.state === 'playing' && runde.selectedTeams.length === 0) {
     return false;
   }

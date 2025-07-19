@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTransitioning }: Props) {
-  const [selectedWinner, setSelectedWinner] = useState<string | null>(runde.winner);
+  const [localSelectedWinner, setLocalSelectedWinner] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
 
   // Sjekk om bruker er host
@@ -23,6 +23,9 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
       setIsHost(name === 'Host');
     });
   }, []);
+
+  // Bruk runde.winner som fallback hvis ingen lokal valg er gjort
+  const selectedWinner = localSelectedWinner || runde.winner;
 
   // Ikke vis noen loading states hvis parent er i transition
   if (isTransitioning) {
@@ -71,8 +74,8 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
   };
 
   const handleWinnerSelection = async (winner: string) => {
-    // Optimistisk oppdatering: sett vinneren med én gang for bedre UX
-    setSelectedWinner(winner);
+    // Sett lokal valg umiddelbart for visuell feedback
+    setLocalSelectedWinner(winner);
     
     // Lagre vinner i databasen for å synkronisere med andre brukere
     if (isHost) {
@@ -81,10 +84,14 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
         if (error) {
           console.error('Feil ved lagring av vinner:', error);
           alert('Feil ved lagring av vinner. Prøv igjen.');
+          // Tilbakestill lokal valg hvis lagring feilet
+          setLocalSelectedWinner(null);
         }
       } catch (error) {
         console.error('Uventet feil ved lagring av vinner:', error);
         alert('Uventet feil ved lagring av vinner. Prøv igjen.');
+        // Tilbakestill lokal valg hvis lagring feilet
+        setLocalSelectedWinner(null);
       }
     }
   };
@@ -120,15 +127,15 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
               ))}
             </View>
 
-            {selectedWinner && (
-              <View style={styles.selectedContainer}>
-                <Text style={styles.selectedText}>Vinner: {selectedWinner}</Text>
-              </View>
-            )}
-
             <Button
               label="Neste fase"
-              onPress={onNextPhaseRequested}
+              onPress={() => {
+                if (selectedWinner) {
+                  onNextPhaseRequested();
+                } else {
+                  alert('Du må velge en vinner først!');
+                }
+              }}
               disabled={!selectedWinner}
               style={[styles.nextButton, !selectedWinner ? styles.disabledButton : {}]}
               textStyle={styles.nextButtonText}
@@ -137,11 +144,6 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
         ) : (
           <View style={styles.waitingContainer}>
             <Text style={styles.waitingText}>Venter på at host velger vinner...</Text>
-            {selectedWinner && (
-              <View style={styles.selectedContainer}>
-                <Text style={styles.selectedText}>Vinner: {selectedWinner}</Text>
-              </View>
-            )}
           </View>
         )}
       </View>
@@ -199,20 +201,6 @@ const styles = StyleSheet.create({
   },
   selectedButtonText: {
     color: '#FFFFFF',
-  },
-  selectedContainer: {
-    marginBottom: 30,
-    padding: 15,
-    backgroundColor: 'rgba(255, 69, 0, 0.2)',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#FF4500',
-  },
-  selectedText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FF4500',
   },
   nextButton: {
     backgroundColor: '#EEB90E',
