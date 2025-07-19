@@ -52,6 +52,20 @@ export default function Index() {
       }
     ];
 
+    // Hardkode to ekstra lag for testing
+    teams.push(
+      {
+        teamName: "Testlag 1",
+        slurks: 100,
+        players: [{ id: "T1P1", name: "Test1" }]
+      },
+      {
+        teamName: "Testlag 2",
+        slurks: 100,
+        players: [{ id: "T2P1", name: "Test2" }]
+      }
+    );
+
     const { data, error } = await createGame(code, teams);
 
     if (error) {

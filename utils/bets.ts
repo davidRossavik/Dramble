@@ -1,9 +1,9 @@
 import { supabase } from '../supabase';
 
-export async function submitBet(gameId: string, teamId: string, challengeIndex: number, amount: number, betOn: string) {
+export async function submitBet(gameId: string, teamName: string, challengeIndex: number, amount: number, betOn: string) {
   const { error } = await supabase.from('bets').insert({
     game_id: gameId,
-    team_id: teamId,
+    team_name: teamName,
     challenge_index: challengeIndex,
     amount,
     bet_on: betOn,
@@ -14,13 +14,13 @@ export async function submitBet(gameId: string, teamId: string, challengeIndex: 
 }
 
 /*        GETBET-FUNKSJON
-    - Henter bet for gitt game- og teamId og challengeIndex
+    - Henter bet for gitt game- og teamName og challengeIndex
     - Kan brukes til å vise hvor mange slurker et gitt team har bettet
     - KAN FJERNES ETTERHVERT OM IKKE BRUKES
 */
 
-export async function getBet(gameId: string, teamId: string, challengeIndex: number) {
-  const { data, error } = await supabase.from('bets').select('*').eq('gameId', gameId).eq('teamId', teamId).eq('challengeIndex', challengeIndex);
+export async function getBet(gameId: string, teamName: string, challengeIndex: number) {
+  const { data, error } = await supabase.from('bets').select('*').eq('game_id', gameId).eq('team_name', teamName).eq('challenge_index', challengeIndex);
   if (error) {
     console.error('Feil ved innhentning av bets: ', error);
     return [];
@@ -54,10 +54,10 @@ export async function resolveBet(gameId: string, challengeIndex: number, winner:
     const delta = isCorrect ? bet.amount : -bet.amount;
 
     // Oppdaterer slurker for laget vha. hjelpefunksjon
-    const {error: updateError } = await updateTeamSlurks(bet.team_id, delta);
+    const {error: updateError } = await updateTeamSlurks(gameId, bet.team_name, delta);
 
     if (updateError) {
-      console.error('Feil ved oppdatering for team ${bet.team_id}: ', updateError.message);
+      console.error(`Feil ved oppdatering for team ${bet.team_name}: `, updateError.message);
     }
   }
 
@@ -68,23 +68,62 @@ export async function resolveBet(gameId: string, challengeIndex: number, winner:
     - enkel funksjon for å oppdatere slurker for ett lag 
 */
 
-export async function updateTeamSlurks(teamId: string, delta: number) {
-  // hent laget
-  const { data: teamData, error: fetchError } = await supabase .from('teams').select('slurks').eq('id', teamId).single();
+export async function updateTeamSlurks(gameId: string, teamName: string, delta: number) {
+  // Hent spillet for å finne laget
+  const { data: gameData, error: fetchError } = await supabase
+    .from('games')
+    .select('teams, balances')
+    .eq('id', gameId)
+    .single();
   
-  if (fetchError || !teamData) {
-    console.error('Kunne ikke hente laget: ', fetchError?.message);
+  if (fetchError || !gameData) {
+    console.error('Kunne ikke hente spillet: ', fetchError?.message);
     return { error: fetchError };
   }
 
-  // Kalkulere ny slurke-verdi (max 0)
-  const newSlurks = Math.max(0, teamData.slurks + delta);
+  const teams = gameData.teams as any[];
+  const balances = gameData.balances || {};
+  
+  // Finn laget og oppdater slurker
+  const currentSlurks = balances[teamName] || 0;
+  const newSlurks = Math.max(0, currentSlurks + delta);
+  
+  const updatedBalances = {
+    ...balances,
+    [teamName]: newSlurks
+  };
 
-  // Oppdatere slurker på laget
-  const { error: updateError } = await supabase.from('teams').update({slurks: newSlurks }).eq('id', teamId);
+  // Oppdatere slurker i spillet
+  const { error: updateError } = await supabase
+    .from('games')
+    .update({ balances: updatedBalances })
+    .eq('id', gameId);
 
   if (updateError) {
     console.error('Feil ved oppdatering av slurker: ', updateError);
   }
   return { error: updateError };
+}
+
+// Ny funksjon for å hente betting-resultater
+
+export async function getBettingResults(gameId: string, challengeIndex: number, winner: string) {
+  const { data: bets, error } = await supabase
+    .from('bets')
+    .select('*')
+    .eq('game_id', gameId)
+    .eq('challenge_index', challengeIndex);
+
+  if (error) {
+    console.error('Feil ved henting av bets: ', error);
+    return [];
+  }
+
+  return bets.map(bet => ({
+    teamName: bet.team_name,
+    betOn: bet.bet_on,
+    amount: bet.amount,
+    isCorrect: bet.bet_on === winner,
+    delta: bet.bet_on === winner ? bet.amount : -bet.amount
+  }));
 }

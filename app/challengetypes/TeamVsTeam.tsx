@@ -14,6 +14,7 @@ type Props = {
   gameId: string;
   challengeIndex: number;
   teams: Team[];
+  allTeams: Team[];
 };
 
 export default function TeamVsTeamBettingScreen({
@@ -21,10 +22,11 @@ export default function TeamVsTeamBettingScreen({
   gameId,
   challengeIndex,
   teams,
+  allTeams,
 }: Props) {
   const [value, setValue] = useState(0);
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState<string | null>(null);
 
   const maxDrinkCount = 20;
   const drinkCountLabel = maxDrinkCount - value;
@@ -43,16 +45,16 @@ export default function TeamVsTeamBettingScreen({
   const challengeTitle = `${challenge.title}: ${team1} vs ${team2}`;
   const challengeDescription = challenge.description;
 
-  // Hent teamId fra lagret data
+  // Hent teamName fra lagret data
   useEffect(() => {
-    AsyncStorage.getItem('teamId').then((id) => {
-      if (id) setTeamId(id);
+    AsyncStorage.getItem('teamName').then((name) => {
+      if (name) setTeamName(name);
     });
   }, []);
 
   const handleConfirmedBet = async () => {
-    if (!selectedButton || !teamId) return;
-    await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
+    if (!selectedButton || !teamName) return;
+    await submitBet(gameId, teamName, challengeIndex, value, selectedButton);
     alert('Du har låst inn ditt bet!');
   };
 

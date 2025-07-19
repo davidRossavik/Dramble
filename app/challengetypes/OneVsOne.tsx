@@ -1,8 +1,8 @@
 
 import { Challenge, Team } from '@/utils/types';
-import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
+import Slider from '@react-native-community/slider';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
@@ -15,7 +15,8 @@ type Props = {
   isHost?: boolean;
   onNextPhaseRequest?: () => void;
   challengeIndex: number;
-  teams: Team[]; // Kan fjernes
+  teams: Team[];
+  allTeams: Team[];
 };
 
 // Bilder //
@@ -23,34 +24,54 @@ const drinkCount = require('@/assets/images/drinkCount.png');
 // Bilder //
 
 
-export default function OneVsOne({ challenge, gameId, challengeIndex, teams }: Props) {
+export default function OneVsOne({ challenge, gameId, challengeIndex, teams, allTeams }: Props) {
   const { title, description, category, type, odds } = challenge;
 
   const [value, setValue] = useState(0); // Slider
   const [selectedButton, setSelectedButton] = useState<string | null>(null); // MarkedSelectedButton
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState<string | null>(null);
+  const [selectedPlayer1, setSelectedPlayer1] = useState<string | null>(null);
+  const [selectedPlayer2, setSelectedPlayer2] = useState<string | null>(null);
 
   // INPASSABLE VALUES (SKAL ENDRES) //
   const maxDrinkCount = 20;
   const drinkCountLabel = maxDrinkCount - value;
   // INPASSABLE VALUES (SKAL ENDRES //
 
-  // Hente spillere //
-  const [player1, player2] = challenge.participants ?? ['?', '?'];
+  // Sikker null-checking for teams
+  if (!teams || teams.length === 0) {
+    return (
+      <BackgroundWrapper>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: 'white', fontSize: 20 }}>Venter på lag...</Text>
+        </View>
+      </BackgroundWrapper>
+    );
+  }
+
+  // For 1v1 challenges velges to lag, og vi velger en spiller fra hvert lag
+  // Hvis challenge har predefinerte participants, bruk dem, ellers velg fra lagene
+  const [player1, player2] = challenge.participants ?? [
+    teams[0]?.players[0]?.name || 'Spiller 1',
+    teams[1]?.players[0]?.name || 'Spiller 2'
+  ];
+
+  // Hvis ingen participants er definert, la brukeren velge spillere fra lagene
+  const needsPlayerSelection = !challenge.participants && teams.length >= 2;
 
   // Tar seg av confirmed-bets //
   const handleConfirmedBet = async () => {
-  if (!selectedButton || !teamId) return;
-  await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
+  if (!selectedButton || !teamName) return;
+  await submitBet(gameId, teamName, challengeIndex, value, selectedButton);
   alert('Du har låst inn ditt bet!');
   };
   
-  // Hent teamId fra AsyncStorage
+  // Hent teamName fra AsyncStorage
   useEffect(() => {
-    AsyncStorage.getItem('teamName').then((id) => {
-      if (id) setTeamId(id);
+    AsyncStorage.getItem('teamName').then((name) => {
+      if (name) setTeamName(name);
     });
-  });
+  }, []);
 
   return (
     <BackgroundWrapper>
@@ -66,6 +87,13 @@ export default function OneVsOne({ challenge, gameId, challengeIndex, teams }: P
         <Text style={[styles.baseText, styles.challengeText]}>{title}</Text>
         <Text style={[styles.baseText, styles.buttonText]}>{player1} VS {player2}</Text>
         <Text style={[styles.baseText, styles.buttonText]}>{description}</Text>
+        
+        {/* Vis hvilke lag som deltar hvis det ikke er predefinerte spillere */}
+        {needsPlayerSelection && (
+          <Text style={[styles.baseText, styles.buttonText, { fontSize: 16, marginTop: 10 }]}>
+            {teams[0]?.teamName} vs {teams[1]?.teamName}
+          </Text>
+        )}
       </View>
 
       {/* Buttons / Choose Person */}
@@ -142,20 +170,6 @@ const styles = StyleSheet.create({
   },
 
   // TEXT //
-    baseText: {
-        fontWeight: 'bold',
-        color: '#FAF0DE',
-        textAlign: 'center',
-    },
-    drinkCountText: {
-        fontSize: 25,
-    },
-    challengeText: {
-        fontSize: 30,
-    },
-    buttonText: {
-        fontSize: 20,
-    },
     sliderText: {
         fontSize: 25,
         marginBottom: 20,

@@ -2,8 +2,8 @@ import { supabase } from '@/supabase';
 import { Challenge } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import PlayingView from './stateViews/PlayingView';
@@ -17,7 +17,6 @@ export default function ChallengeScreen() {
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [challengeIndex, setChallengeIndex] = useState<number>(0);
-  const opacity = useRef(new Animated.Value(1)).current;
 
   if (typeof gameId !== 'string') {
     return <Text>Invalid game ID</Text>;
@@ -68,14 +67,19 @@ export default function ChallengeScreen() {
         },
         (payload) => {
           const newState: ChallengeState = payload.new.challenge_state;
-          const index = payload.new.current_challenge_index;
+          const oldState: ChallengeState = payload.old.challenge_state;
+          const newIndex = payload.new.current_challenge_index;
+          const oldIndex = payload.old.current_challenge_index;
           const challenges = payload.new.challenges;
 
-          if (challenges && challenges[index]) {
-            const nextChallenge = challenges[index];
-            transitionTo(newState, nextChallenge,index);
-          } else {
-            console.warn('Ingen challenge funnet for index:', index);
+          // Kjør kun hvis state eller index faktisk har endret seg
+          if (newState !== oldState || newIndex !== oldIndex) {
+            if (challenges && challenges[newIndex]) {
+              const nextChallenge = challenges[newIndex];
+              transitionTo(newState, nextChallenge, newIndex);
+            } else {
+              console.warn('Ingen challenge funnet for index:', newIndex);
+            }
           }
         }
       )
@@ -86,44 +90,25 @@ export default function ChallengeScreen() {
     };
   }, [gameId]);
 
-  // Animasjon og oppdatering
-  const transitionTo = (newState: ChallengeState, newChallenge: Challenge, index:number) => {
+  // Enkel oppdatering uten animasjon
+  const transitionTo = (newState: ChallengeState, newChallenge: Challenge, index: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
 
-    Animated.timing(opacity, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: false,
-    }).start(() => {
-      // Nå er vi midt i fade-out, oppdater challenge og state
-      setChallenge(newChallenge);
-      setChallengeIndex(index);
-      setDisplayState(newState);
+    // Oppdater challenge og state umiddelbart
+    setChallenge(newChallenge);
+    setChallengeIndex(index);
+    setDisplayState(newState);
 
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: false,
-      }).start(() => {
-        setIsTransitioning(false);
-      });
-    });
+    // Sett transition til false etter kort forsinkelse
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 100);
   };
-
 
   const handlePhaseAdvance = async () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-
-    // Start fade-out
-    await new Promise((resolve) =>
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start(resolve)
-    );
 
     // Host oppdaterer state i DB
     if (isHost) {
@@ -159,9 +144,8 @@ export default function ChallengeScreen() {
     // Nå venter vi på at realtime skal kalle transitionTo()
   };
 
-
   // Ikke vis noe mens vi bytter eller laster
-  if (!challenge) {  
+  if (!challenge || isTransitioning) {  
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Laster utfordring...</Text>
@@ -170,7 +154,7 @@ export default function ChallengeScreen() {
   }
 
   return (
-    <Animated.View style={{ flex: 1, opacity }}>
+    <View style={{ flex: 1 }}>
       {displayState === 'betting' && (
         <BettingPhaseView
           challenge={challenge}
@@ -178,22 +162,27 @@ export default function ChallengeScreen() {
           challengeIndex={challengeIndex}
           isHost={isHost}
           onNextPhaseRequested={handlePhaseAdvance}
+          isTransitioning={isTransitioning}
         />
       )}
       {displayState === 'playing' && (
         <PlayingView
           challenge={challenge}
           gameId={gameId}
+          challengeIndex={challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
+          isTransitioning={isTransitioning}
         />
       )}
       {displayState === 'finished' && (
         <FinishedView
           challenge={challenge}
           gameId={gameId}
+          challengeIndex={challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
+          isTransitioning={isTransitioning}
         />
       )}
-    </Animated.View>
+    </View>
   );
 }

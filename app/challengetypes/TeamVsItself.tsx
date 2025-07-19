@@ -14,6 +14,7 @@ type Props = {
   gameId: string;
   challengeIndex: number;
   teams: Team[];
+  allTeams: Team[];
 };
 
 export default function TeamVsItselfBettingScreen({
@@ -21,36 +22,51 @@ export default function TeamVsItselfBettingScreen({
   gameId,
   challengeIndex,
   teams,
+  allTeams,
 }: Props) {
   const [value, setValue] = useState(0);
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState<string | null>(null);
 
   const maxDrinkCount = 20;
   const drinkCountLabel = maxDrinkCount - value;
 
-  const performingTeam = teams[0]; // Den som skal utføre utfordringen
-
-  useEffect(() => {
-    AsyncStorage.getItem('teamId').then((id) => {
-      if (id) setTeamId(id);
-    });
-  }, []);
-
-  const isBettingTeam = teamId !== performingTeam.teamName;
-
-  const handleConfirmedBet = async () => {
-    if (!selectedButton || !teamId) return;
-    await submitBet(gameId, teamId, challengeIndex, value, selectedButton);
-    alert('Du har låst inn ditt bet!');
-  };
-
-  if (!isBettingTeam) {
+  // Sikker null-checking for teams
+  if (!teams || teams.length === 0) {
     return (
       <BackgroundWrapper>
         <View style={styles.centered}>
           <Text style={[styles.baseText, styles.challengeText]}>
-            {performingTeam.teamName} skal utføre utfordringen:
+            Venter på lag...
+          </Text>
+        </View>
+      </BackgroundWrapper>
+    );
+  }
+
+  const performingTeam = teams[0]; // Den som skal utføre utfordringen
+
+  useEffect(() => {
+    AsyncStorage.getItem('teamName').then((name) => {
+      if (name) setTeamName(name);
+    });
+  }, []);
+
+  // Alle lag kan vedde UNNTATT det som utfører utfordringen
+  const canBet = teamName && teamName !== performingTeam?.teamName;
+
+  const handleConfirmedBet = async () => {
+    if (!selectedButton || !teamName) return;
+    await submitBet(gameId, teamName, challengeIndex, value, selectedButton);
+    alert('Du har låst inn ditt bet!');
+  };
+
+  if (!canBet) {
+    return (
+      <BackgroundWrapper>
+        <View style={styles.centered}>
+          <Text style={[styles.baseText, styles.challengeText]}>
+            {performingTeam?.teamName || 'Laget'} skal utføre utfordringen:
           </Text>
           <Text style={[styles.baseText, styles.buttonText, { marginVertical: 20 }]}>
             {challenge.description}
@@ -72,7 +88,7 @@ export default function TeamVsItselfBettingScreen({
 
       <View style={styles.challengeContainer}>
         <Text style={[styles.baseText, styles.challengeText]}>
-          Tror du {performingTeam.teamName} klarer dette?
+          Tror du {performingTeam?.teamName || 'laget'} klarer dette?
         </Text>
         <Text style={[styles.baseText, styles.buttonText]}>{challenge.description}</Text>
       </View>

@@ -217,3 +217,139 @@ export async function removeTeam(gameId: string, teamName: string) {
 
   return { error: updateError };
 }
+
+// Nye funksjoner for å håndtere valgte teams for challenges
+
+export async function setSelectedTeamsForChallenge(gameId: string, challengeIndex: number, selectedTeams: Team[]) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('selected_teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av selected_teams:', error);
+    return { error };
+  }
+
+  try {
+    // Parse JSON hvis det er en string, ellers bruk direkte
+    const currentSelectedTeams = typeof data?.selected_teams === 'string' 
+      ? JSON.parse(data.selected_teams) 
+      : (data?.selected_teams || {});
+    
+    const updatedSelectedTeams = {
+      ...currentSelectedTeams,
+      [challengeIndex]: selectedTeams
+    };
+
+    const { error: updateError } = await supabase
+      .from('games')
+      .update({ selected_teams: updatedSelectedTeams })
+      .eq('id', gameId);
+
+    if (updateError) {
+      console.error('Feil ved oppdatering av selected_teams:', updateError);
+    }
+
+    return { error: updateError };
+  } catch (parseError) {
+    console.error('Feil ved parsing av selected_teams:', parseError);
+    return { error: parseError };
+  }
+}
+
+export async function getSelectedTeamsForChallenge(gameId: string, challengeIndex: number): Promise<Team[]> {
+  const { data, error } = await supabase
+    .from('games')
+    .select('selected_teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av selected_teams:', error);
+    return [];
+  }
+  if (!data?.selected_teams) {
+    // Ikke logg som error, dette er normalt hvis ingen lag er valgt enda
+    return [];
+  }
+
+  try {
+    const selectedTeams = typeof data.selected_teams === 'string'
+      ? JSON.parse(data.selected_teams)
+      : data.selected_teams;
+    return selectedTeams[challengeIndex] || [];
+  } catch (parseError) {
+    console.error('Feil ved parsing av selected_teams:', parseError);
+    return [];
+  }
+}
+
+// Nye funksjoner for å håndtere vinner-seleksjon
+
+export async function setWinnerForChallenge(gameId: string, challengeIndex: number, winner: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('challenge_winners')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av challenge_winners:', error);
+    return { error };
+  }
+
+  try {
+    // Parse JSON hvis det er en string, ellers bruk direkte
+    const currentWinners = typeof data?.challenge_winners === 'string' 
+      ? JSON.parse(data.challenge_winners) 
+      : (data?.challenge_winners || {});
+    
+    const updatedWinners = {
+      ...currentWinners,
+      [challengeIndex]: winner
+    };
+
+    const { error: updateError } = await supabase
+      .from('games')
+      .update({ challenge_winners: updatedWinners })
+      .eq('id', gameId);
+
+    if (updateError) {
+      console.error('Feil ved oppdatering av challenge_winners:', updateError);
+    }
+
+    return { error: updateError };
+  } catch (parseError) {
+    console.error('Feil ved parsing av challenge_winners:', parseError);
+    return { error: parseError };
+  }
+}
+
+export async function getWinnerForChallenge(gameId: string, challengeIndex: number): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('games')
+    .select('challenge_winners')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av challenge_winners:', error);
+    return null;
+  }
+  if (!data?.challenge_winners) {
+    // Ikke logg som error, dette er normalt hvis ingen vinner er valgt ennå
+    return null;
+  }
+
+  try {
+    const challengeWinners = typeof data.challenge_winners === 'string'
+      ? JSON.parse(data.challenge_winners)
+      : data.challenge_winners;
+    return challengeWinners[challengeIndex] || null;
+  } catch (parseError) {
+    console.error('Feil ved parsing av challenge_winners:', parseError);
+    return null;
+  }
+}
