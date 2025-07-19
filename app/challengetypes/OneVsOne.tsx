@@ -1,8 +1,8 @@
 
 import { Challenge, Team } from '@/utils/types';
-import Slider from '@react-native-community/slider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
+import Slider from '@react-native-community/slider';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
@@ -106,23 +106,6 @@ export default function OneVsOne({ challenge, gameId, challengeIndex, teams }: P
 }
 
 const styles = StyleSheet.create({
-  baseText: {
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    textAlign: 'center',
-  },
-  drinkCountText: {
-    fontSize: 25,
-  },
-  challengeText: {
-    fontSize: 30,
-  },
-  buttonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
   description: {
     fontSize: 16,
     marginBottom: 12,
@@ -142,74 +125,74 @@ const styles = StyleSheet.create({
   },
 
   // TEXT //
-    baseText: {
-        fontWeight: 'bold',
-        color: '#FAF0DE',
-        textAlign: 'center',
-    },
-    drinkCountText: {
-        fontSize: 25,
-    },
-    challengeText: {
-        fontSize: 30,
-    },
-    buttonText: {
-        fontSize: 20,
-    },
-    sliderText: {
-        fontSize: 25,
-        marginBottom: 20,
-    },
+  baseText: {
+      fontWeight: 'bold',
+      color: '#FAF0DE',
+      textAlign: 'center',
+  },
+  drinkCountText: {
+      fontSize: 25,
+  },
+  challengeText: {
+      fontSize: 30,
+  },
+  buttonText: {
+      fontSize: 20,
+  },
+  sliderText: {
+      fontSize: 25,
+      marginBottom: 20,
+  },
 
-    // BUTTONS //
-    buttonBase: {
-        width: 170,
-        height: 100,
-        borderRadius: 5,
-    },
-    button1: {
-        backgroundColor: '#EEB90E',
-    },
-    button2: {
-        backgroundColor: '#D41E1D',
-    },
-    exitButton: {
-        width: 280,
-        height: 80,
-        backgroundColor: '#EEB90E',
-    },
+  // BUTTONS //
+  buttonBase: {
+      width: 170,
+      height: 100,
+      borderRadius: 5,
+  },
+  button1: {
+      backgroundColor: '#EEB90E',
+  },
+  button2: {
+      backgroundColor: '#D41E1D',
+  },
+  exitButton: {
+      width: 280,
+      height: 80,
+      backgroundColor: '#EEB90E',
+  },
 
 
-    // VIEWSTYLES // 
-    drinkCountContainer: {
-        position: 'absolute',
-        top: 60,
-        right: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    drinkCountPic: { // drink-Image
-        width: 80,
-        height: 80,
-    },
-    challengeContainer: {
-        flex: 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 80,
-        gap: 40,
-    },
-    buttonContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 20,
-        marginBottom: 50,
-    },
-    slider: { // Slider
-        width: '80%',
-        height: 40,
-        alignSelf: 'center',
-    },
+  // VIEWSTYLES // 
+  drinkCountContainer: {
+      position: 'absolute',
+      top: 60,
+      right: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
+  drinkCountPic: { // drink-Image
+      width: 80,
+      height: 80,
+  },
+  challengeContainer: {
+      flex: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: 80,
+      gap: 40,
+  },
+  buttonContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 20,
+      marginBottom: 50,
+  },
+  slider: { // Slider
+      width: '80%',
+      height: 40,
+      alignSelf: 'center',
+  },
 });
