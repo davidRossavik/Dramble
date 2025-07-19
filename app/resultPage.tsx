@@ -8,7 +8,7 @@ export default function resultPage() {
     const { guess, amount, winner } = useLocalSearchParams();
     const router = useRouter();
     const goToFlaks = () =>{
-        router.push('/flaks');
+        router.push('/spinTheWheel');
     };
 
     return (

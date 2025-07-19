@@ -79,5 +79,11 @@ export default function RootLayout() {
       animation: 'fade',
       presentation: 'card',
     }} />
+    <Stack.Screen name="spinTheWheel" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
   </Stack>
 }

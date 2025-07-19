@@ -7,6 +7,7 @@ import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native
 
 import * as Animatable from 'react-native-animatable';
 
+import { getRandomTeamName } from "@/utils/nameGenerator";
 import { createGame } from "../utils/games";
 
 import BackgroundWrapper from "@/components/BackgroundWrapper";
@@ -31,14 +32,16 @@ export default function Index() {
 
   const navigateToStartGame = async () => {
     const code = generateId(); // f.eks. "XKW32P"
+    const teamName = getRandomTeamName(); // randomTeamName
 
     await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', "Team Rød");
+    await AsyncStorage.setItem('teamName', teamName);
     await AsyncStorage.setItem('playerName', "Host");
+    await AsyncStorage.setItem('isHost', 'true');
 
     const teams: Team[] = [
       {
-        teamName: "Team Rød",
+        teamName: teamName,
         slurks: 100,
         players: [
           {
@@ -58,7 +61,7 @@ export default function Index() {
 
     // Naviger videre med spill-id og kode
     router.push({
-      pathname: '/startGame', 
+      pathname: '/spinTheWheel', //bytt denne
       params: { gameId: data.id, code }
     });
   };
