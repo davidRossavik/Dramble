@@ -1,126 +1,76 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { getBettingResults, resolveBet } from '@/utils/bets';
-import { getSelectedTeamsForChallenge, getWinnerForChallenge } from '@/utils/games';
-import { Challenge, Team } from '@/utils/types';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
-  challenge: Challenge;
+  runde: Runde;
   gameId: string;
-  challengeIndex: number;
   onNextPhaseRequested: () => void;
-  isTransitioning?: boolean; // Ny prop for å vite om parent er i transition
+  isTransitioning?: boolean;
 };
 
-type BetResult = {
-  teamName: string;
-  betOn: string;
-  amount: number;
-  isCorrect: boolean;
-  delta: number;
-};
-
-export default function FinishedView({ challenge, gameId, challengeIndex, onNextPhaseRequested, isTransitioning }: Props) {
+export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTransitioning }: Props) {
   const [isHost, setIsHost] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
-  const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
-  const [betResults, setBetResults] = useState<BetResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [slurksUpdated, setSlurksUpdated] = useState(false);
 
-  // Hent data og oppdater slurker
+  // Sjekk om bruker er host
   useEffect(() => {
-    const fetchDataAndResolveBets = async () => {
-      setIsLoading(true);
-      
-      // Sjekk om bruker er host
-      const playerName = await AsyncStorage.getItem('playerName');
-      setIsHost(playerName === 'Host');
-
-      // Hent valgte teams
-      const teams = await getSelectedTeamsForChallenge(gameId, challengeIndex);
-      setSelectedTeams(teams);
-
-      // Hent vinner
-      const challengeWinner = await getWinnerForChallenge(gameId, challengeIndex);
-      setWinner(challengeWinner);
-
-      if (challengeWinner && !slurksUpdated) {
-        // Oppdater slurker basert på betting-resultater
-        await resolveBet(gameId, challengeIndex, challengeWinner);
-        setSlurksUpdated(true);
-      }
-
-      // Hent og vis betting-resultater
-      if (challengeWinner) {
-        const results = await getBettingResults(gameId, challengeIndex, challengeWinner);
-        setBetResults(results);
-      }
-      
-      setIsLoading(false);
-    };
-
-    fetchDataAndResolveBets();
-  }, [gameId, challengeIndex, slurksUpdated]);
-
-  const getChallengeDescription = () => {
-    const performingTeam = selectedTeams[0];
-    
-    switch (challenge.type) {
-      case '1v1':
-        const [player1, player2] = challenge.participants || ['Spiller 1', 'Spiller 2'];
-        return `${player1} vs ${player2}: ${challenge.description}`;
-      
-      case 'Team-vs-Team':
-        const team1 = selectedTeams[0]?.teamName || 'Lag 1';
-        const team2 = selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1} vs ${team2}: ${challenge.description}`;
-      
-      case 'Team-vs-itself':
-        return `${performingTeam?.teamName || 'Laget'} skal: ${challenge.description}`;
-      
-      default:
-        return challenge.description;
-    }
-  };
-
-  const getWinnerDisplay = () => {
-    if (!winner) return 'Ingen vinner valgt';
-    
-    switch (challenge.type) {
-      case '1v1':
-        return `${winner} vant!`;
-      
-      case 'Team-vs-Team':
-        return `${winner} vant!`;
-      
-      case 'Team-vs-itself':
-        return winner === 'Klarer' 
-          ? `${selectedTeams[0]?.teamName || 'Laget'} klarte det!`
-          : `${selectedTeams[0]?.teamName || 'Laget'} klarte det ikke!`;
-      
-      default:
-        return `${winner} vant!`;
-    }
-  };
+    AsyncStorage.getItem('playerName').then((name) => {
+      setIsHost(name === 'Host');
+    });
+  }, []);
 
   // Ikke vis noen loading states hvis parent er i transition
   if (isTransitioning) {
     return null; // Returner ingenting, la parent håndtere loading
   }
 
-  if (isLoading) {
-    return (
-      <BackgroundWrapper>
-        <View style={styles.container}>
-          <Text style={styles.title}>Laster resultater...</Text>
-        </View>
-      </BackgroundWrapper>
-    );
-  }
+  const getChallengeDescription = () => {
+    switch (runde.challenge.type) {
+      case '1v1':
+        const [player1, player2] = runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
+        return `${player1} vs ${player2}: ${runde.challenge.description}`;
+      
+      case 'Team-vs-Team':
+        const team1 = runde.selectedTeams[0]?.teamName || 'Lag 1';
+        const team2 = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        return `${team1} vs ${team2}: ${runde.challenge.description}`;
+      
+      case 'Team-vs-itself':
+        // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
+        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
+        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
+      
+      default:
+        return runde.challenge.description;
+    }
+  };
+
+  const getWinnerDisplay = () => {
+    if (!runde.winner) return 'Ingen vinner valgt';
+    
+    switch (runde.challenge.type) {
+      case '1v1':
+        return `${runde.winner} vant!`;
+      
+      case 'Team-vs-Team':
+        return `${runde.winner} vant!`;
+      
+      case 'Team-vs-itself':
+        // For Team-vs-itself viser vi om de to spillerne klarte utfordringen sammen
+        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
+        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        return runde.winner === 'Klarer' 
+          ? `${team1Name} og ${team2Name} klarte det sammen!`
+          : `${team1Name} og ${team2Name} klarte det ikke sammen!`;
+      
+      default:
+        return `${runde.winner} vant!`;
+    }
+  };
 
   return (
     <BackgroundWrapper>
@@ -139,8 +89,8 @@ export default function FinishedView({ challenge, gameId, challengeIndex, onNext
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsTitle}>Betting-resultater:</Text>
           
-          {betResults.length > 0 ? (
-            betResults.map((result, index) => (
+          {runde.betResults.length > 0 ? (
+            runde.betResults.map((result, index) => (
               <View key={index} style={styles.betResult}>
                 <Text style={styles.teamName}>{result.teamName}</Text>
                 <Text style={styles.betInfo}>
@@ -209,7 +159,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF4500',
   },
   winnerLabel: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#FF4500',
@@ -238,7 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   teamName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FAF0DE',
     marginBottom: 5,
@@ -269,7 +219,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
-    alignSelf: 'center',
   },
   nextButtonText: {
     fontSize: 18,

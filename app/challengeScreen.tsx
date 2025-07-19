@@ -137,9 +137,8 @@ export default function ChallengeScreen() {
     <View style={{ flex: 1 }}>
       {runde!.state === 'betting' && (
         <BettingPhaseView
-          challenge={runde!.challenge}
+          runde={runde!}
           gameId={gameId}
-          challengeIndex={runde!.challengeIndex}
           isHost={isHost}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
@@ -147,18 +146,16 @@ export default function ChallengeScreen() {
       )}
       {runde!.state === 'playing' && (
         <PlayingView
-          challenge={runde!.challenge}
+          runde={runde!}
           gameId={gameId}
-          challengeIndex={runde!.challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
         />
       )}
       {runde!.state === 'finished' && (
         <FinishedView
-          challenge={runde!.challenge}
+          runde={runde!}
           gameId={gameId}
-          challengeIndex={runde!.challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
         />

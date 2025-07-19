@@ -1,97 +1,43 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { supabase } from '@/supabase';
-import { getSelectedTeamsForChallenge, getWinnerForChallenge, setWinnerForChallenge } from '@/utils/games';
-import { Challenge, Team } from '@/utils/types';
+import { setWinnerForChallenge } from '@/utils/games';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 type Props = {
-  challenge: Challenge;
+  runde: Runde;
   gameId: string;
-  challengeIndex: number;
   onNextPhaseRequested: () => void;
-  isTransitioning?: boolean; // Ny prop for å vite om parent er i transition
+  isTransitioning?: boolean;
 };
 
-export default function PlayingView({ challenge, gameId, challengeIndex, onNextPhaseRequested, isTransitioning }: Props) {
-  const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
-  const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
+export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTransitioning }: Props) {
+  const [selectedWinner, setSelectedWinner] = useState<string | null>(runde.winner);
   const [isHost, setIsHost] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Hent valgte teams og sjekk om bruker er host
+  // Sjekk om bruker er host
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      
-      // Hent valgte teams
-      const teams = await getSelectedTeamsForChallenge(gameId, challengeIndex);
-      setSelectedTeams(teams);
+    AsyncStorage.getItem('playerName').then((name) => {
+      setIsHost(name === 'Host');
+    });
+  }, []);
 
-      // Sjekk om bruker er host
-      const playerName = await AsyncStorage.getItem('playerName');
-      setIsHost(playerName === 'Host');
-      
-      // Hent eksisterende vinner hvis den finnes
-      const existingWinner = await getWinnerForChallenge(gameId, challengeIndex);
-      if (existingWinner) {
-        setSelectedWinner(existingWinner);
-      }
-      
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [gameId, challengeIndex]);
-
-  // Realtime subscription for å lytte på vinner-oppdateringer
-  useEffect(() => {
-    const channel = supabase
-      .channel(`winner-${gameId}-${challengeIndex}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'games',
-          filter: `id=eq.${gameId}`,
-        },
-        async (payload) => {
-          if (payload.new.challenge_winners) {
-            try {
-              // Parse JSON hvis det er en string, ellers bruk direkte
-              const challengeWinners = typeof payload.new.challenge_winners === 'string'
-                ? JSON.parse(payload.new.challenge_winners)
-                : payload.new.challenge_winners;
-              
-              const newWinner = challengeWinners[challengeIndex];
-              if (newWinner && newWinner !== selectedWinner) {
-                setSelectedWinner(newWinner);
-              }
-            } catch (parseError) {
-              console.error('Feil ved parsing av challenge_winners i realtime:', parseError);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [gameId, challengeIndex]); // Fjernet selectedWinner fra dependency array
+  // Ikke vis noen loading states hvis parent er i transition
+  if (isTransitioning) {
+    return null; // Returner ingenting, la parent håndtere loading
+  }
 
   const getWinnerOptions = () => {
-    switch (challenge.type) {
+    switch (runde.challenge.type) {
       case '1v1':
         // For 1v1 bruker vi spiller-navnene fra challenge
-        return challenge.participants || ['Spiller 1', 'Spiller 2'];
+        return runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
       
       case 'Team-vs-Team':
         // For Team-vs-Team bruker vi lagnavnene
-        return selectedTeams.map(team => team.teamName);
+        return runde.selectedTeams.map(team => team.teamName);
       
       case 'Team-vs-itself':
         // For Team-vs-itself er det "Klarer" eller "Klarer ikke"
@@ -103,23 +49,24 @@ export default function PlayingView({ challenge, gameId, challengeIndex, onNextP
   };
 
   const getChallengeDescription = () => {
-    const performingTeam = selectedTeams[0];
-    
-    switch (challenge.type) {
+    switch (runde.challenge.type) {
       case '1v1':
-        const [player1, player2] = challenge.participants || ['Spiller 1', 'Spiller 2'];
-        return `${player1} vs ${player2}: ${challenge.description}`;
+        const [player1, player2] = runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
+        return `${player1} vs ${player2}: ${runde.challenge.description}`;
       
       case 'Team-vs-Team':
-        const team1 = selectedTeams[0]?.teamName || 'Lag 1';
-        const team2 = selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1} vs ${team2}: ${challenge.description}`;
+        const team1 = runde.selectedTeams[0]?.teamName || 'Lag 1';
+        const team2 = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        return `${team1} vs ${team2}: ${runde.challenge.description}`;
       
       case 'Team-vs-itself':
-        return `${performingTeam?.teamName || 'Laget'} skal: ${challenge.description}`;
+        // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
+        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
+        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
       
       default:
-        return challenge.description;
+        return runde.challenge.description;
     }
   };
 
@@ -130,7 +77,7 @@ export default function PlayingView({ challenge, gameId, challengeIndex, onNextP
     // Lagre vinner i databasen for å synkronisere med andre brukere
     if (isHost) {
       try {
-        const { error } = await setWinnerForChallenge(gameId, challengeIndex, winner);
+        const { error } = await setWinnerForChallenge(gameId, runde.challengeIndex, winner);
         if (error) {
           console.error('Feil ved lagring av vinner:', error);
           alert('Feil ved lagring av vinner. Prøv igjen.');
@@ -141,21 +88,6 @@ export default function PlayingView({ challenge, gameId, challengeIndex, onNextP
       }
     }
   };
-
-  // Ikke vis noen loading states hvis parent er i transition
-  if (isTransitioning) {
-    return null; // Returner ingenting, la parent håndtere loading
-  }
-
-  if (isLoading) {
-    return (
-      <BackgroundWrapper>
-        <View style={styles.container}>
-          <Text style={styles.title}>Laster challenge...</Text>
-        </View>
-      </BackgroundWrapper>
-    );
-  }
 
   const winnerOptions = getWinnerOptions();
 
