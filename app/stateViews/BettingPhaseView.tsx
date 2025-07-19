@@ -84,11 +84,11 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
   const renderBettingComponent = () => {
     switch (runde.challenge.type) {
       case '1v1':
-        return <OneVsOne challenge={runde.challenge} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <OneVsOne runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
       case 'Team-vs-Team':
-        return <TeamVsTeam challenge={runde.challenge} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <TeamVsTeam runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
       case 'Team-vs-itself':
-        return <TeamVsItself challenge={runde.challenge} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <TeamVsItself runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
       default:
         return <Text style={styles.errorText}>Ukjent challenge-type</Text>;
     }

@@ -1,214 +1,281 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { submitBet } from '@/utils/bets';
-import { Challenge, Team } from '@/utils/types';
+import { Runde, Team } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-
-const drinkCount = require('@/assets/images/drinkCount.png');
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Props = {
-  challenge: Challenge;
+  runde: Runde;
   gameId: string;
   challengeIndex: number;
   teams: Team[];
   allTeams: Team[];
 };
 
-export default function TeamVsItselfBettingScreen({
-  challenge,
-  gameId,
-  challengeIndex,
-  teams,
-  allTeams,
-}: Props) {
-  const [value, setValue] = useState(0);
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
-  const [teamName, setTeamName] = useState<string | null>(null);
+export default function TeamVsItself({ runde, gameId, challengeIndex, teams, allTeams }: Props) {
+  const [teamName, setTeamName] = useState<string>('');
+  const [selectedOutcome, setSelectedOutcome] = useState<string>('');
+  const [betAmount, setBetAmount] = useState<string>('');
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
 
-  const maxDrinkCount = 20;
-  const drinkCountLabel = maxDrinkCount - value;
-
-  // Sikker null-checking for teams
-  if (!teams || teams.length === 0) {
-    return (
-      <BackgroundWrapper>
-        <View style={styles.centered}>
-          <Text style={[styles.baseText, styles.challengeText]}>
-            Venter på lag...
-          </Text>
-        </View>
-      </BackgroundWrapper>
-    );
-  }
-
-  const performingTeam = teams[0]; // Den som skal utføre utfordringen
-
+  // Hent team-navn
   useEffect(() => {
     AsyncStorage.getItem('teamName').then((name) => {
       if (name) setTeamName(name);
     });
   }, []);
 
-  // Alle lag kan vedde UNNTATT det som utfører utfordringen
-  const canBet = teamName && teamName !== performingTeam?.teamName;
+  const handlePlaceBet = async () => {
+    if (!selectedOutcome || !betAmount || !teamName) {
+      alert('Vennligst velg utfall og skriv inn betting-beløp');
+      return;
+    }
 
-  const handleConfirmedBet = async () => {
-    if (!selectedButton || !teamName) return;
-    await submitBet(gameId, teamName, challengeIndex, value, selectedButton);
-    alert('Du har låst inn ditt bet!');
+    const amount = parseInt(betAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Vennligst skriv inn et gyldig beløp');
+      return;
+    }
+
+    setIsPlacingBet(true);
+    try {
+      const { error } = await submitBet(gameId, teamName, challengeIndex, amount, selectedOutcome);
+      if (error) {
+        console.error('Feil ved betting:', error);
+        alert('Feil ved betting. Prøv igjen.');
+      } else {
+        // Reset form
+        setSelectedOutcome('');
+        setBetAmount('');
+        alert('Betting registrert!');
+      }
+    } catch (error) {
+      console.error('Uventet feil ved betting:', error);
+      alert('Uventet feil ved betting. Prøv igjen.');
+    } finally {
+      setIsPlacingBet(false);
+    }
   };
 
-  if (!canBet) {
-    return (
-      <BackgroundWrapper>
-        <View style={styles.centered}>
-          <Text style={[styles.baseText, styles.challengeText]}>
-            {performingTeam?.teamName || 'Laget'} skal utføre utfordringen:
-          </Text>
-          <Text style={[styles.baseText, styles.buttonText, { marginVertical: 20 }]}>
-            {challenge.description}
-          </Text>
-          <Text style={[styles.baseText, styles.buttonText]}>
-            Dere får ikke vedde på egen utfordring.
-          </Text>
-        </View>
-      </BackgroundWrapper>
-    );
-  }
+  const getOutcomeOptions = () => {
+    return ['Klarer', 'Klarer ikke'];
+  };
+
+  const getChallengeDescription = () => {
+    // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
+    const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
+    const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
+    return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
+  };
+
+  const outcomeOptions = getOutcomeOptions();
 
   return (
     <BackgroundWrapper>
-      <View style={styles.drinkCountContainer}>
-        <Text style={[styles.baseText, styles.drinkCountText]}>{drinkCountLabel}</Text>
-        <Image source={drinkCount} style={styles.drinkCountPic} />
-      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.title}>Lag vs Seg Selv Challenge</Text>
+        
+        <View style={styles.challengeContainer}>
+          <Text style={styles.description}>{getChallengeDescription()}</Text>
+        </View>
 
-      <View style={styles.challengeContainer}>
-        <Text style={[styles.baseText, styles.challengeText]}>
-          Tror du {performingTeam?.teamName || 'laget'} klarer dette?
-        </Text>
-        <Text style={[styles.baseText, styles.buttonText]}>{challenge.description}</Text>
-      </View>
+        <View style={styles.bettingContainer}>
+          <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
+          
+          <View style={styles.outcomeSelection}>
+            <Text style={styles.label}>Velg utfall:</Text>
+            <View style={styles.buttons}>
+              {outcomeOptions.map((outcome, index) => (
+                <Button
+                  key={index}
+                  label={outcome}
+                  onPress={() => setSelectedOutcome(outcome)}
+                  style={[
+                    styles.outcomeButton,
+                    selectedOutcome === outcome ? styles.selectedOutcomeButton : {}
+                  ]}
+                  textStyle={[
+                    styles.outcomeButtonText,
+                    selectedOutcome === outcome ? styles.selectedOutcomeButtonText : {}
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
 
-      <View style={styles.buttonContainer}>
-        <Button
-          textStyle={[styles.baseText, styles.buttonText]}
-          style={[styles.buttonBase, styles.button1]}
-          label="Klarer"
-          onPress={() => setSelectedButton('Klarer')}
-          stayPressed={selectedButton === 'Klarer'}
-        />
-        <Button
-          textStyle={[styles.baseText, styles.buttonText]}
-          style={[styles.buttonBase, styles.button2]}
-          label="Klarer ikke"
-          onPress={() => setSelectedButton('Klarer ikke')}
-          stayPressed={selectedButton === 'Klarer ikke'}
-        />
-      </View>
+          <View style={styles.betAmountContainer}>
+            <Text style={styles.label}>Antall slurker:</Text>
+            <TextInput
+              style={styles.input}
+              value={betAmount}
+              onChangeText={setBetAmount}
+              placeholder="Skriv inn antall slurker"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+          </View>
 
-      <View style={{ width: '100%', height: 70 }}>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={maxDrinkCount}
-          step={1}
-          value={value}
-          onValueChange={(val) => setValue(val)}
-          minimumTrackTintColor="#81AF24"
-          maximumTrackTintColor="#00471E"
-          thumbTintColor="#FF4500"
-        />
-        <Text style={[styles.baseText, styles.sliderText]}>{value.toFixed(0)}</Text>
-      </View>
+          <Button
+            label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}
+            onPress={handlePlaceBet}
+            disabled={!selectedOutcome || !betAmount || isPlacingBet}
+            style={[
+              styles.betButton,
+              (!selectedOutcome || !betAmount || isPlacingBet) ? styles.disabledButton : {}
+            ]}
+            textStyle={styles.betButtonText}
+          />
+        </View>
 
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Button
-          style={[styles.buttonBase, styles.exitButton]}
-          label="Lås inn"
-          textStyle={[styles.baseText, styles.buttonText]}
-          disabled={selectedButton === null}
-          onPress={handleConfirmedBet}
-        />
-      </View>
+        <View style={styles.currentBetsContainer}>
+          <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
+          
+          {runde.betResults.length > 0 ? (
+            runde.betResults.map((bet, index) => (
+              <View key={index} style={styles.betItem}>
+                <Text style={styles.betTeam}>{bet.teamName}</Text>
+                <Text style={styles.betInfo}>
+                  Vedder {bet.amount} slurker på "{bet.betOn}"
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noBets}>Ingen veddemål ennå</Text>
+          )}
+        </View>
+      </ScrollView>
     </BackgroundWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  baseText: {
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#FAF0DE',
+    marginBottom: 20,
+  },
+  challengeContainer: {
+    marginBottom: 30,
+    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#FAF0DE',
+    lineHeight: 22,
+  },
+  bettingContainer: {
+    marginBottom: 30,
+  },
+  bettingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#FAF0DE',
+    marginBottom: 20,
+  },
+  outcomeSelection: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    marginBottom: 10,
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  outcomeButton: {
+    minWidth: 120,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#2f7a4c',
+    borderRadius: 8,
+  },
+  selectedOutcomeButton: {
+    backgroundColor: '#FF4500',
+  },
+  outcomeButtonText: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
   },
-  drinkCountText: {
-    fontSize: 25,
+  selectedOutcomeButtonText: {
+    color: '#FFFFFF',
   },
-  challengeText: {
-    fontSize: 30,
-  },
-  buttonText: {
-    fontSize: 20,
-  },
-  sliderText: {
-    fontSize: 25,
+  betAmountContainer: {
     marginBottom: 20,
   },
-  buttonBase: {
-    width: 170,
-    height: 100,
-    borderRadius: 5,
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    color: '#000',
   },
-  button1: {
-    backgroundColor: '#1ABC9C',
-  },
-  button2: {
-    backgroundColor: '#C0392B',
-  },
-  exitButton: {
-    width: 280,
-    height: 80,
+  betButton: {
     backgroundColor: '#EEB90E',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
   },
-  drinkCountContainer: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+  disabledButton: {
+    backgroundColor: '#666',
   },
-  drinkCountPic: {
-    width: 80,
-    height: 80,
+  betButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
   },
-  challengeContainer: {
-    flex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 80,
-    gap: 40,
+  currentBetsContainer: {
+    marginTop: 20,
   },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-    marginBottom: 50,
+  currentBetsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#FAF0DE',
+    marginBottom: 15,
   },
-  slider: {
-    width: '80%',
-    height: 40,
-    alignSelf: 'center',
+  betItem: {
+    marginBottom: 10,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    gap: 30,
+  betTeam: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    marginBottom: 5,
+  },
+  betInfo: {
+    fontSize: 12,
+    color: '#FAF0DE',
+  },
+  noBets: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#FAF0DE',
+    fontStyle: 'italic',
   },
 });
