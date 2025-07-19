@@ -1,5 +1,6 @@
 import { supabase } from '@/supabase';
-import { Challenge } from '@/utils/types';
+import { advanceToNextRound, fetchRunde, isRundeReady, updateRundeState } from '@/utils/rounds';
+import { Runde, RundeState } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -8,15 +9,11 @@ import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import PlayingView from './stateViews/PlayingView';
 
-type ChallengeState = 'betting' | 'playing' | 'finished';
-
 export default function ChallengeScreen() {
   const { gameId } = useLocalSearchParams();
-  const [displayState, setDisplayState] = useState<ChallengeState>('betting');
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [challengeIndex, setChallengeIndex] = useState<number>(0);
 
   if (typeof gameId !== 'string') {
     return <Text>Invalid game ID</Text>;
@@ -33,27 +30,29 @@ export default function ChallengeScreen() {
 
   // Initial game state
   useEffect(() => {
-    const fetchInitialGameState = async () => {
-      const { data, error } = await supabase
-        .from('games')
-        .select('challenge_state, current_challenge_index, challenges')
-        .eq('id', gameId)
-        .single();
+    const fetchInitialRunde = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select('current_challenge_index')
+          .eq('id', gameId)
+          .single();
 
-      if (!error && data) {
-        const newChallenge = data.challenges?.[data.current_challenge_index];
-        if (newChallenge) {
-          transitionTo(data.challenge_state, newChallenge, data.current_challenge_index);
+        if (!error && data) {
+          const newRunde = await fetchRunde(gameId, data.current_challenge_index);
+          setRunde(newRunde);
+        } else {
+          console.error('Feil ved henting av spilldata:', error);
         }
-      } else {
-        console.error('Feil ved henting av spilldata:', error);
+      } catch (error) {
+        console.error('Feil ved henting av initial runde:', error);
       }
     };
 
-    fetchInitialGameState();
+    fetchInitialRunde();
   }, [gameId]);
 
-  // Realtime oppdatering
+  // Realtime oppdatering - forenklet
   useEffect(() => {
     const channel = supabase
       .channel(`game-${gameId}`)
@@ -65,21 +64,14 @@ export default function ChallengeScreen() {
           table: 'games',
           filter: `id=eq.${gameId}`,
         },
-        (payload) => {
-          const newState: ChallengeState = payload.new.challenge_state;
-          const oldState: ChallengeState = payload.old.challenge_state;
-          const newIndex = payload.new.current_challenge_index;
-          const oldIndex = payload.old.current_challenge_index;
-          const challenges = payload.new.challenges;
-
-          // Kjør kun hvis state eller index faktisk har endret seg
-          if (newState !== oldState || newIndex !== oldIndex) {
-            if (challenges && challenges[newIndex]) {
-              const nextChallenge = challenges[newIndex];
-              transitionTo(newState, nextChallenge, newIndex);
-            } else {
-              console.warn('Ingen challenge funnet for index:', newIndex);
-            }
+        async (payload) => {
+          // Hent hele runden på nytt når noe endres
+          try {
+            const newIndex = payload.new.current_challenge_index;
+            const newRunde = await fetchRunde(gameId, newIndex);
+            setRunde(newRunde);
+          } catch (error) {
+            console.error('Feil ved oppdatering av runde:', error);
           }
         }
       )
@@ -91,61 +83,49 @@ export default function ChallengeScreen() {
   }, [gameId]);
 
   // Enkel oppdatering uten animasjon
-  const transitionTo = (newState: ChallengeState, newChallenge: Challenge, index: number) => {
+  const transitionTo = async (newState: RundeState, challengeIndex: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
 
-    // Oppdater challenge og state umiddelbart
-    setChallenge(newChallenge);
-    setChallengeIndex(index);
-    setDisplayState(newState);
-
-    // Sett transition til false etter kort forsinkelse
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 100);
+    try {
+      // Hent ny runde
+      const newRunde = await fetchRunde(gameId, challengeIndex);
+      setRunde(newRunde);
+    } catch (error) {
+      console.error('Feil ved transition:', error);
+    } finally {
+      // Sett transition til false etter kort forsinkelse
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 100);
+    }
   };
 
   const handlePhaseAdvance = async () => {
-    if (isTransitioning) return;
+    if (isTransitioning || !runde) return;
     setIsTransitioning(true);
 
     // Host oppdaterer state i DB
     if (isHost) {
       try {
-        if (displayState === 'betting') {
-          await supabase.from('games').update({ challenge_state: 'playing' }).eq('id', gameId);
-        } else if (displayState === 'playing') {
-          await supabase.from('games').update({ challenge_state: 'finished' }).eq('id', gameId);
-        } else if (displayState === 'finished') {
-          const { data, error: rpcError } = await supabase.rpc('increment_index', { gid: gameId });
-          if (rpcError || typeof data !== 'number') {
-            console.error('Feil ved RPC:', rpcError);
-            return;
-          }
-
-          const { error: updateError } = await supabase
-            .from('games')
-            .update({
-              challenge_state: 'betting',
-              current_challenge_index: data,
-            })
-            .eq('id', gameId);
-
-          if (updateError) {
-            console.error('Feil ved oppdatering til neste challenge:', updateError);
-          }
+        if (runde.state === 'betting') {
+          await updateRundeState(gameId, 'playing');
+        } else if (runde.state === 'playing') {
+          await updateRundeState(gameId, 'finished');
+        } else if (runde.state === 'finished') {
+          await advanceToNextRound(gameId);
         }
       } catch (error) {
         console.error('Feil under overgang:', error);
+        setIsTransitioning(false);
       }
     }
 
-    // Nå venter vi på at realtime skal kalle transitionTo()
+    // Nå venter vi på at realtime skal oppdatere runde
   };
 
   // Ikke vis noe mens vi bytter eller laster
-  if (!challenge || isTransitioning) {  
+  if (!isRundeReady(runde, isTransitioning)) {  
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Laster utfordring...</Text>
@@ -155,30 +135,30 @@ export default function ChallengeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      {displayState === 'betting' && (
+      {runde!.state === 'betting' && (
         <BettingPhaseView
-          challenge={challenge}
+          challenge={runde!.challenge}
           gameId={gameId}
-          challengeIndex={challengeIndex}
+          challengeIndex={runde!.challengeIndex}
           isHost={isHost}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
         />
       )}
-      {displayState === 'playing' && (
+      {runde!.state === 'playing' && (
         <PlayingView
-          challenge={challenge}
+          challenge={runde!.challenge}
           gameId={gameId}
-          challengeIndex={challengeIndex}
+          challengeIndex={runde!.challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
         />
       )}
-      {displayState === 'finished' && (
+      {runde!.state === 'finished' && (
         <FinishedView
-          challenge={challenge}
+          challenge={runde!.challenge}
           gameId={gameId}
-          challengeIndex={challengeIndex}
+          challengeIndex={runde!.challengeIndex}
           onNextPhaseRequested={handlePhaseAdvance}
           isTransitioning={isTransitioning}
         />
