@@ -6,6 +6,7 @@ import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { supabase } from '../../supabase';
 
 type Props = {
   runde: Runde;
@@ -27,6 +28,29 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
     }
     fetchBalances();
     AsyncStorage.getItem('teamName').then(setMyTeamName);
+
+    // Sett opp real-time listener for balance oppdateringer
+    const channel = supabase
+      .channel(`balances-${gameId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'games',
+          filter: `id=eq.${gameId}`,
+        },
+        (payload) => {
+          if (payload.new.balances) {
+            setBalances(payload.new.balances);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [gameId, runde]);
 
   // Ikke vis noen loading states hvis parent er i transition

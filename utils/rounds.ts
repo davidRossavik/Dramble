@@ -1,7 +1,7 @@
 import { supabase } from '@/supabase';
 import { getBettingResults } from '@/utils/bets';
 import { getSelectedTeamsForChallenge, getWinnerForChallenge } from '@/utils/games';
-import { Runde, RundeState, Team } from '@/utils/types';
+import { BetResult, Runde, RundeState, Team } from '@/utils/types';
 
 /**
  * Velger lag automatisk basert på challenge type
@@ -43,11 +43,35 @@ export async function fetchRunde(gameId: string, challengeIndex: number): Promis
     }
 
     // Hent alle nødvendige data i parallell
-    const [selectedTeams, winner, betResults] = await Promise.all([
+    const [selectedTeams, winner] = await Promise.all([
       getSelectedTeamsForChallenge(gameId, challengeIndex),
       getWinnerForChallenge(gameId, challengeIndex),
-      getBettingResults(gameId, challengeIndex, game.challenge_state === 'finished' ? 'dummy' : ''),
     ]);
+
+    // Hent betting-resultater for alle faser (ikke kun finished)
+    // Under betting viser vi alle bets, under finished viser vi resultater med isCorrect
+    let betResults: BetResult[] = [];
+    if (game.challenge_state === 'betting') {
+      // Under betting: hent alle bets uten å sjekke isCorrect
+      const { data: bets, error } = await supabase
+        .from('bets')
+        .select('*')
+        .eq('game_id', gameId)
+        .eq('challenge_index', challengeIndex);
+      
+      if (!error && bets) {
+        betResults = bets.map(bet => ({
+          teamName: bet.team_name,
+          betOn: bet.bet_on,
+          amount: bet.amount,
+          isCorrect: false, // Ikke relevant under betting
+          delta: 0 // Ikke relevant under betting
+        }));
+      }
+    } else if (game.challenge_state === 'finished' && winner) {
+      // Under finished: hent resultater med isCorrect basert på vinner
+      betResults = await getBettingResults(gameId, challengeIndex, winner);
+    }
 
     // Opprett rundeobjekt
     const runde: Runde = {

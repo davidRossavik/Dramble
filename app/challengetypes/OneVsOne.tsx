@@ -18,36 +18,47 @@ type Props = {
 
 export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeams, balances }: Props) {
   const [playerName, setPlayerName] = useState<string>('');
+  const [teamName, setTeamName] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [teamBalance, setTeamBalance] = useState<number | null>(null);
+  const [betError, setBetError] = useState<string | null>(null);
 
-  // Hent spiller-navn
+  // Hent spiller-navn og lag-navn
   useEffect(() => {
     AsyncStorage.getItem('playerName').then((name) => {
       if (name) setPlayerName(name);
     });
     AsyncStorage.getItem('teamName').then((team) => {
-      if (team && balances && balances[team]) setTeamBalance(balances[team]);
+      if (team) {
+        setTeamName(team);
+        if (balances && balances[team]) setTeamBalance(balances[team]);
+      }
     });
   }, [balances]);
 
   const handlePlaceBet = async () => {
-    if (!selectedPlayer || !betAmount || !playerName) {
+    if (!selectedPlayer || !betAmount || !playerName || !teamName) {
       alert('Vennligst velg spiller og skriv inn betting-beløp');
       return;
     }
 
     const amount = parseInt(betAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Vennligst skriv inn et gyldig beløp');
+      setBetError('Vennligst skriv inn et gyldig beløp');
       return;
     }
 
+    if (teamBalance !== null && amount > teamBalance) {
+      setBetError('Du kan ikke vedde mer enn du har igjen!');
+      return;
+    }
+    setBetError(null);
+
     setIsPlacingBet(true);
     try {
-      const { error } = await submitBet(gameId, playerName, challengeIndex, amount, selectedPlayer);
+      const { error } = await submitBet(gameId, teamName, challengeIndex, amount, selectedPlayer);
       if (error) {
         console.error('Feil ved betting:', error);
         alert('Feil ved betting. Prøv igjen.');
@@ -114,7 +125,10 @@ export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeam
             <TextInput
               style={styles.input}
               value={betAmount}
-              onChangeText={setBetAmount}
+              onChangeText={text => {
+                setBetAmount(text);
+                setBetError(null);
+              }}
               placeholder="Skriv inn antall slurker"
               placeholderTextColor="#999"
               keyboardType="numeric"
@@ -128,13 +142,18 @@ export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeam
             </Text>
           )}
 
+          {/* Vis feilmelding hvis innsats er ugyldig */}
+          {betError && (
+            <Text style={{color: 'red', marginBottom: 8}}>{betError}</Text>
+          )}
+
           <Button
             label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}
             onPress={handlePlaceBet}
-            disabled={!selectedPlayer || !betAmount || isPlacingBet}
+            disabled={!selectedPlayer || !betAmount || isPlacingBet || !!betError}
             style={[
               styles.betButton,
-              (!selectedPlayer || !betAmount || isPlacingBet) ? styles.disabledButton : {}
+              (!selectedPlayer || !betAmount || isPlacingBet || !!betError) ? styles.disabledButton : {}
             ]}
             textStyle={styles.betButtonText}
           />

@@ -67,7 +67,7 @@ export default function ChallengeScreen() {
         async (payload) => {
           try {
             const newIndex = payload.new.current_challenge_index;
-            const oldIndex = payload.old.current_challenge_index;
+            const oldIndex = payload.old?.current_challenge_index;
             
             // Hvis challenge index endret seg, hent hele runden på nytt
             if (oldIndex !== undefined && newIndex !== oldIndex) {
@@ -76,26 +76,23 @@ export default function ChallengeScreen() {
               return;
             }
             
-            // Hvis bare challenge_winners endret seg, ignorer det
-            if (payload.new.challenge_winners !== payload.old.challenge_winners) {
-              return; // Ikke gjør noe
-            }
-            
-            // Hvis oldIndex er undefined, ignorer det (første gang listener starter)
-            if (oldIndex === undefined) {
+            // Hvis challenge_state endret seg, oppdater runden (viktig for fase-overganger)
+            if (payload.new.challenge_state !== payload.old?.challenge_state) {
+              const newRunde = await fetchRunde(gameId, newIndex);
+              setRunde(newRunde);
               return;
             }
             
-            // Hvis bare challenge_state endret seg, ignorer det (for betting -> playing overgang)
-            if (payload.new.challenge_state !== payload.old.challenge_state) {
+            // Hvis bare challenge_winners endret seg, ignorer det
+            if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
               return; // Ikke gjør noe
             }
             
             // Sjekk om det er andre endringer som faktisk påvirker runden
             const hasOtherChanges = 
-              payload.new.selected_teams !== payload.old.selected_teams ||
-              payload.new.teams !== payload.old.teams ||
-              payload.new.challenges !== payload.old.challenges;
+              payload.new.selected_teams !== payload.old?.selected_teams ||
+              payload.new.teams !== payload.old?.teams ||
+              payload.new.challenges !== payload.old?.challenges;
             
             if (hasOtherChanges) {
               const newRunde = await fetchRunde(gameId, newIndex);

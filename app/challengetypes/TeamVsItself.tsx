@@ -21,6 +21,7 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
   const [betAmount, setBetAmount] = useState<string>('');
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [teamBalance, setTeamBalance] = useState<number | null>(null);
+  const [betError, setBetError] = useState<string | null>(null);
 
   // Hent team-navn
   useEffect(() => {
@@ -43,9 +44,15 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
 
     const amount = parseInt(betAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Vennligst skriv inn et gyldig beløp');
+      setBetError('Vennligst skriv inn et gyldig beløp');
       return;
     }
+
+    if (teamBalance !== null && amount > teamBalance) {
+      setBetError('Du kan ikke vedde mer enn du har igjen!');
+      return;
+    }
+    setBetError(null);
 
     setIsPlacingBet(true);
     try {
@@ -118,7 +125,10 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
             <TextInput
               style={styles.input}
               value={betAmount}
-              onChangeText={setBetAmount}
+              onChangeText={text => {
+                setBetAmount(text);
+                setBetError(null);
+              }}
               placeholder="Skriv inn antall slurker"
               placeholderTextColor="#999"
               keyboardType="numeric"
@@ -132,13 +142,18 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
             </Text>
           )}
 
+          {/* Vis feilmelding hvis innsats er ugyldig */}
+          {betError && (
+            <Text style={{color: 'red', marginBottom: 8}}>{betError}</Text>
+          )}
+
           <Button
             label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}
             onPress={handlePlaceBet}
-            disabled={!selectedOutcome || !betAmount || isPlacingBet}
+            disabled={!selectedOutcome || !betAmount || isPlacingBet || !!betError}
             style={[
               styles.betButton,
-              (!selectedOutcome || !betAmount || isPlacingBet) ? styles.disabledButton : {}
+              (!selectedOutcome || !betAmount || isPlacingBet || !!betError) ? styles.disabledButton : {}
             ]}
             textStyle={styles.betButtonText}
           />
