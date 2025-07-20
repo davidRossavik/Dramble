@@ -12,13 +12,15 @@ type Props = {
   challengeIndex: number;
   teams: Team[];
   allTeams: Team[];
+  balances?: Record<string, number>;
 };
 
-export default function TeamVsTeam({ runde, gameId, challengeIndex, teams, allTeams }: Props) {
+export default function TeamVsTeam({ runde, gameId, challengeIndex, teams, allTeams, balances }: Props) {
   const [teamName, setTeamName] = useState<string>('');
   const [selectedTeam, setSelectedTeam] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
   const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [teamBalance, setTeamBalance] = useState<number | null>(null);
 
   // Hent team-navn
   useEffect(() => {
@@ -26,6 +28,12 @@ export default function TeamVsTeam({ runde, gameId, challengeIndex, teams, allTe
       if (name) setTeamName(name);
     });
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem('teamName').then((team) => {
+      if (team && balances && balances[team]) setTeamBalance(balances[team]);
+    });
+  }, [balances]);
 
   const handlePlaceBet = async () => {
     if (!selectedTeam || !betAmount || !teamName) {
@@ -115,6 +123,13 @@ export default function TeamVsTeam({ runde, gameId, challengeIndex, teams, allTe
               keyboardType="numeric"
             />
           </View>
+
+          {/* Vis lagets balance */}
+          {teamBalance !== null && (
+            <Text style={{color: '#F0E3C0', fontWeight: 'bold', marginBottom: 8}}>
+              Slurker igjen: {teamBalance}
+            </Text>
+          )}
 
           <Button
             label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}

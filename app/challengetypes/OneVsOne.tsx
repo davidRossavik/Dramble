@@ -13,20 +13,25 @@ type Props = {
   challengeIndex: number;
   teams: Team[];
   allTeams: Team[];
+  balances?: Record<string, number>;
 };
 
-export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeams }: Props) {
+export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeams, balances }: Props) {
   const [playerName, setPlayerName] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
   const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [teamBalance, setTeamBalance] = useState<number | null>(null);
 
   // Hent spiller-navn
   useEffect(() => {
     AsyncStorage.getItem('playerName').then((name) => {
       if (name) setPlayerName(name);
     });
-  }, []);
+    AsyncStorage.getItem('teamName').then((team) => {
+      if (team && balances && balances[team]) setTeamBalance(balances[team]);
+    });
+  }, [balances]);
 
   const handlePlaceBet = async () => {
     if (!selectedPlayer || !betAmount || !playerName) {
@@ -115,6 +120,13 @@ export default function OneVsOne({ runde, gameId, challengeIndex, teams, allTeam
               keyboardType="numeric"
             />
           </View>
+
+          {/* Vis lagets balance */}
+          {teamBalance !== null && (
+            <Text style={{color: '#F0E3C0', fontWeight: 'bold', marginBottom: 8}}>
+              Slurker igjen: {teamBalance}
+            </Text>
+          )}
 
           <Button
             label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}

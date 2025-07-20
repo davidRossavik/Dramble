@@ -1,9 +1,10 @@
 import OneVsOne from '@/app/challengetypes/OneVsOne';
 import TeamVsItself from '@/app/challengetypes/TeamVsItself';
 import TeamVsTeam from '@/app/challengetypes/TeamVsTeam';
-import { setSelectedTeamsForChallenge } from '@/utils/games';
+import { getGameById, setSelectedTeamsForChallenge } from '@/utils/games';
 import { Runde } from '@/utils/types';
-import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 type Props = {
@@ -16,6 +17,17 @@ type Props = {
 
 export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseRequested, isTransitioning }: Props) {
   const [isSelectingTeams, setIsSelectingTeams] = useState(false);
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  const [myTeamName, setMyTeamName] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchBalances() {
+      const { data } = await getGameById(gameId); // runde.code hvis tilgjengelig, ellers gameId
+      if (data && data.balances) setBalances(data.balances);
+    }
+    fetchBalances();
+    AsyncStorage.getItem('teamName').then(setMyTeamName);
+  }, [gameId, runde]);
 
   // Ikke vis noen loading states hvis parent er i transition
   if (isTransitioning) {
@@ -80,15 +92,26 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
     );
   }
 
+  // Vis balances for alle lag
+  const renderBalances = () => {
+    if (!myTeamName || !balances[myTeamName]) return null;
+    return (
+      <View style={{marginBottom: 16}}>
+        <Text style={{fontWeight: 'bold', color: '#F0E3C0', marginBottom: 4}}>Slurker igjen:</Text>
+        <Text style={{color: '#F0E3C0'}}>{balances[myTeamName]}</Text>
+      </View>
+    );
+  };
+
   // Render betting komponent basert på challenge type
   const renderBettingComponent = () => {
     switch (runde.challenge.type) {
       case '1v1':
-        return <OneVsOne runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <OneVsOne runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
       case 'Team-vs-Team':
-        return <TeamVsTeam runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <TeamVsTeam runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
       case 'Team-vs-itself':
-        return <TeamVsItself runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} />;
+        return <TeamVsItself runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
       default:
         return <Text style={styles.errorText}>Ukjent challenge-type</Text>;
     }
@@ -96,8 +119,8 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
 
   return (
     <View style={styles.container}>
+      {/* {renderBalances()} Fjernet, vises kun i betting-komponentene */}
       {renderBettingComponent()}
-
       {isHost && runde.selectedTeams.length > 0 && (
         <Text onPress={onNextPhaseRequested} style={styles.startButton}>
           Start Challenge

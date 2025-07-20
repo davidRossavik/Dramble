@@ -99,6 +99,18 @@ export async function getGameByCode(code: string) {
   return { data, error: null };
 }
 
+export async function getGameById(id: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) {
+    console.error("Feil ved henting av spill på id:", error.message);
+    return { data: null, error };
+  }
+  return { data, error: null };
+}
 
 
 
@@ -333,3 +345,4 @@ export async function updateBalances(gameId: string, balances: Record<string, nu
     .eq('id', gameId);
   return { error };
 }
+
