@@ -12,20 +12,20 @@ import {
   View,
 } from 'react-native';
 
-const backgroundImage = require('../assets/images/background.png');
-const wheelImage = require('../assets/images/spinTheWheel.png');
-const arrowImage = require('../assets/images/pil.png');
+const backgroundImage = require('../../assets/images/background.png');
+const wheelImage = require('../../assets/images/spinTheWheel.png');
+const arrowImage = require('../../assets/images/pil.png');
 
 const { width } = Dimensions.get('window');
 
-const segments = [
-  'Drikk 3 slurker',
-  '+10 slurker',
-  '-5 slurker',
-  '+10 slurker',
-  'ingenting',
-  '-5 slurker',
-];
+// const segments = [
+//   'Drikk 3 slurker',
+//   '+10 slurker',
+//   '-5 slurker',
+//   '+10 slurker',
+//   'ingenting',
+//   '-5 slurker',
+// ];
 
 export default function SpinTheWheelScreen() {
   const rotation = useRef(new Animated.Value(0)).current;

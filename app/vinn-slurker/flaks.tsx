@@ -1,15 +1,15 @@
 import Slider from '@react-native-community/slider';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    ImageBackground,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type Card = {
@@ -18,11 +18,11 @@ type Card = {
   flipped: boolean;
 };
 
-const backgroundImage = require('../assets/images/background.png');
-const cardBackImage = require('../assets/images/card.png');
-const champisImage = require('../assets/images/champis.png');
-const whiskeyImage = require('../assets/images/whiskey.png');
-const heartImage = require('../assets/images/heart.png');
+const backgroundImage = require('../../assets/images/background.png');
+const cardBackImage = require('../../assets/images/card.png');
+const champisImage = require('../../assets/images/champis.png');
+const whiskeyImage = require('../../assets/images/whiskey.png');
+const heartImage = require('../../assets/images/heart.png');
 
 const NUM_CARDS = 12;
 
