@@ -54,10 +54,10 @@ export async function addPlayerToTeam(gameId: string, teamName: string, newPlaye
 
 
 
-export async function createGame(code:string, teams: Team[]) {
+export async function createGame(code:string, teams: Team[], startSlurks: number) {
     const balances: Record<string, number> = {};
     for (const team of teams) {
-        balances[team.teamName] = 100; // Startslurker per lag
+        balances[team.teamName] = startSlurks;
     }
 
     const { data, error } = await supabase
@@ -324,4 +324,12 @@ export async function getWinnerForChallenge(gameId: string, challengeIndex: numb
     console.error('Feil ved parsing av challenge_winners:', parseError);
     return null;
   }
+}
+
+export async function updateBalances(gameId: string, balances: Record<string, number>) {
+  const { error } = await supabase
+    .from('games')
+    .update({ balances })
+    .eq('id', gameId);
+  return { error };
 }
