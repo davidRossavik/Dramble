@@ -61,7 +61,7 @@ export default function Index() {
 
     // Naviger videre med spill-id og kode
     router.push({
-      pathname: '/vinn-slurker/upOrDownStart', //bytt denne
+      pathname: '/vinn-slurker/rouletteStart', //bytt denne
       params: { gameId: data.id, code }
     });
   };
