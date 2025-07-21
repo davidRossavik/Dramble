@@ -138,7 +138,13 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
     const newChallenge = challenges[newIndex];
 
     if (!newChallenge) {
-      throw new Error(`Ingen challenge funnet for index: ${newIndex}`);
+      // Ingen flere challenges igjen, sett status til 'finished'
+      await supabase
+        .from('games')
+        .update({ status: 'finished' })
+        .eq('id', gameId);
+      console.log('Spillet er ferdig, status satt til finished');
+      return;
     }
 
     // Velg lag basert på challenge type

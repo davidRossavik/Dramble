@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
+import GameFinishedView from './stateViews/GameFinishedView';
 import PlayingView from './stateViews/PlayingView';
 
 export default function ChallengeScreen() {
@@ -14,6 +15,7 @@ export default function ChallengeScreen() {
   const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [gameStatus, setGameStatus] = useState<string | null>(null);
 
   if (typeof gameId !== 'string') {
     return <Text>Invalid game ID</Text>;
@@ -28,31 +30,33 @@ export default function ChallengeScreen() {
     checkHostStatus();
   }, []);
 
-  // Initial game state
+  // Hent game status og initial game state
   useEffect(() => {
-    const fetchInitialRunde = async () => {
+    const fetchInitialGame = async () => {
       try {
         const { data, error } = await supabase
           .from('games')
-          .select('current_challenge_index')
+          .select('current_challenge_index, status')
           .eq('id', gameId)
           .single();
 
         if (!error && data) {
-          const newRunde = await fetchRunde(gameId, data.current_challenge_index);
-          setRunde(newRunde);
+          setGameStatus(data.status);
+          if (data.status !== 'finished') {
+            const newRunde = await fetchRunde(gameId, data.current_challenge_index);
+            setRunde(newRunde);
+          }
         } else {
           console.error('Feil ved henting av spilldata:', error);
         }
       } catch (error) {
-        console.error('Feil ved henting av initial runde:', error);
+        console.error('Feil ved henting av initial game:', error);
       }
     };
-
-    fetchInitialRunde();
+    fetchInitialGame();
   }, [gameId]);
 
-  // Realtime oppdatering - enkel
+  // Realtime oppdatering for status og runde
   useEffect(() => {
     const channel = supabase
       .channel(`game-${gameId}`)
@@ -66,34 +70,34 @@ export default function ChallengeScreen() {
         },
         async (payload) => {
           try {
+            if (payload.new.status !== payload.old?.status) {
+              setGameStatus(payload.new.status);
+              if (payload.new.status === 'finished') {
+                return;
+              }
+            }
+            if (payload.new.status === 'finished') {
+              return;
+            }
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
-            
-            // Hvis challenge index endret seg, hent hele runden på nytt
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex);
               setRunde(newRunde);
               return;
             }
-            
-            // Hvis challenge_state endret seg, oppdater runden (viktig for fase-overganger)
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex);
               setRunde(newRunde);
               return;
             }
-            
-            // Hvis bare challenge_winners endret seg, ignorer det
             if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
-              return; // Ikke gjør noe
+              return;
             }
-            
-            // Sjekk om det er andre endringer som faktisk påvirker runden
             const hasOtherChanges = 
               payload.new.selected_teams !== payload.old?.selected_teams ||
               payload.new.teams !== payload.old?.teams ||
               payload.new.challenges !== payload.old?.challenges;
-            
             if (hasOtherChanges) {
               const newRunde = await fetchRunde(gameId, newIndex);
               setRunde(newRunde);
@@ -104,7 +108,6 @@ export default function ChallengeScreen() {
         }
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -133,6 +136,12 @@ export default function ChallengeScreen() {
     if (isTransitioning || !runde) return;
     setIsTransitioning(true);
 
+    // Ikke gå videre hvis spillet er ferdig
+    if (gameStatus === 'finished') {
+      setIsTransitioning(false);
+      return;
+    }
+
     // Host oppdaterer state i DB
     if (isHost) {
       try {
@@ -148,17 +157,20 @@ export default function ChallengeScreen() {
         setIsTransitioning(false);
       }
     }
-
     // Nå venter vi på at realtime skal oppdatere runde
   };
 
   // Ikke vis noe mens vi bytter eller laster
-  if (!isRundeReady(runde, isTransitioning)) {  
+  if (gameStatus !== 'finished' && !isRundeReady(runde, isTransitioning)) {  
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Laster utfordring...</Text>
       </View>
     );
+  }
+
+  if (gameStatus === 'finished') {
+    return <GameFinishedView gameId={gameId} isHost={isHost} />;
   }
 
   return (
