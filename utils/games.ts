@@ -2,39 +2,11 @@ import { supabase } from "../supabase";
 import { Player, Team } from "./types";
 
 
-//henter alle rader med spill i "games" tabellen
-export async function getAllGames() {
-    const{data, error} = await supabase.from("games").select("*");
-    if (error) {
-        console.log("feil ved innhenting av games data: ", error.message)
-        return [];
-    }
-
-    return data;
-}
 
 
 
-export async function getTeamForPlayer(gameId: string, playerId: string) {
-  const { data: game, error } = await supabase
-    .from('games')
-    .select('teams')
-    .eq('id', gameId)
-    .single();
 
-  if (error || !game) {
-    console.error("Kunne ikke hente spill:", error);
-    return null;
-  }
 
-  for (const team of game.teams as Team[]) {
-    if (team.players.some(p => p.id === playerId)) {
-      return team;
-    }
-  }
-
-  return null;
-}
 
 
 
@@ -82,10 +54,10 @@ export async function addPlayerToTeam(gameId: string, teamName: string, newPlaye
 
 
 
-export async function createGame(code:string, teams: Team[]) {
+export async function createGame(code:string, teams: Team[], startSlurks: number) {
     const balances: Record<string, number> = {};
     for (const team of teams) {
-        balances[team.teamName] = 100; // Startslurker per lag
+        balances[team.teamName] = startSlurks;
     }
 
     const { data, error } = await supabase
@@ -127,6 +99,18 @@ export async function getGameByCode(code: string) {
   return { data, error: null };
 }
 
+export async function getGameById(id: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) {
+    console.error("Feil ved henting av spill på id:", error.message);
+    return { data: null, error };
+  }
+  return { data, error: null };
+}
 
 
 
@@ -217,3 +201,148 @@ export async function removeTeam(gameId: string, teamName: string) {
 
   return { error: updateError };
 }
+
+// Nye funksjoner for å håndtere valgte teams for challenges
+
+export async function setSelectedTeamsForChallenge(gameId: string, challengeIndex: number, selectedTeams: Team[]) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('selected_teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av selected_teams:', error);
+    return { error };
+  }
+
+  try {
+    // Parse JSON hvis det er en string, ellers bruk direkte
+    const currentSelectedTeams = typeof data?.selected_teams === 'string' 
+      ? JSON.parse(data.selected_teams) 
+      : (data?.selected_teams || {});
+    
+    const updatedSelectedTeams = {
+      ...currentSelectedTeams,
+      [challengeIndex]: selectedTeams
+    };
+
+    const { error: updateError } = await supabase
+      .from('games')
+      .update({ selected_teams: updatedSelectedTeams })
+      .eq('id', gameId);
+
+    if (updateError) {
+      console.error('Feil ved oppdatering av selected_teams:', updateError);
+    }
+
+    return { error: updateError };
+  } catch (parseError) {
+    console.error('Feil ved parsing av selected_teams:', parseError);
+    return { error: parseError };
+  }
+}
+
+export async function getSelectedTeamsForChallenge(gameId: string, challengeIndex: number): Promise<Team[]> {
+  const { data, error } = await supabase
+    .from('games')
+    .select('selected_teams')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av selected_teams:', error);
+    return [];
+  }
+  if (!data?.selected_teams) {
+    // Ikke logg som error, dette er normalt hvis ingen lag er valgt enda
+    return [];
+  }
+
+  try {
+    const selectedTeams = typeof data.selected_teams === 'string'
+      ? JSON.parse(data.selected_teams)
+      : data.selected_teams;
+    return selectedTeams[challengeIndex] || [];
+  } catch (parseError) {
+    console.error('Feil ved parsing av selected_teams:', parseError);
+    return [];
+  }
+}
+
+// Nye funksjoner for å håndtere vinner-seleksjon
+
+export async function setWinnerForChallenge(gameId: string, challengeIndex: number, winner: string) {
+  const { data, error } = await supabase
+    .from('games')
+    .select('challenge_winners')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av challenge_winners:', error);
+    return { error };
+  }
+
+  try {
+    // Parse JSON hvis det er en string, ellers bruk direkte
+    const currentWinners = typeof data?.challenge_winners === 'string' 
+      ? JSON.parse(data.challenge_winners) 
+      : (data?.challenge_winners || {});
+    
+    const updatedWinners = {
+      ...currentWinners,
+      [challengeIndex]: winner
+    };
+
+    const { error: updateError } = await supabase
+      .from('games')
+      .update({ challenge_winners: updatedWinners })
+      .eq('id', gameId);
+
+    if (updateError) {
+      console.error('Feil ved oppdatering av challenge_winners:', updateError);
+    }
+
+    return { error: updateError };
+  } catch (parseError) {
+    console.error('Feil ved parsing av challenge_winners:', parseError);
+    return { error: parseError };
+  }
+}
+
+export async function getWinnerForChallenge(gameId: string, challengeIndex: number): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('games')
+    .select('challenge_winners')
+    .eq('id', gameId)
+    .single();
+
+  if (error) {
+    console.error('Feil ved henting av challenge_winners:', error);
+    return null;
+  }
+  if (!data?.challenge_winners) {
+    // Ikke logg som error, dette er normalt hvis ingen vinner er valgt ennå
+    return null;
+  }
+
+  try {
+    const challengeWinners = typeof data.challenge_winners === 'string'
+      ? JSON.parse(data.challenge_winners)
+      : data.challenge_winners;
+    return challengeWinners[challengeIndex] || null;
+  } catch (parseError) {
+    console.error('Feil ved parsing av challenge_winners:', parseError);
+    return null;
+  }
+}
+
+export async function updateBalances(gameId: string, balances: Record<string, number>) {
+  const { error } = await supabase
+    .from('games')
+    .update({ balances })
+    .eq('id', gameId);
+  return { error };
+}
+

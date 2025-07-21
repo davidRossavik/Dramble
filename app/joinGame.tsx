@@ -31,6 +31,10 @@ export default function JoinGame() {
 
     const gameId = data.id;
     const existingTeams = data.teams ?? [];
+    const balances = data.balances ?? {};
+    // Finn startverdi fra balances (bruk første lag sin verdi, eller 100 som fallback)
+    const balanceValues = Object.values(balances);
+    const startBalance = balanceValues.length > 0 ? Number(balanceValues[0]) : 100;
 
     // Random Lagnavn-generator //
     const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
@@ -39,14 +43,13 @@ export default function JoinGame() {
 
     const newTeam = {
         teamName: randomTeamName,
-        slurks: 100, //hardkode for testing
         players: [{
             id: generateId(), // Eller crypto.randomUUID
             name: cleanName,
         }],
     };
 
-    await addTeamToGame(gameId, newTeam, 100);
+    await addTeamToGame(gameId, newTeam, startBalance);
 
     await AsyncStorage.setItem('gameCode', code);
     await AsyncStorage.setItem('teamName', randomTeamName); 

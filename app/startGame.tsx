@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
+import { addPlayerToTeam, createGame, getGameByCode, removePlayerFromTeam, removeTeam, updateBalances } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
 import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
@@ -30,6 +30,7 @@ export default function GameLobby() {
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
   const [localTeamName, setLocalTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [startSlurks, setStartSlurks] = useState<number>(100); // Ny state for startverdi
   const statusChannelRef = useRef<any>(null);
   // State og Referanser //
 
@@ -70,34 +71,13 @@ export default function GameLobby() {
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && playerName !== 'Host') {
-            // Hent første challenge fra Supabase
-            const fetchFirstChallenge = async () => {
-              const { data, error } = await supabase
-                .from('games')
-                .select('challenges')
-                .eq('id', id)
-                .single();
-
-              if (error) {
-                console.log('Feil ved henting av challenge for lagleder:', error);
-                return;
-              }
-
-              const challengeList = data.challenges;
-              const firstChallenge = challengeList[0];
-
-              router.replace({
-                pathname: '/challengeScreen',
-                params: {
-                  challenge: JSON.stringify(firstChallenge),
-                  gameId: id.toString(),
+            router.replace({
+              pathname: '/challengeScreen',
+              params: {
+                gameId: id.toString(),
               },
             });
-          };
-
-          fetchFirstChallenge();
-        }
-
+          }
         }
       )
       .subscribe();
@@ -194,6 +174,49 @@ export default function GameLobby() {
   };
   // FJERN SPILLER //
 
+  const handleCreateGame = async () => {
+    // Kun host skal kunne opprette spill
+    if (playerName !== 'Host') return;
+    // Sjekk om spill allerede finnes
+    const { data: existing, error: fetchError } = await getGameByCode(code);
+    if (existing) {
+      setGameId(existing.id);
+      return;
+    }
+    // Lag lag-array med host som første lag
+    const teams: Team[] = [
+      {
+        teamName: localTeamName,
+        players: [
+          {
+            id: generateId(),
+            name: playerName
+          }
+        ]
+      }
+    ];
+    // Opprett spill med valgt startSlurks
+    const { data, error } = await createGame(code, teams, startSlurks);
+    if (data) {
+      setGameId(data.id);
+      fetchTeams(); // Oppdater lagvisning
+    } else {
+      alert('Feil ved opprettelse av spill: ' + error);
+    }
+  };
+
+  // Legg til funksjon for å oppdatere balances når host velger modus
+  const handleUpdateBalances = async (newBalance: number) => {
+    if (!gameId) return;
+    // Oppdater balances for alle lag til valgt verdi
+    const balances: Record<string, number> = {};
+    teams.forEach(team => {
+      balances[team.teamName] = newBalance;
+    });
+    await updateBalances(gameId, balances);
+    fetchTeams(); // Oppdater visning
+  };
+
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
@@ -244,6 +267,18 @@ export default function GameLobby() {
             </View>
           </View>
         ))}
+
+        {/* Velg startverdi for slurker - kun for host */}
+        {playerName === 'Host' && (
+          <View style={{marginBottom: 20}}>
+            <Text style={{fontWeight: 'bold', fontSize: 18, color: '#F0E3C0', marginBottom: 8}}>Startsum slurker per lag:</Text>
+            <View style={{flexDirection: 'row', gap: 10}}>
+              <Button label="Småslurking (50)" onPress={() => { setStartSlurks(50); handleUpdateBalances(50); }} style={{backgroundColor: startSlurks === 50 ? '#D49712' : '#073510'}} />
+              <Button label="Festmodus (100)" onPress={() => { setStartSlurks(100); handleUpdateBalances(100); }} style={{backgroundColor: startSlurks === 100 ? '#D49712' : '#073510'}} />
+              <Button label="Blackout (200)" onPress={() => { setStartSlurks(200); handleUpdateBalances(200); }} style={{backgroundColor: startSlurks === 200 ? '#D49712' : '#073510'}} />
+            </View>
+          </View>
+        )}
       </ScrollView>
       
       {/* Start Spill */}
@@ -251,31 +286,17 @@ export default function GameLobby() {
         <View style={styles.startGameContainer}>
           <Button label="Start spill" style={styles.startGame_button}
             onPress={async () => {
-              await initializeGame(gameId);
-              await updateGameStatus(gameId, 'playing');
-
-              const { data, error } = await supabase
-                .from('games')
-                .select('challenges')
-                .eq('id', gameId)
-                .single()
-
-              if (error) {
-                console.log("feil ved henting av challenge: ", error)
+              if (!gameId) {
+                await handleCreateGame();
                 return;
               }
-              const challangeList = data.challenges;
-              const currentIndex = 0;
-              const firstChallenge = challangeList[currentIndex];
-
+              await initializeGame(gameId);
+              await updateGameStatus(gameId, 'playing');
               router.push({
                 pathname: '/challengeScreen',
-                params: {
-                  challenge: JSON.stringify(firstChallenge), // må serialiseres
-                  gameId: gameId.toString(),
-              }
-            });
-          }}
+                params: { gameId: gameId.toString() },
+              });
+            }}
           /> 
         </View>
       )}
