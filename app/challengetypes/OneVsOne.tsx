@@ -1,4 +1,3 @@
-
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { submitBet } from '@/utils/bets';
@@ -196,7 +195,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   challengeContainer: {
-    marginBottom: 30,
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 80,
+    gap: 40,
     padding: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 10,
@@ -206,6 +209,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#FAF0DE',
     lineHeight: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   bettingContainer: {
     marginBottom: 30,
@@ -308,4 +313,69 @@ const styles = StyleSheet.create({
     color: '#FAF0DE',
     fontStyle: 'italic',
   },
+
+  // TEXT //
+  baseText: {
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+  },
+  drinkCountText: {
+    fontSize: 25,
+  },
+  challengeText: {
+    fontSize: 30,
+  },
+  buttonText: {
+    fontSize: 20,
+  },
+  sliderText: {
+    fontSize: 25,
+    marginBottom: 20,
+  },
+
+  // BUTTONS //
+  buttonBase: {
+    width: 170,
+    height: 100,
+    borderRadius: 5,
+  },
+  button1: {
+    backgroundColor: '#EEB90E',
+  },
+  button2: {
+    backgroundColor: '#D41E1D',
+  },
+  exitButton: {
+    width: 280,
+    height: 80,
+    backgroundColor: '#EEB90E',
+  },
+
+  // VIEWSTYLES //
+  drinkCountContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  drinkCountPic: {
+    width: 80,
+    height: 80,
+  },
+  buttonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 50,
+  },
+  slider: {
+    width: '80%',
+    height: 40,
+    alignSelf: 'center',
+  },
 });
+
