@@ -1,6 +1,7 @@
 import OneVsOne from '@/app/challengetypes/OneVsOne';
 import TeamVsItself from '@/app/challengetypes/TeamVsItself';
 import TeamVsTeam from '@/app/challengetypes/TeamVsTeam';
+import { submitBet } from '@/utils/bets';
 import { getGameById, setSelectedTeamsForChallenge } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +21,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
   const [isSelectingTeams, setIsSelectingTeams] = useState(false);
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [myTeamName, setMyTeamName] = useState<string | null>(null);
+  const [localBets, setLocalBets] = useState<any[]>([]); // Lokale bets
 
   useEffect(() => {
     async function fetchBalances() {
@@ -127,15 +129,49 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
     );
   };
 
+  // Legg til en hjelpefunksjon for å oppdatere balances lokalt
+  function optimisticUpdateBalance(teamName: string, amount: number) {
+    setBalances(prev => ({
+      ...prev,
+      [teamName]: (prev[teamName] || 0) - amount
+    }));
+  }
+
+  // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
+  const handlePlaceBet = (bet: { teamName: string; betOn: string; amount: number }) => {
+    setLocalBets(prev => [
+      ...prev,
+      {
+        ...bet,
+        isCorrect: false,
+        delta: 0
+      }
+    ]);
+    optimisticUpdateBalance(bet.teamName, bet.amount);
+    // ...reset form, vis feedback...
+  };
+
+  // Når hosten trykker 'Start challenge', send alle bets til Supabase
+  const handleStartChallenge = async () => {
+    for (const bet of localBets) {
+      await submitBet(gameId, bet.teamName, runde.challengeIndex, bet.amount, bet.betOn);
+    }
+    setLocalBets([]); // Tøm lokal state etter innsending
+    onNextPhaseRequested(); // Bytt fase som før
+  };
+
+  // Vis kun lokale bets (evt. + runde.betResults hvis ønskelig)
+  const allBets = [...localBets];
+
   // Render betting komponent basert på challenge type
   const renderBettingComponent = () => {
     switch (runde.challenge.type) {
       case '1v1':
-        return <OneVsOne runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
+        return <OneVsOne runde={runde} balances={balances} onPlaceBet={handlePlaceBet} localBets={localBets} />;
       case 'Team-vs-Team':
-        return <TeamVsTeam runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
+        return <TeamVsTeam runde={runde} balances={balances} onPlaceBet={handlePlaceBet} localBets={localBets} />;
       case 'Team-vs-itself':
-        return <TeamVsItself runde={runde} gameId={gameId} challengeIndex={runde.challengeIndex} teams={runde.selectedTeams} allTeams={runde.teams} balances={balances} />;
+        return <TeamVsItself runde={runde} balances={balances} onPlaceBet={handlePlaceBet} localBets={localBets} />;
       default:
         return <Text style={styles.errorText}>Ukjent challenge-type</Text>;
     }
@@ -146,7 +182,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
       {/* {renderBalances()} Fjernet, vises kun i betting-komponentene */}
       {renderBettingComponent()}
       {isHost && runde.selectedTeams.length > 0 && (
-        <Text onPress={onNextPhaseRequested} style={styles.startButton}>
+        <Text onPress={handleStartChallenge} style={styles.startButton}>
           Start Challenge
         </Text>
       )}

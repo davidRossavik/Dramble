@@ -12,7 +12,6 @@ import PlayingView from './stateViews/PlayingView';
 
 export default function ChallengeScreen() {
   const { gameId } = useLocalSearchParams();
-  console.log('ChallengeScreen mount/render', gameId);
   const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
