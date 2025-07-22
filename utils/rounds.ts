@@ -24,7 +24,7 @@ export function selectTeamsForChallenge(teams: Team[], challengeType: string): T
 /**
  * Henter alt nødvendig data for en runde i parallell
  */
-export async function fetchRunde(gameId: string, challengeIndex: number): Promise<Runde> {
+export async function fetchRunde(gameId: string, challengeIndex: number, debug: string = ' '): Promise<Runde | null> {
   try {
     // Hent spilldata og challenge
     const { data: game, error: gameError } = await supabase
@@ -32,14 +32,14 @@ export async function fetchRunde(gameId: string, challengeIndex: number): Promis
       .select('*')
       .eq('id', gameId)
       .single();
-
     if (gameError || !game) {
       throw new Error(`Kunne ikke hente spill: ${gameError?.message}`);
     }
 
     const challenge = game.challenges?.[challengeIndex];
     if (!challenge) {
-      throw new Error(`Ingen challenge funnet for index: ${challengeIndex}`);
+      // Ingen challenge funnet for denne indexen – returner null i stedet for å kaste feil
+      return null;
     }
 
     // Hent alle nødvendige data i parallell
@@ -138,7 +138,13 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
     const newChallenge = challenges[newIndex];
 
     if (!newChallenge) {
-      throw new Error(`Ingen challenge funnet for index: ${newIndex}`);
+      // Ingen flere challenges igjen, sett status til 'finished'
+      await supabase
+        .from('games')
+        .update({ status: 'finished' })
+        .eq('id', gameId);
+      console.log('Spillet er ferdig, status satt til finished');
+      return;
     }
 
     // Velg lag basert på challenge type

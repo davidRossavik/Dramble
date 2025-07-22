@@ -1,25 +1,21 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { submitBet } from '@/utils/bets';
-import { Runde, Team } from '@/utils/types';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Props = {
   runde: Runde;
-  gameId: string;
-  challengeIndex: number;
-  teams: Team[];
-  allTeams: Team[];
-  balances?: Record<string, number>;
+  balances: Record<string, number>;
+  onPlaceBet: (bet: { teamName: string; betOn: string; amount: number }) => void;
+  localBets?: { teamName: string; betOn: string; amount: number }[];
 };
 
-export default function TeamVsItself({ runde, gameId, challengeIndex, teams, allTeams, balances }: Props) {
+export default function TeamVsItself({ runde, balances, onPlaceBet, localBets }: Props) {
   const [teamName, setTeamName] = useState<string>('');
   const [selectedOutcome, setSelectedOutcome] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
-  const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [teamBalance, setTeamBalance] = useState<number | null>(null);
   const [betError, setBetError] = useState<string | null>(null);
 
@@ -54,24 +50,9 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
     }
     setBetError(null);
 
-    setIsPlacingBet(true);
-    try {
-      const { error } = await submitBet(gameId, teamName, challengeIndex, amount, selectedOutcome);
-      if (error) {
-        console.error('Feil ved betting:', error);
-        alert('Feil ved betting. Prøv igjen.');
-      } else {
-        // Reset form
-        setSelectedOutcome('');
-        setBetAmount('');
-        alert('Betting registrert!');
-      }
-    } catch (error) {
-      console.error('Uventet feil ved betting:', error);
-      alert('Uventet feil ved betting. Prøv igjen.');
-    } finally {
-      setIsPlacingBet(false);
-    }
+    onPlaceBet({ teamName, betOn: selectedOutcome, amount });
+    setBetAmount('');
+    setSelectedOutcome('');
   };
 
   const getOutcomeOptions = () => {
@@ -86,6 +67,12 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
   };
 
   const outcomeOptions = getOutcomeOptions();
+
+  // Kombiner betResults og localBets
+  const allBets = [
+    ...(runde.betResults || []),
+    ...(localBets || [])
+  ];
 
   return (
     <BackgroundWrapper>
@@ -148,12 +135,12 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
           )}
 
           <Button
-            label={isPlacingBet ? "Plasserer veddemål..." : "Plasser veddemål"}
+            label="Plasser veddemål"
             onPress={handlePlaceBet}
-            disabled={!selectedOutcome || !betAmount || isPlacingBet || !!betError}
+            disabled={!selectedOutcome || !betAmount || !!betError}
             style={[
               styles.betButton,
-              (!selectedOutcome || !betAmount || isPlacingBet || !!betError) ? styles.disabledButton : {}
+              (!selectedOutcome || !betAmount || !!betError) ? styles.disabledButton : {}
             ]}
             textStyle={styles.betButtonText}
           />
@@ -162,8 +149,8 @@ export default function TeamVsItself({ runde, gameId, challengeIndex, teams, all
         <View style={styles.currentBetsContainer}>
           <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
           
-          {runde.betResults.length > 0 ? (
-            runde.betResults.map((bet, index) => (
+          {allBets.length > 0 ? (
+            allBets.map((bet, index) => (
               <View key={index} style={styles.betItem}>
                 <Text style={styles.betTeam}>{bet.teamName}</Text>
                 <Text style={styles.betInfo}>

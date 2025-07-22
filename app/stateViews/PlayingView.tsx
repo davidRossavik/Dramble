@@ -16,6 +16,7 @@ type Props = {
 export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTransitioning }: Props) {
   const [localSelectedWinner, setLocalSelectedWinner] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
+  console.log('PlayingView mount/render', runde.challengeIndex);
 
   // Sjekk om bruker er host
   useEffect(() => {
@@ -73,27 +74,10 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
     }
   };
 
-  const handleWinnerSelection = async (winner: string) => {
+  const handleWinnerSelection = (winner: string) => {
     // Sett lokal valg umiddelbart for visuell feedback
     setLocalSelectedWinner(winner);
-    
-    // Lagre vinner i databasen for å synkronisere med andre brukere
-    if (isHost) {
-      try {
-        const { error } = await setWinnerForChallenge(gameId, runde.challengeIndex, winner);
-        if (error) {
-          console.error('Feil ved lagring av vinner:', error);
-          alert('Feil ved lagring av vinner. Prøv igjen.');
-          // Tilbakestill lokal valg hvis lagring feilet
-          setLocalSelectedWinner(null);
-        }
-      } catch (error) {
-        console.error('Uventet feil ved lagring av vinner:', error);
-        alert('Uventet feil ved lagring av vinner. Prøv igjen.');
-        // Tilbakestill lokal valg hvis lagring feilet
-        setLocalSelectedWinner(null);
-      }
-    }
+    // Ikke lagre til Supabase her!
   };
 
   const winnerOptions = getWinnerOptions();
@@ -129,8 +113,17 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
 
             <Button
               label="Neste fase"
-              onPress={() => {
+              onPress={async () => {
                 if (selectedWinner) {
+                  // Lagre vinner i Supabase først, hvis ikke allerede lagret
+                  if (isHost && !runde.winner) {
+                    const { error } = await setWinnerForChallenge(gameId, runde.challengeIndex, selectedWinner);
+                    if (error) {
+                      console.error('Feil ved lagring av vinner:', error);
+                      alert('Feil ved lagring av vinner. Prøv igjen.');
+                      return;
+                    }
+                  }
                   onNextPhaseRequested();
                 } else {
                   alert('Du må velge en vinner først!');
