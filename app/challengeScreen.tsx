@@ -12,6 +12,7 @@ import PlayingView from './stateViews/PlayingView';
 
 export default function ChallengeScreen() {
   const { gameId } = useLocalSearchParams();
+  console.log('ChallengeScreen mount/render', gameId);
   const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -36,14 +37,16 @@ export default function ChallengeScreen() {
       try {
         const { data, error } = await supabase
           .from('games')
-          .select('current_challenge_index, status')
+          .select('current_challenge_index, status, challenge_state')
           .eq('id', gameId)
           .single();
+        
+        
 
         if (!error && data) {
           setGameStatus(data.status);
           if (data.status !== 'finished') {
-            const newRunde = await fetchRunde(gameId, data.current_challenge_index);
+            const newRunde = await fetchRunde(gameId, data.current_challenge_index, 'initial');
             setRunde(newRunde);
           }
         } else {
@@ -73,35 +76,35 @@ export default function ChallengeScreen() {
             if (payload.new.status !== payload.old?.status) {
               setGameStatus(payload.new.status);
               if (payload.new.status === 'finished') {
-                return;
+                return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
               }
             }
             if (payload.new.status === 'finished') {
-              return;
+              return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
             }
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
             if (oldIndex !== undefined && newIndex !== oldIndex) {
-              const newRunde = await fetchRunde(gameId, newIndex);
+              const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
-              return;
+              return; //setter ny runde når index endrer seg
             }
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
-              const newRunde = await fetchRunde(gameId, newIndex);
+              const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
-              return;
+              return; //setter ny runde når state endrer seg
             }
-            if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
-              return;
-            }
-            const hasOtherChanges = 
-              payload.new.selected_teams !== payload.old?.selected_teams ||
-              payload.new.teams !== payload.old?.teams ||
-              payload.new.challenges !== payload.old?.challenges;
-            if (hasOtherChanges) {
-              const newRunde = await fetchRunde(gameId, newIndex);
-              setRunde(newRunde);
-            }
+            // if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
+            //   return;
+            // }
+            // const hasOtherChanges = 
+            //   payload.new.selected_teams !== payload.old?.selected_teams ||
+            //   payload.new.teams !== payload.old?.teams ||
+            //   payload.new.challenges !== payload.old?.challenges;
+            // if (hasOtherChanges) {
+            //   const newRunde = await fetchRunde(gameId, newIndex);
+            //   setRunde(newRunde);
+            // } tester å ikke kalle fetchRunde på andre endringer
           } catch (error) {
             console.error('Feil ved oppdatering av runde:', error);
           }
@@ -120,7 +123,7 @@ export default function ChallengeScreen() {
 
     try {
       // Hent ny runde
-      const newRunde = await fetchRunde(gameId, challengeIndex);
+      const newRunde = await fetchRunde(gameId, challengeIndex, 'transition');
       setRunde(newRunde);
     } catch (error) {
       console.error('Feil ved transition:', error);
@@ -133,6 +136,7 @@ export default function ChallengeScreen() {
   };
 
   const handlePhaseAdvance = async () => {
+    console.log('handlePhaseAdvance');
     if (isTransitioning || !runde) return;
     setIsTransitioning(true);
 

@@ -24,7 +24,7 @@ export function selectTeamsForChallenge(teams: Team[], challengeType: string): T
 /**
  * Henter alt nødvendig data for en runde i parallell
  */
-export async function fetchRunde(gameId: string, challengeIndex: number): Promise<Runde> {
+export async function fetchRunde(gameId: string, challengeIndex: number, debug: string = ' '): Promise<Runde> {
   try {
     // Hent spilldata og challenge
     const { data: game, error: gameError } = await supabase
@@ -32,7 +32,7 @@ export async function fetchRunde(gameId: string, challengeIndex: number): Promis
       .select('*')
       .eq('id', gameId)
       .single();
-
+    console.log(debug);
     if (gameError || !game) {
       throw new Error(`Kunne ikke hente spill: ${gameError?.message}`);
     }

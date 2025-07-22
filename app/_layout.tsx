@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 SplashScreen.preventAutoHideAsync(); //  ikke skjul splashscreen automatisk
 
 export default function RootLayout() {
+  console.log('RootLayout render');
   const [isReady, setIsReady] = useState(false); //  holder styr på om vi er klare
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function RootLayout() {
       headerTransparent: true,
       animation: 'fade',
       presentation: 'card',
-    }} />
+      }} />
 
     {/* Disse har vi ikke med per nå */}
     <Stack.Screen name="questionPage" options={{
