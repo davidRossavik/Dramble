@@ -3,6 +3,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 
+import BackgroundWrapper from '@/components/BackgroundWrapper';
+
 SplashScreen.preventAutoHideAsync(); //  ikke skjul splashscreen automatisk
 
 export default function RootLayout() {
@@ -33,56 +35,34 @@ export default function RootLayout() {
     return null; // ⏳ vis ingenting før vi er klare
   }
 
-  return <Stack>
-    <Stack.Screen name="index" options={{
-      headerShown: false,
-      animation: 'none',
-      presentation: 'card'
-      }} />
+  return (
+    <BackgroundWrapper>
+      <Stack>
     
-    <Stack.Screen name="startGame" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
-      }} />
-    
-    <Stack.Screen name="joinGame" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
-    }} />
-
-
-    <Stack.Screen name="challengeScreen" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
+      <Stack.Screen name="index" options={{
+        headerShown: false,
+        animation: 'none',
+        }} />
+      
+      <Stack.Screen name="startGame" options={{
+        title: '',
+        headerTransparent: true,
+        animation: 'fade',
+        }} />
+      
+      <Stack.Screen name="joinGame" options={{
+        title: '',
+        headerTransparent: true,
+        animation: 'fade',
       }} />
 
-    {/* Disse har vi ikke med per nå */}
-    <Stack.Screen name="questionPage" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
-    }} />
-
-    <Stack.Screen name="chooseWinner" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
-    }} />
-
-    <Stack.Screen name="resultPage" options={{
-      title: '',
-      headerTransparent: true,
-      animation: 'fade',
-      presentation: 'card',
-    }} />
-
-  </Stack>
+      <Stack.Screen name="challengeScreen" options={{
+        title: '',
+        headerTransparent: true,
+        animation: 'fade',
+        }} />
+      
+    </Stack>
+  </BackgroundWrapper> 
+  );
 }

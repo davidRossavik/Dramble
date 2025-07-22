@@ -10,7 +10,7 @@ import { getRandomTeamName } from "@/utils/nameGenerator";
 import { Team } from "@/utils/types";
 import { createGame } from "../utils/games";
 
-import BackgroundWrapper from "@/components/BackgroundWrapper";
+import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import InfoModal from '@/components/InfoModal';
 
