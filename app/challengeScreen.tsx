@@ -5,7 +5,7 @@ import { Runde, RundeState } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Text, View } from 'react-native';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import GameFinishedView from './stateViews/GameFinishedView';
@@ -23,20 +23,42 @@ export default function ChallengeScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const fadeIn = () => {
+  return new Promise((resolve) => {
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start();
-  }
+    }).start(({ finished }) => {
+      resolve(true);
+    });
+  });
+};
+  
+  const fadeOut = () => {
+    return new Promise((resolve) => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 2000,
+        useNativeDriver: true,
+      }).start(({finished}) => {
+        console.log('FadeOut completed:', finished);
+        resolve(true);});
+    });
+  };
+
+  useEffect(() => {
+    if (runde) {
+      fadeIn();
+    }
+  }, [runde?.state]);
   // Animasjon
 
   if (typeof gameId !== 'string') {
     return (
     <BackgroundWrapper>
-      <View style={styles.centered}>
-        <Text>Invalid game ID</Text>;
+      <View style={{justifyContent: 'center', alignItems: 'center'}}>
+        <Text>Invalid game ID</Text>
       </View>
     </BackgroundWrapper>
     )
@@ -101,23 +123,20 @@ export default function ChallengeScreen() {
                 return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
               }
             }
-            if (payload.new.status === 'finished') {
-              return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
-            }
+        
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
-              setIsTransitioning(false);
               return; //setter ny runde når index endrer seg
             }
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
-              setIsTransitioning(false);
               return; //setter ny runde når state endrer seg
             }
+
             // if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
             //   return;
             // }
@@ -129,6 +148,7 @@ export default function ChallengeScreen() {
             //   const newRunde = await fetchRunde(gameId, newIndex);
             //   setRunde(newRunde);
             // } tester å ikke kalle fetchRunde på andre endringer
+
           } catch (error) {
             console.error('Feil ved oppdatering av runde:', error);
             setIsTransitioning(false);
@@ -141,18 +161,10 @@ export default function ChallengeScreen() {
     };
   }, [gameId]);
 
-  // Fade på runde.state endring //
-  useEffect(() => {
-    if (runde) {
-      fadeIn();
-    }
-  }, [runde?.state]);
-
   // Enkel oppdatering uten animasjon
   const transitionTo = async (newState: RundeState, challengeIndex: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-
     try {
       // Hent ny runde
       const newRunde = await fetchRunde(gameId, challengeIndex, 'transition');
@@ -160,18 +172,13 @@ export default function ChallengeScreen() {
     } catch (error) {
       console.error('Feil ved transition:', error);
     } 
-    // finally {
-      // Sett transition til false etter kort forsinkelse
-      // setTimeout(() => {
-      //   setIsTransitioning(false);
-      // }, 100);
-    // }
   };
-
+  
   const handlePhaseAdvance = async () => {
     console.log('handlePhaseAdvance');
     if (isTransitioning || !runde) return;
     setIsTransitioning(true);
+
 
     // Ikke gå videre hvis spillet er ferdig
     if (gameStatus === 'finished') {
@@ -197,15 +204,6 @@ export default function ChallengeScreen() {
     // Nå venter vi på at realtime skal oppdatere runde
   };
 
-  // Ikke vis noe mens vi bytter eller laster
-  // if (gameStatus !== 'finished' && !isRundeReady(runde, isTransitioning)) {  
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  //       <Text>Laster utfordring...</Text>
-  //     </View>
-  //   );
-  // }
-
   if (gameStatus === 'finished') {
     return <GameFinishedView gameId={gameId} isHost={isHost} />;
   }
@@ -213,13 +211,6 @@ export default function ChallengeScreen() {
   return (
     <BackgroundWrapper>
       <View style={{flex: 1}}>
-        {/*Initial lasting */}
-        {isLoading && (
-          <View style={styles.centered}>
-            {/* <ActivityIndicator size="large" color="#fff" /> */}
-            {/* <Text style={{ color: 'white', marginTop: 8 }}>Laster...</Text> */}
-          </View>
-        )} 
 
         {/* Hovedinnhold med fade */}
         {!isLoading && runde && (
@@ -252,33 +243,7 @@ export default function ChallengeScreen() {
           </Animated.View>
         )}
 
-        {/* Overlay når vi venter på ny fase */}
-        {isTransitioning && (
-          <View style={styles.transitionOverlay}>
-            {/* <ActivityIndicator size="large" color="#fff" /> */}
-            {/* <Text style={{ color: 'white', marginTop: 10 }}>Laster neste fase...</Text> */}
-          </View>
-        )}
       </View>
     </BackgroundWrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  transitionOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    // backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
-});
