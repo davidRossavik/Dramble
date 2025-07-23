@@ -34,15 +34,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "splash": {
-      "image": "./assets/images/textLogo.png",  
-      "resizeMode": "contain",                
-      "backgroundColor": "#000000"            
+      "image": "./assets/images/textLogo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
     }
   }
 }
