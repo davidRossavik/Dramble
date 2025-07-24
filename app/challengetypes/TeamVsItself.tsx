@@ -2,7 +2,7 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Props = {
@@ -18,6 +18,8 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
   const [betAmount, setBetAmount] = useState<string>('');
   const [teamBalance, setTeamBalance] = useState<number | null>(null);
   const [betError, setBetError] = useState<string | null>(null);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const isPlacingBetRef = useRef(false);
 
   // Hent team-navn
   useEffect(() => {
@@ -33,26 +35,34 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
   }, [balances]);
 
   const handlePlaceBet = async () => {
-    if (!selectedOutcome || !betAmount || !teamName) {
-      alert('Vennligst velg utfall og skriv inn betting-beløp');
-      return;
-    }
+    if (isPlacingBetRef.current) return; // Blokker flere trykk synkront
+    isPlacingBetRef.current = true;
+    setIsPlacingBet(true);
+    try {
+      if (!selectedOutcome || !betAmount || !teamName) {
+        alert('Vennligst velg utfall og skriv inn betting-beløp');
+        return;
+      }
 
-    const amount = parseInt(betAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setBetError('Vennligst skriv inn et gyldig beløp');
-      return;
-    }
+      const amount = parseInt(betAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setBetError('Vennligst skriv inn et gyldig beløp');
+        return;
+      }
 
-    if (teamBalance !== null && amount > teamBalance) {
-      setBetError('Du kan ikke vedde mer enn du har igjen!');
-      return;
-    }
-    setBetError(null);
+      if (teamBalance !== null && amount > teamBalance) {
+        setBetError('Du kan ikke vedde mer enn du har igjen!');
+        return;
+      }
+      setBetError(null);
 
-    onPlaceBet({ teamName, betOn: selectedOutcome, amount });
-    setBetAmount('');
-    setSelectedOutcome('');
+      await onPlaceBet({ teamName, betOn: selectedOutcome, amount });
+      setBetAmount('');
+      setSelectedOutcome('');
+    } finally {
+      setIsPlacingBet(false);
+      isPlacingBetRef.current = false;
+    }
   };
 
   const getOutcomeOptions = () => {
@@ -135,12 +145,12 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
           )}
 
           <Button
-            label="Plasser veddemål"
+            label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
             onPress={handlePlaceBet}
-            disabled={!selectedOutcome || !betAmount || !!betError}
+            disabled={isPlacingBet || !selectedOutcome || !betAmount || !!betError}
             style={[
               styles.betButton,
-              (!selectedOutcome || !betAmount || !!betError) ? styles.disabledButton : {}
+              (isPlacingBet || !selectedOutcome || !betAmount || !!betError) ? styles.disabledButton : {}
             ]}
             textStyle={styles.betButtonText}
           />
