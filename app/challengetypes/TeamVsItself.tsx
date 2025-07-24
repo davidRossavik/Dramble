@@ -9,10 +9,10 @@ type Props = {
   runde: Runde;
   balances: Record<string, number>;
   onPlaceBet: (bet: { teamName: string; betOn: string; amount: number }) => void;
-  localBets?: { teamName: string; betOn: string; amount: number }[];
+  // localBets?: { teamName: string; betOn: string; amount: number }[]; // Fjernet
 };
 
-export default function TeamVsItself({ runde, balances, onPlaceBet, localBets }: Props) {
+export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
   const [teamName, setTeamName] = useState<string>('');
   const [selectedOutcome, setSelectedOutcome] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
@@ -70,8 +70,8 @@ export default function TeamVsItself({ runde, balances, onPlaceBet, localBets }:
 
   // Kombiner betResults og localBets
   const allBets = [
-    ...(runde.betResults || []),
-    ...(localBets || [])
+    ...(runde.betResults || [])
+    // ...(localBets || []) // Fjernet
   ];
 
   return (

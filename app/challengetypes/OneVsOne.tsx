@@ -9,10 +9,10 @@ type Props = {
   runde: Runde;
   balances: Record<string, number>;
   onPlaceBet: (bet: { teamName: string; betOn: string; amount: number }) => void;
-  localBets?: { teamName: string; betOn: string; amount: number }[];
+  
 };
 
-export default function OneVsOne({ runde, balances, onPlaceBet, localBets }: Props) {
+export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
   const [playerName, setPlayerName] = useState<string>('');
   const [teamName, setTeamName] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
@@ -69,8 +69,8 @@ export default function OneVsOne({ runde, balances, onPlaceBet, localBets }: Pro
 
   // Kombiner betResults og localBets
   const allBets = [
-    ...(runde.betResults || []),
-    ...(localBets || [])
+    ...(runde.betResults || [])
+    // ...(localBets || []) // Fjernet
   ];
 
   return (
