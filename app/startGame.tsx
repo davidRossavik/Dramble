@@ -273,9 +273,9 @@ export default function GameLobby() {
           <View style={{marginBottom: 20}}>
             <Text style={{fontWeight: 'bold', fontSize: 18, color: '#F0E3C0', marginBottom: 8}}>Startsum slurker per lag:</Text>
             <View style={{flexDirection: 'row', gap: 10}}>
-              <Button label="Småslurking (50)" onPress={() => { setStartSlurks(50); handleUpdateBalances(50); }} style={{backgroundColor: startSlurks === 50 ? '#D49712' : '#073510'}} />
-              <Button label="Festmodus (100)" onPress={() => { setStartSlurks(100); handleUpdateBalances(100); }} style={{backgroundColor: startSlurks === 100 ? '#D49712' : '#073510'}} />
-              <Button label="Blackout (200)" onPress={() => { setStartSlurks(200); handleUpdateBalances(200); }} style={{backgroundColor: startSlurks === 200 ? '#D49712' : '#073510'}} />
+              <Button label="Småslurking (20)" onPress={() => { setStartSlurks(20); handleUpdateBalances(20); }} style={{backgroundColor: startSlurks === 20 ? '#D49712' : '#073510'}} />
+              <Button label="Festmodus (50)" onPress={() => { setStartSlurks(50); handleUpdateBalances(50); }} style={{backgroundColor: startSlurks === 50 ? '#D49712' : '#073510'}} />
+              <Button label="Blackout (100)" onPress={() => { setStartSlurks(100); handleUpdateBalances(100); }} style={{backgroundColor: startSlurks === 100 ? '#D49712' : '#073510'}} />
             </View>
           </View>
         )}
