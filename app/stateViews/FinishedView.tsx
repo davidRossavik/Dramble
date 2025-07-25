@@ -109,7 +109,7 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
 
   return (
     <BackgroundWrapper>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.title}>Challenge fullført!</Text>
         
         <View style={styles.challengeContainer}>
@@ -170,9 +170,6 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   contentContainer: {
     padding: 20,
     paddingBottom: 40,
@@ -187,8 +184,13 @@ const styles = StyleSheet.create({
   challengeContainer: {
     marginBottom: 30,
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
   },
   description: {
     fontSize: 16,
@@ -239,9 +241,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 8,
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
   },
   balanceText: {
     fontSize: 16,
@@ -251,8 +258,13 @@ const styles = StyleSheet.create({
   drinkingContainer: {
     marginBottom: 30,
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
   },
   drinkingTitle: {
     fontSize: 20,
@@ -264,8 +276,13 @@ const styles = StyleSheet.create({
   drinkingResult: {
     marginBottom: 15,
     padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
   },
   drinkingMessage: {
     fontSize: 16,
