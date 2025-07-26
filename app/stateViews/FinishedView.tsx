@@ -20,8 +20,8 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
 
   // Sjekk om bruker er host og hent balances
   useEffect(() => {
-    AsyncStorage.getItem('playerName').then((name) => {
-      setIsHost(name === 'Host');
+    AsyncStorage.getItem('isHost').then((hostValue) => {
+      setIsHost(hostValue === 'true');
     });
 
     // Hent oppdaterte balances

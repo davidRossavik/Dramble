@@ -20,8 +20,8 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
 
   // Sjekk om bruker er host
   useEffect(() => {
-    AsyncStorage.getItem('playerName').then((name) => {
-      setIsHost(name === 'Host');
+    AsyncStorage.getItem('isHost').then((hostValue) => {
+      setIsHost(hostValue === 'true');
     });
   }, []);
 

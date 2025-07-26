@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 
 import { useState } from 'react';
@@ -6,9 +5,6 @@ import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native
 
 import * as Animatable from 'react-native-animatable';
 
-import { getRandomTeamName } from "@/utils/nameGenerator";
-import { Team } from "@/utils/types";
-import { createGame } from "../utils/games";
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
@@ -28,55 +24,8 @@ export default function Index() {
 
   // Navigation //
   const router = useRouter();
-  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  const [startSlurks, setStartSlurks] = useState<number>(100); // Ny state for startverdi
-
-  const navigateToStartGame = async () => {
-    const code = generateId(); // f.eks. "XKW32P"
-    const teamName = getRandomTeamName(); // randomTeamName
-
-    await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', teamName);
-    await AsyncStorage.setItem('playerName', "Host");
-    await AsyncStorage.setItem('isHost', 'true');
-
-    // Opprett lag-array med hostens lag og evt. testlag
-    const teams: Team[] = [
-      {
-        teamName: teamName,
-        players: [
-          {
-            id: generateId(),
-            name: "Host"
-          }
-        ]
-      }
-    ];
-    // Hardkode to ekstra lag for testing
-    teams.push(
-      {
-        teamName: "Testlag 1",
-        players: [{ id: "T1P1", name: "Test1" }]
-      },
-      {
-        teamName: "Testlag 2",
-        players: [{ id: "T2P1", name: "Test2" }]
-      }
-    );
-
-    // Opprett spill i databasen med default startverdi (100)
-    const { data, error } = await createGame(code, teams, 100);
-    if (error) {
-      alert("Feil ved opprettelse av spill: " + error);
-      return;
-    }
-
-    router.push({
-      pathname: '/startGame',
-      params: { code }
-    });
-  };
+  const navigateToStartGameSetup = () => router.push('/startGameSetup');
 
   const navigateToJoinGame = () => {router.push('/joinGame')};
   // Navigation //
@@ -87,7 +36,7 @@ export default function Index() {
         <Image source={logoImage} style={styles.logoImage} />
 
         <Animatable.View animation="slideInRight" duration={1200}>
-          <Pressable style={styles.redButton} onPress={navigateToStartGame}>
+          <Pressable style={styles.redButton} onPress={navigateToStartGameSetup}>
             <Text style={styles.buttonText}>Start spill</Text>
           </Pressable>
         </Animatable.View>
