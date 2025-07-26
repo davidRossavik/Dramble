@@ -3,13 +3,6 @@ import { Player, Team } from "./types";
 
 
 
-
-
-
-
-
-
-
 export async function addPlayerToTeam(gameId: string, teamName: string, newPlayer: Player) {
   // Hent spillet først
   const { data: game, error } = await supabase
@@ -54,7 +47,7 @@ export async function addPlayerToTeam(gameId: string, teamName: string, newPlaye
 
 
 
-export async function createGame(code:string, teams: Team[], startSlurks: number) {
+export async function createGame(code:string, teams: Team[], startSlurks: number, hostName: string) {
     const balances: Record<string, number> = {};
     for (const team of teams) {
         balances[team.teamName] = startSlurks;
@@ -68,7 +61,8 @@ export async function createGame(code:string, teams: Team[], startSlurks: number
         teams,
         balances,
         current_challenge_index: 0,
-        challenge_state: 'waiting'
+        challenge_state: 'waiting',
+        hostName
       }
     ])
     .select()
