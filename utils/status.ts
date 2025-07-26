@@ -25,7 +25,7 @@ export async function updateGameStatus(gameId: string, status: 'waiting' | 'play
 
 //kjøres når hosten trykker på start spill første gang
 export async function initializeGame(gameId: string) {
-  const challenges = await getRandomChallengesWithPlayers(gameId, 2);
+  const challenges = await getRandomChallengesWithPlayers(gameId, 1);
 
   // Hent alle lag for å velge automatisk
   const { data: game, error: gameError } = await supabase

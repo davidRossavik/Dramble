@@ -2,8 +2,181 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+const drinkCountImg = require('@/assets/images/drinkCount.png');
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    padding: 24,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  descriptionBox: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    marginTop: 56, // Økt for å unngå overlap
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+    // @ts-ignore
+    backdropFilter: 'blur(6px)', // web only
+  },
+  description: {
+    color: '#FAF0DE',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  bettingContainer: {
+    marginTop: 12,
+    marginBottom: 24,
+  },
+  bettingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  playerSelection: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  sliderValue: {
+    fontSize: 28,
+    color: '#FAF0DE',
+    textAlign: 'center',
+    marginTop: 24,
+    marginBottom: 0,
+    fontWeight: 'bold',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  betButton: {
+    backgroundColor: '#EEB90E',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  disabledButton: {
+    backgroundColor: '#666',
+  },
+  betButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+  },
+  currentBetsContainer: {
+    marginTop: 32,
+  },
+  currentBetsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  betItem: {
+    marginBottom: 10,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+  },
+  betTeam: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    marginBottom: 5,
+  },
+  betInfo: {
+    fontSize: 12,
+    color: '#FAF0DE',
+  },
+  noBets: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#FAF0DE',
+    fontStyle: 'italic',
+  },
+  playerButton: {
+    minWidth: 100,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#2f7a4c',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  selectedPlayerButton: {
+    backgroundColor: '#FF4500',
+  },
+  playerButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+  },
+  selectedPlayerButtonText: {
+    color: '#FFFFFF',
+  },
+  drinkCountCorner: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34,34,34,0.7)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  drinkCountImg: {
+    width: 32,
+    height: 32,
+    marginRight: 6,
+  },
+  drinkCountText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+});
 
 type Props = {
   runde: Runde;
@@ -16,7 +189,7 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
   const [playerName, setPlayerName] = useState<string>('');
   const [teamName, setTeamName] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
-  const [betAmount, setBetAmount] = useState<string>('');
+  const [betAmount, setBetAmount] = useState<number>(0); // Endret til number for slider
   const [teamBalance, setTeamBalance] = useState<number | null>(null);
   const [betError, setBetError] = useState<string | null>(null);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
@@ -36,29 +209,27 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
   }, [balances]);
 
   const handlePlaceBet = async () => {
-    if (isPlacingBetRef.current) return; // Blokker flere trykk synkront
-    isPlacingBetRef.current = true;
+    if (!selectedPlayer || !playerName || !teamName) {
+      alert('Vennligst velg spiller og skriv inn betting-beløp');
+      return;
+    }
+
+    const amount = betAmount;
+    if (isNaN(amount) || amount <= 0) {
+      setBetError('Vennligst velg et gyldig beløp');
+      return;
+    }
+
+    if (teamBalance !== null && amount > teamBalance) {
+      setBetError('Du kan ikke vedde mer enn du har igjen!');
+      return;
+    }
+    setBetError(null);
+
     setIsPlacingBet(true);
     try {
-      if (!selectedPlayer || !betAmount || !playerName || !teamName) {
-        alert('Vennligst velg spiller og skriv inn betting-beløp');
-        return;
-      }
-
-      const amount = parseInt(betAmount);
-      if (isNaN(amount) || amount <= 0) {
-        setBetError('Vennligst skriv inn et gyldig beløp');
-        return;
-      }
-
-      if (teamBalance !== null && amount > teamBalance) {
-        setBetError('Du kan ikke vedde mer enn du har igjen!');
-        return;
-      }
-      setBetError(null);
-
       await onPlaceBet({ teamName, betOn: selectedPlayer, amount });
-      setBetAmount('');
+      setBetAmount(0);
       setSelectedPlayer('');
     } finally {
       setIsPlacingBet(false);
@@ -85,294 +256,84 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
 
   return (
     <BackgroundWrapper>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>1v1 Challenge</Text>
-        
-        <View style={styles.challengeContainer}>
-          <Text style={styles.description}>{getChallengeDescription()}</Text>
-        </View>
-
-        <View style={styles.bettingContainer}>
-          <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
-          
-          <View style={styles.playerSelection}>
-            <Text style={styles.label}>Velg spiller:</Text>
-            <View style={styles.buttons}>
-              {playerOptions.map((player: string, index: number) => (
-                <Button
-                  key={index}
-                  label={player}
-                  onPress={() => setSelectedPlayer(player)}
-                  style={[
-                    styles.playerButton,
-                    selectedPlayer === player ? styles.selectedPlayerButton : {}
-                  ]}
-                  textStyle={[
-                    styles.playerButtonText,
-                    selectedPlayer === player ? styles.selectedPlayerButtonText : {}
-                  ]}
-                />
-              ))}
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          {teamBalance !== null && (
+            <View style={styles.drinkCountCorner}>
+              <Image source={drinkCountImg} style={styles.drinkCountImg} />
+              <Text style={styles.drinkCountText}>{teamBalance}</Text>
             </View>
-          </View>
-
-          <View style={styles.betAmountContainer}>
-            <Text style={styles.label}>Antall slurker:</Text>
-            <TextInput
-              style={styles.input}
+          )}
+          <ScrollView contentContainerStyle={styles.contentContainer}>
+            <View style={styles.descriptionBox}>
+              <Text style={styles.description}>{getChallengeDescription()}</Text>
+            </View>
+            <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
+            <View style={styles.playerSelection}>
+              <Text style={styles.label}>Velg spiller:</Text>
+              <View style={styles.buttons}>
+                {playerOptions.map((player, idx) => (
+                  <Button
+                    key={idx}
+                    label={player}
+                    onPress={() => setSelectedPlayer(player)}
+                    style={[
+                      styles.playerButton,
+                      selectedPlayer === player ? styles.selectedPlayerButton : {},
+                    ]}
+                    textStyle={[
+                      styles.playerButtonText,
+                      selectedPlayer === player ? styles.selectedPlayerButtonText : {},
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+            <Text style={styles.sliderValue}>{betAmount}</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={10}
+              step={1}
               value={betAmount}
-              onChangeText={text => {
-                setBetAmount(text);
+              onValueChange={val => {
+                setBetAmount(val);
                 setBetError(null);
               }}
-              placeholder="Skriv inn antall slurker"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
+              minimumTrackTintColor="#81AF24"
+              maximumTrackTintColor="#00471E"
+              thumbTintColor="#FF4500"
             />
-          </View>
-
-          {/* Vis lagets balance */}
-          {teamBalance !== null && (
-            <Text style={{color: '#F0E3C0', fontWeight: 'bold', marginBottom: 8}}>
-              Slurker igjen: {teamBalance}
-            </Text>
-          )}
-
-          {/* Vis feilmelding hvis innsats er ugyldig */}
-          {betError && (
-            <Text style={{color: 'red', marginBottom: 8}}>{betError}</Text>
-          )}
-
-          <Button
-            label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
-            onPress={handlePlaceBet}
-            disabled={isPlacingBet || !selectedPlayer || !betAmount || !!betError}
-            style={[
-              styles.betButton,
-              (isPlacingBet || !selectedPlayer || !betAmount || !!betError) ? styles.disabledButton : {}
-            ]}
-            textStyle={styles.betButtonText}
-          />
+            {betError && <Text style={styles.errorText}>{betError}</Text>}
+            <Button
+              label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
+              onPress={handlePlaceBet}
+              disabled={isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError}
+              style={[
+                styles.betButton,
+                (isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
+              ]}
+              textStyle={styles.betButtonText}
+            />
+            <View style={styles.currentBetsContainer}>
+              <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
+              {allBets.length > 0 ? (
+                allBets.map((bet, idx) => (
+                  <View key={idx} style={styles.betItem}>
+                    <Text style={styles.betTeam}>{bet.teamName}</Text>
+                    <Text style={styles.betInfo}>
+                      Vedder {bet.amount} slurker på "{bet.betOn}"
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noBets}>Ingen veddemål ennå</Text>
+              )}
+            </View>
+          </ScrollView>
         </View>
-
-                 <View style={styles.currentBetsContainer}>
-           <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
-           
-           {allBets.length > 0 ? (
-             allBets.map((bet, index) => (
-               <View key={index} style={styles.betItem}>
-                 <Text style={styles.betTeam}>{bet.teamName}</Text>
-                 <Text style={styles.betInfo}>
-                   Vedder {bet.amount} slurker på "{bet.betOn}"
-                 </Text>
-               </View>
-             ))
-           ) : (
-             <Text style={styles.noBets}>Ingen veddemål ennå</Text>
-           )}
-         </View>
-      </ScrollView>
+      </SafeAreaView>
     </BackgroundWrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FAF0DE',
-    marginBottom: 20,
-  },
-  challengeContainer: {
-    flex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 80,
-    gap: 40,
-    padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 10,
-  },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#FAF0DE',
-    lineHeight: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  bettingContainer: {
-    marginBottom: 30,
-  },
-  bettingTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FAF0DE',
-    marginBottom: 20,
-  },
-  playerSelection: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    marginBottom: 10,
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  playerButton: {
-    minWidth: 100,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#2f7a4c',
-    borderRadius: 8,
-  },
-  selectedPlayerButton: {
-    backgroundColor: '#FF4500',
-  },
-  playerButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    textAlign: 'center',
-  },
-  selectedPlayerButtonText: {
-    color: '#FFFFFF',
-  },
-  betAmountContainer: {
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#000',
-  },
-  betButton: {
-    backgroundColor: '#EEB90E',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-  },
-  disabledButton: {
-    backgroundColor: '#666',
-  },
-  betButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-  },
-  currentBetsContainer: {
-    marginTop: 20,
-  },
-  currentBetsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FAF0DE',
-    marginBottom: 15,
-  },
-  betItem: {
-    marginBottom: 10,
-    padding: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-  },
-  betTeam: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    marginBottom: 5,
-  },
-  betInfo: {
-    fontSize: 12,
-    color: '#FAF0DE',
-  },
-  noBets: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#FAF0DE',
-    fontStyle: 'italic',
-  },
-
-  // TEXT //
-  baseText: {
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    textAlign: 'center',
-  },
-  drinkCountText: {
-    fontSize: 25,
-  },
-  challengeText: {
-    fontSize: 30,
-  },
-  buttonText: {
-    fontSize: 20,
-  },
-  sliderText: {
-    fontSize: 25,
-    marginBottom: 20,
-  },
-
-  // BUTTONS //
-  buttonBase: {
-    width: 170,
-    height: 100,
-    borderRadius: 5,
-  },
-  button1: {
-    backgroundColor: '#EEB90E',
-  },
-  button2: {
-    backgroundColor: '#D41E1D',
-  },
-  exitButton: {
-    width: 280,
-    height: 80,
-    backgroundColor: '#EEB90E',
-  },
-
-  // VIEWSTYLES //
-  drinkCountContainer: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  drinkCountPic: {
-    width: 80,
-    height: 80,
-  },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-    marginBottom: 50,
-  },
-  slider: {
-    width: '80%',
-    height: 40,
-    alignSelf: 'center',
-  },
-});
 

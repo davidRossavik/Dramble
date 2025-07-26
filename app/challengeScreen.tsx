@@ -1,9 +1,9 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import { supabase } from '@/supabase';
 import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
-import { Runde, RundeState } from '@/utils/types';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
 import BettingPhaseView from './stateViews/BettingPhaseView';
@@ -12,7 +12,8 @@ import GameFinishedView from './stateViews/GameFinishedView';
 import PlayingView from './stateViews/PlayingView';
 
 export default function ChallengeScreen() {
-  const { gameId } = useLocalSearchParams();
+  const router = useRouter();
+  const { gameId, code } = useLocalSearchParams();
   const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -82,8 +83,6 @@ export default function ChallengeScreen() {
           .select('current_challenge_index, status, challenge_state')
           .eq('id', gameId)
           .single();
-        
-        
 
         if (!error && data) {
           setGameStatus(data.status);
@@ -120,34 +119,30 @@ export default function ChallengeScreen() {
             if (payload.new.status !== payload.old?.status) {
               setGameStatus(payload.new.status);
               if (payload.new.status === 'finished') {
-                return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
+                // Ikke returner tidlig - la oss håndtere dette som andre overganger
+                setRunde(null); // Fjern runde for å vise GameFinishedView
+                setIsTransitioning(false); // Slutt transition
+                return;
+              }
+              if (payload.new.status === 'waiting') {
+                const gameCode = code;
+                router.replace({ pathname: '/startGame', params: { code: gameCode } });
+                return;
               }
             }
-        
+
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
-              return; //setter ny runde når index endrer seg
+              return;
             }
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
-              return; //setter ny runde når state endrer seg
+              return;
             }
-
-            // if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
-            //   return;
-            // }
-            // const hasOtherChanges = 
-            //   payload.new.selected_teams !== payload.old?.selected_teams ||
-            //   payload.new.teams !== payload.old?.teams ||
-            //   payload.new.challenges !== payload.old?.challenges;
-            // if (hasOtherChanges) {
-            //   const newRunde = await fetchRunde(gameId, newIndex);
-            //   setRunde(newRunde);
-            // } tester å ikke kalle fetchRunde på andre endringer
 
           } catch (error) {
             console.error('Feil ved oppdatering av runde:', error);
@@ -161,24 +156,10 @@ export default function ChallengeScreen() {
     };
   }, [gameId]);
 
-  // Enkel oppdatering uten animasjon
-  const transitionTo = async (newState: RundeState, challengeIndex: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    try {
-      // Hent ny runde
-      const newRunde = await fetchRunde(gameId, challengeIndex, 'transition');
-      setRunde(newRunde);
-    } catch (error) {
-      console.error('Feil ved transition:', error);
-    } 
-  };
   
   const handlePhaseAdvance = async () => {
-    console.log('handlePhaseAdvance');
     if (isTransitioning || !runde) return;
     setIsTransitioning(true);
-
 
     // Ikke gå videre hvis spillet er ferdig
     if (gameStatus === 'finished') {
@@ -194,18 +175,45 @@ export default function ChallengeScreen() {
         } else if (runde.state === 'playing') {
           await updateRundeState(gameId, 'finished');
         } else if (runde.state === 'finished') {
-          await advanceToNextRound(gameId);
+          // Sjekk om dette er siste runde
+          const { data: gameData, error: gameError } = await supabase
+            .from('games')
+            .select('challenges, current_challenge_index')
+            .eq('id', gameId)
+            .single();
+            
+          if (gameError || !gameData) {
+            setIsTransitioning(false);
+            return;
+          }
+          
+          const challenges = gameData.challenges || [];
+          const currentIndex = gameData.current_challenge_index;
+          const isLastRound = currentIndex >= challenges.length - 1;
+          
+          if (isLastRound) {
+            // Sett status til finished direkte for å unngå race condition
+            await supabase
+              .from('games')
+              .update({ status: 'finished' })
+              .eq('id', gameId);
+            // Ikke sett isTransitioning til false her - la realtime listener håndtere det
+            return;
+          } else {
+            await advanceToNextRound(gameId);
+          }
         }
       } catch (error) {
         console.error('Feil under overgang:', error);
         setIsTransitioning(false);
       }
     }
-    // Nå venter vi på at realtime skal oppdatere runde
   };
 
   if (gameStatus === 'finished') {
-    return <GameFinishedView gameId={gameId} isHost={isHost} />;
+    return (
+      <GameFinishedView gameId={gameId} isHost={isHost} />
+    );
   }
 
   return (

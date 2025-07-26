@@ -4,7 +4,7 @@ import { setWinnerForChallenge } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   runde: Runde;
@@ -83,8 +83,8 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
 
   return (
     <BackgroundWrapper>
-      <View style={styles.container}>
-        <Text style={styles.title}>Challenge pågår!</Text>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Utfordring pågår!</Text>
         
         <View style={styles.challengeContainer}>
           <Text style={styles.description}>{getChallengeDescription()}</Text>
@@ -92,6 +92,7 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
 
         {isHost ? (
           <>
+            <Text style={styles.instruction}>Velg vinner</Text>
             <View style={styles.buttons}>
               {winnerOptions.map((option, index) => (
                 <Button
@@ -111,7 +112,7 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
             </View>
 
             <Button
-              label="Neste fase"
+              label="Se resultat"
               onPress={async () => {
                 if (selectedWinner) {
                   // Lagre vinner i Supabase først, hvis ikke allerede lagret
@@ -138,7 +139,7 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
             <Text style={styles.waitingText}>Venter på at host velger vinner...</Text>
           </View>
         )}
-      </View>
+      </SafeAreaView>
     </BackgroundWrapper>
   );
 }
@@ -161,6 +162,14 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 10,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+    // @ts-ignore
+    backdropFilter: 'blur(6px)', // web only
   },
   description: {
     fontSize: 18,
@@ -218,5 +227,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     color: '#FAF0DE',
+  },
+  instruction: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    textAlign: 'center',
+    marginBottom: 18,
+    marginTop: 8,
+    letterSpacing: 1,
   },
 });
