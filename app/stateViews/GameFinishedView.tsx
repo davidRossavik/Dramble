@@ -2,6 +2,7 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { supabase } from '@/supabase';
 import { getGameById } from '@/utils/games';
+import { initializeGame } from '@/utils/status';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
@@ -34,9 +35,32 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
   const handlePlayAgain = async () => {
     // Slett alle bets for dette spillet
     await supabase.from('bets').delete().eq('game_id', gameId);
-    // Slett selve spillet
-    await supabase.from('games').delete().eq('id', gameId);
-    router.replace('/startGame');
+
+    // Hent lagene og koden fra spillet
+    const { data } = await getGameById(gameId);
+    let newBalances: Record<string, number> = {};
+    if (data && data.teams) {
+      for (const team of data.teams) {
+        newBalances[team.teamName] = 50; // festmodus startverdi
+      }
+    }
+    const gameCode = data?.code;
+
+    // Nullstill relevante felter og sett balances til default
+    await supabase.from('games').update({
+      current_challenge_index: 0,
+      challenge_state: 'waiting',
+      challenge_winners: null,
+      balances: newBalances,
+      selected_teams: null,
+      status: 'waiting',
+    }).eq('id', gameId);
+
+    // Re-initialiser challenges og lagvalg
+    await initializeGame(gameId);
+
+    // Redirect med kode
+    router.replace({ pathname: '/startGame', params: { code: gameCode } });
   };
 
   return (

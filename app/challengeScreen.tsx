@@ -3,7 +3,7 @@ import { supabase } from '@/supabase';
 import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
 import { Runde, RundeState } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
 import BettingPhaseView from './stateViews/BettingPhaseView';
@@ -12,7 +12,8 @@ import GameFinishedView from './stateViews/GameFinishedView';
 import PlayingView from './stateViews/PlayingView';
 
 export default function ChallengeScreen() {
-  const { gameId } = useLocalSearchParams();
+  const router = useRouter();
+  const { gameId, code } = useLocalSearchParams();
   const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -122,8 +123,13 @@ export default function ChallengeScreen() {
               if (payload.new.status === 'finished') {
                 return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
               }
+              if (payload.new.status === 'waiting') {
+                const gameCode = code;
+                router.replace({ pathname: '/startGame', params: { code: gameCode } });
+                return;
+              }
             }
-        
+
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
             if (oldIndex !== undefined && newIndex !== oldIndex) {
@@ -136,18 +142,6 @@ export default function ChallengeScreen() {
               setRunde(newRunde);
               return; //setter ny runde når state endrer seg
             }
-
-            // if (payload.new.challenge_winners !== payload.old?.challenge_winners) {
-            //   return;
-            // }
-            // const hasOtherChanges = 
-            //   payload.new.selected_teams !== payload.old?.selected_teams ||
-            //   payload.new.teams !== payload.old?.teams ||
-            //   payload.new.challenges !== payload.old?.challenges;
-            // if (hasOtherChanges) {
-            //   const newRunde = await fetchRunde(gameId, newIndex);
-            //   setRunde(newRunde);
-            // } tester å ikke kalle fetchRunde på andre endringer
 
           } catch (error) {
             console.error('Feil ved oppdatering av runde:', error);

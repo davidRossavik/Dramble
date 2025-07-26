@@ -30,7 +30,7 @@ export default function GameLobby() {
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
   const [localTeamName, setLocalTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
-  const [startSlurks, setStartSlurks] = useState<number>(100); // Ny state for startverdi
+  const [startSlurks, setStartSlurks] = useState<number>(50); // Ny state for startverdi
   const statusChannelRef = useRef<any>(null);
   // State og Referanser //
 

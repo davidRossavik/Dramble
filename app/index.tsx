@@ -30,7 +30,7 @@ export default function Index() {
   const router = useRouter();
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  const [startSlurks, setStartSlurks] = useState<number>(100); // Ny state for startverdi
+  const [startSlurks, setStartSlurks] = useState<number>(50); // Ny state for startverdi
 
   const navigateToStartGame = async () => {
     const code = generateId(); // f.eks. "XKW32P"
@@ -65,8 +65,8 @@ export default function Index() {
       }
     );
 
-    // Opprett spill i databasen med default startverdi (100)
-    const { data, error } = await createGame(code, teams, 100);
+    // Opprett spill i databasen med default startverdi (50)
+    const { data, error } = await createGame(code, teams, 50);
     if (error) {
       alert("Feil ved opprettelse av spill: " + error);
       return;
