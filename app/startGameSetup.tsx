@@ -10,7 +10,7 @@ import { Team } from '@/utils/types';
 
 export default function StartGameSetup() {
   const [hostName, setHostName] = useState('');
-  const [startSlurks, setStartSlurks] = useState<number>(100);
+  const [startSlurks, setStartSlurks] = useState<number>(50);
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -82,22 +82,22 @@ export default function StartGameSetup() {
         <Text style={styles.subtitle}>Velg gamemode:</Text>
         <View style={styles.modeRow}>
           <Pressable
+            style={[styles.modeButton, startSlurks === 20 && styles.modeButtonSelected]}
+            onPress={() => setStartSlurks(20)}
+          >
+            <Text style={styles.modeButtonText}>Småslurking (20)</Text>
+          </Pressable>
+          <Pressable
             style={[styles.modeButton, startSlurks === 50 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(50)}
           >
-            <Text style={styles.modeButtonText}>Småslurking (50)</Text>
+            <Text style={styles.modeButtonText}>Festmodus (50)</Text>
           </Pressable>
           <Pressable
             style={[styles.modeButton, startSlurks === 100 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(100)}
           >
-            <Text style={styles.modeButtonText}>Festmodus (100)</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.modeButton, startSlurks === 200 && styles.modeButtonSelected]}
-            onPress={() => setStartSlurks(200)}
-          >
-            <Text style={styles.modeButtonText}>Blackout (200)</Text>
+            <Text style={styles.modeButtonText}>Blackout (100)</Text>
           </Pressable>
         </View>
 

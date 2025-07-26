@@ -74,10 +74,9 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
         return `${team1} vs ${team2}: ${runde.challenge.description}`;
       
       case 'Team-vs-itself':
-        // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
-        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
-        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
+        // For Team-vs-itself skal laget utføre utfordringen internt
+        const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
+        return `${teamName} skal: ${runde.challenge.description}`;
       
       default:
         return runde.challenge.description;
@@ -95,12 +94,11 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
         return `${runde.winner} vant!`;
       
       case 'Team-vs-itself':
-        // For Team-vs-itself viser vi om de to spillerne klarte utfordringen sammen
-        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
-        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
+        // For Team-vs-itself viser vi om laget klarte utfordringen
+        const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
         return runde.winner === 'Klarer' 
-          ? `${team1Name} og ${team2Name} klarte det sammen!`
-          : `${team1Name} og ${team2Name} klarte det ikke sammen!`;
+          ? `${teamName} klarte det!`
+          : `${teamName} klarte det ikke!`;
       
       default:
         return `${runde.winner} vant!`;

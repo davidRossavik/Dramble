@@ -70,10 +70,9 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
   };
 
   const getChallengeDescription = () => {
-    // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
-    const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
-    const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
-    return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
+    // For Team-vs-itself skal laget utføre utfordringen internt
+    const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
+    return `${teamName} skal: ${runde.challenge.description}`;
   };
 
   const outcomeOptions = getOutcomeOptions();

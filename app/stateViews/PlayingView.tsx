@@ -64,10 +64,9 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
         return `${team1} vs ${team2}: ${runde.challenge.description}`;
       
       case 'Team-vs-itself':
-        // For Team-vs-itself skal to spillere fra forskjellige lag utføre utfordringen sammen
-        const team1Name = runde.selectedTeams[0]?.teamName || 'Lag 1';
-        const team2Name = runde.selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1Name} og ${team2Name} skal sammen: ${runde.challenge.description}`;
+        // For Team-vs-itself skal laget utføre utfordringen internt
+        const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
+        return `${teamName} skal: ${runde.challenge.description}`;
       
       default:
         return runde.challenge.description;
