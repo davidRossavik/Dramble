@@ -4,13 +4,32 @@ import { supabase } from '@/supabase';
 import { getGameById } from '@/utils/games';
 import { initializeGame } from '@/utils/status';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Text, View } from 'react-native';
 
 export default function GameFinishedView({ gameId, isHost }: { gameId: string, isHost: boolean }) {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [teams, setTeams] = useState<any[]>([]);
   const router = useRouter();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Identisk fadeIn-funksjon som i ChallengeScreen
+  const fadeIn = () => {
+    return new Promise((resolve) => {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        resolve(true);
+      });
+    });
+  };
+
+  useEffect(() => {
+    fadeIn();
+  }, [fadeAnim]);
 
   useEffect(() => {
     async function fetchBalances() {
@@ -24,29 +43,22 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
   }, [gameId]);
 
   const handleEndGame = async () => {
-    // Slett alle bets for dette spillet
     await supabase.from('bets').delete().eq('game_id', gameId);
-    // Slett selve spillet
     await supabase.from('games').delete().eq('id', gameId);
     Alert.alert('Spillet er avsluttet og fjernet!');
     router.replace('/');
   };
 
   const handlePlayAgain = async () => {
-    // Slett alle bets for dette spillet
     await supabase.from('bets').delete().eq('game_id', gameId);
-
-    // Hent lagene og koden fra spillet
     const { data } = await getGameById(gameId);
     let newBalances: Record<string, number> = {};
     if (data && data.teams) {
       for (const team of data.teams) {
-        newBalances[team.teamName] = 50; // festmodus startverdi
+        newBalances[team.teamName] = 50;
       }
     }
     const gameCode = data?.code;
-
-    // Nullstill relevante felter og sett balances til default
     await supabase.from('games').update({
       current_challenge_index: 0,
       challenge_state: 'waiting',
@@ -55,17 +67,13 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
       selected_teams: null,
       status: 'waiting',
     }).eq('id', gameId);
-
-    // Re-initialiser challenges og lagvalg
     await initializeGame(gameId);
-
-    // Redirect med kode
     router.replace({ pathname: '/startGame', params: { code: gameCode } });
   };
 
   return (
     <BackgroundWrapper>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <Animated.View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, opacity: fadeAnim }}>
         <Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 16, color: '#fff' }}>Spillet er ferdig!</Text>
         <Text style={{ fontSize: 18, marginBottom: 24, color: '#fff' }}>Slurker igjen per lag (må tas!):</Text>
         {teams.map(team => (
@@ -111,7 +119,7 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
             />
           </View>
         )}
-      </View>
+      </Animated.View>
     </BackgroundWrapper>
   );
 } 

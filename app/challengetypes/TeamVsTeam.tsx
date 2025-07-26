@@ -229,7 +229,7 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
     try {
       await onPlaceBet({ teamName, betOn: selectedTeam, amount });
       setBetAmount(0);
-      setSelectedTeam('');
+    setSelectedTeam('');
     } finally {
       setIsPlacingBet(false);
       isPlacingBetRef.current = false;
@@ -266,29 +266,29 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
           )}
           <ScrollView contentContainerStyle={styles.contentContainer}>
             <View style={styles.descriptionBox}>
-              <Text style={styles.description}>{getChallengeDescription()}</Text>
-            </View>
-            <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
-            <View style={styles.teamSelection}>
-              <Text style={styles.label}>Velg lag:</Text>
-              <View style={styles.buttons}>
+          <Text style={styles.description}>{getChallengeDescription()}</Text>
+        </View>
+          <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
+          <View style={styles.teamSelection}>
+            <Text style={styles.label}>Velg lag:</Text>
+            <View style={styles.buttons}>
                 {teamOptions.map((team, idx) => (
-                  <Button
+                <Button
                     key={idx}
-                    label={team}
-                    onPress={() => setSelectedTeam(team)}
-                    style={[
-                      styles.teamButton,
+                  label={team}
+                  onPress={() => setSelectedTeam(team)}
+                  style={[
+                    styles.teamButton,
                       selectedTeam === team ? styles.selectedTeamButton : {},
-                    ]}
-                    textStyle={[
-                      styles.teamButtonText,
+                  ]}
+                  textStyle={[
+                    styles.teamButtonText,
                       selectedTeam === team ? styles.selectedTeamButtonText : {},
-                    ]}
-                  />
-                ))}
-              </View>
+                  ]}
+                />
+              ))}
             </View>
+          </View>
             <Text style={styles.sliderValue}>{betAmount}</Text>
             <Slider
               style={styles.slider}
@@ -305,32 +305,32 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
               thumbTintColor="#FF4500"
             />
             {betError && <Text style={styles.errorText}>{betError}</Text>}
-            <Button
+          <Button
               label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
-              onPress={handlePlaceBet}
+            onPress={handlePlaceBet}
               disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
-              style={[
-                styles.betButton,
+            style={[
+              styles.betButton,
                 (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
-              ]}
-              textStyle={styles.betButtonText}
-            />
-            <View style={styles.currentBetsContainer}>
-              <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
-              {allBets.length > 0 ? (
+            ]}
+            textStyle={styles.betButtonText}
+          />
+        <View style={styles.currentBetsContainer}>
+          <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
+          {allBets.length > 0 ? (
                 allBets.map((bet, idx) => (
                   <View key={idx} style={styles.betItem}>
-                    <Text style={styles.betTeam}>{bet.teamName}</Text>
-                    <Text style={styles.betInfo}>
-                      Vedder {bet.amount} slurker på "{bet.betOn}"
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noBets}>Ingen veddemål ennå</Text>
-              )}
-            </View>
-          </ScrollView>
+                <Text style={styles.betTeam}>{bet.teamName}</Text>
+                <Text style={styles.betInfo}>
+                  Vedder {bet.amount} slurker på "{bet.betOn}"
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noBets}>Ingen veddemål ennå</Text>
+          )}
+        </View>
+      </ScrollView>
         </View>
       </SafeAreaView>
     </BackgroundWrapper>

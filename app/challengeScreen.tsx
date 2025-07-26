@@ -1,7 +1,7 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import { supabase } from '@/supabase';
 import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
-import { Runde, RundeState } from '@/utils/types';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -83,8 +83,6 @@ export default function ChallengeScreen() {
           .select('current_challenge_index, status, challenge_state')
           .eq('id', gameId)
           .single();
-        
-        
 
         if (!error && data) {
           setGameStatus(data.status);
@@ -121,7 +119,10 @@ export default function ChallengeScreen() {
             if (payload.new.status !== payload.old?.status) {
               setGameStatus(payload.new.status);
               if (payload.new.status === 'finished') {
-                return; //gjør ingenting når spillet er ferdig, da har vi allerede sett på GameFinishedView
+                // Ikke returner tidlig - la oss håndtere dette som andre overganger
+                setRunde(null); // Fjern runde for å vise GameFinishedView
+                setIsTransitioning(false); // Slutt transition
+                return;
               }
               if (payload.new.status === 'waiting') {
                 const gameCode = code;
@@ -135,12 +136,12 @@ export default function ChallengeScreen() {
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
-              return; //setter ny runde når index endrer seg
+              return;
             }
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
-              return; //setter ny runde når state endrer seg
+              return;
             }
 
           } catch (error) {
@@ -155,24 +156,10 @@ export default function ChallengeScreen() {
     };
   }, [gameId]);
 
-  // Enkel oppdatering uten animasjon
-  const transitionTo = async (newState: RundeState, challengeIndex: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    try {
-      // Hent ny runde
-      const newRunde = await fetchRunde(gameId, challengeIndex, 'transition');
-      setRunde(newRunde);
-    } catch (error) {
-      console.error('Feil ved transition:', error);
-    } 
-  };
   
   const handlePhaseAdvance = async () => {
-    console.log('handlePhaseAdvance');
     if (isTransitioning || !runde) return;
     setIsTransitioning(true);
-
 
     // Ikke gå videre hvis spillet er ferdig
     if (gameStatus === 'finished') {
@@ -188,18 +175,45 @@ export default function ChallengeScreen() {
         } else if (runde.state === 'playing') {
           await updateRundeState(gameId, 'finished');
         } else if (runde.state === 'finished') {
-          await advanceToNextRound(gameId);
+          // Sjekk om dette er siste runde
+          const { data: gameData, error: gameError } = await supabase
+            .from('games')
+            .select('challenges, current_challenge_index')
+            .eq('id', gameId)
+            .single();
+            
+          if (gameError || !gameData) {
+            setIsTransitioning(false);
+            return;
+          }
+          
+          const challenges = gameData.challenges || [];
+          const currentIndex = gameData.current_challenge_index;
+          const isLastRound = currentIndex >= challenges.length - 1;
+          
+          if (isLastRound) {
+            // Sett status til finished direkte for å unngå race condition
+            await supabase
+              .from('games')
+              .update({ status: 'finished' })
+              .eq('id', gameId);
+            // Ikke sett isTransitioning til false her - la realtime listener håndtere det
+            return;
+          } else {
+            await advanceToNextRound(gameId);
+          }
         }
       } catch (error) {
         console.error('Feil under overgang:', error);
         setIsTransitioning(false);
       }
     }
-    // Nå venter vi på at realtime skal oppdatere runde
   };
 
   if (gameStatus === 'finished') {
-    return <GameFinishedView gameId={gameId} isHost={isHost} />;
+    return (
+      <GameFinishedView gameId={gameId} isHost={isHost} />
+    );
   }
 
   return (
