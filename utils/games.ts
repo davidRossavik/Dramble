@@ -99,10 +99,12 @@ export async function getGameById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
+    
   if (error) {
     console.error("Feil ved henting av spill på id:", error.message);
     return { data: null, error };
   }
+  
   return { data, error: null };
 }
 

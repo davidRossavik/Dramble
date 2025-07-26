@@ -12,4 +12,7 @@ export const funnyTeamNames = [
   "Fernet Foreningen",
   "Drukneklanen",
   "Sip Happens",
+  "Tequila Titans",
+  "Jägermeister meisters",
+  "Whiske Warriors",
 ];
