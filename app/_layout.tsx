@@ -62,6 +62,12 @@ export default function RootLayout() {
         animation: 'fade',
         }} />
       
+      <Stack.Screen name="startGameSetup" options={{
+        title: '',
+        headerTransparent: true,
+        animation: 'fade',
+        }} />
+      
     </Stack>
   </BackgroundWrapper> 
   );
