@@ -79,7 +79,7 @@ export default function StartGameSetup() {
           onChangeText={setHostName}
         />
 
-        <Text style={styles.subtitle}>Velg gamemode:</Text>
+        <Text style={styles.subtitle}>Start Slurker:</Text>
         <View style={styles.modeRow}>
           <Pressable
             style={[styles.modeButton, startSlurks === 20 && styles.modeButtonSelected]}
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
   modeRow: {
     flexDirection: 'row',
     gap: 10,
-    width: '100%',
     justifyContent: 'center',
+    flexWrap: 'wrap',
   },
   modeButton: {
     backgroundColor: '#073510',
@@ -152,9 +152,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 15,
     paddingVertical: 12,
-    paddingHorizontal: 18,
-    minWidth: 90,
-    marginHorizontal: 3,
+    paddingHorizontal: 15,
+    minWidth: 80,
+    marginHorizontal: 2,
   },
   modeButtonSelected: {
     backgroundColor: '#D49712',
