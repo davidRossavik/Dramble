@@ -5,8 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-nati
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
-import { subscribeToGameUpdates } from '@/utils/realtime';
+import { addPlayerToTeam, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
 import { supabase } from '../supabase';
@@ -135,9 +134,25 @@ export default function GameLobby() {
     // Teams listener - bruk storedCode fra AsyncStorage
     const storedCode = await AsyncStorage.getItem('gameCode');
     if (storedCode) {
-      const teamsChannel = subscribeToGameUpdates(storedCode, (updatedTeams) => {
-        setTeams(updatedTeams || []);
-      });
+      const teamsChannel = supabase
+        .channel(`game-teams-${storedCode}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'teams',
+            filter: `game_id=eq.${gameId}`,
+          },
+          (payload) => {
+            const updatedTeams = payload.new.map((team: any) => ({
+              ...team,
+              players: team.players || [],
+            }));
+            setTeams(updatedTeams);
+          }
+        )
+        .subscribe();
       teamsChannelRef.current = teamsChannel;
     }
   };
@@ -161,9 +176,12 @@ export default function GameLobby() {
     const team = teams.find(t => t.teamName === teamName);
     if (!team) return;
 
-    const nameTaken = team.players.some(p => p.name.toLowerCase() === name.toLowerCase());
+    // Sjekk om navnet allerede finnes i hele spillet (alle lag)
+    const nameTaken = teams.some(t => 
+      t.players.some(p => p.name.toLowerCase() === name.toLowerCase())
+    );
     if (nameTaken) {
-      alert('Det finnes allerede en spiller med det navnet på laget');
+      alert('Det finnes allerede en spiller med det navnet i spillet');
       return;
     }
 
@@ -249,6 +267,24 @@ export default function GameLobby() {
     }
   };
 
+  const handleRandomizePlayers = async () => {
+    if (!gameId) return;
+
+    try {
+      const result = await randomizePlayers(gameId, teams);
+      
+      if (result.error) {
+        console.log(result.error);
+        return;
+      } else if (result.data) {
+        setTeams(result.data);
+      }
+    } catch (error) {
+      console.error('Feil ved randomisering av spillere:', error);
+      alert('Feil ved randomisering av spillere');
+    }
+  };
+
   // Render
   return (
     <BackgroundWrapper>
@@ -266,7 +302,7 @@ export default function GameLobby() {
                 <View style={styles.centeredTextWrapper}>
                   <Text style={styles.teamName}>{team.teamName}</Text>
                 </View>
-                {isHost && (
+                {isHost && !team.players.some(p => p.name === hostName) && (
                   <Button 
                     imageSource={x_button} 
                     imageStyle={styles.x_button} 
@@ -276,10 +312,11 @@ export default function GameLobby() {
               </View>
               
               <View style={styles.teamContent}>
-                {team.players.map(player => {
+                {team.players.map((player, index) => {
                   const isHostPlayer = player.name === hostName;
+                  const isTeamLeader = index === 0; // Første spiller er lagleder
                   return (
-                    <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5 }}>
+                    <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5, position: 'relative' }}>
                       {isHostPlayer && (
                         <Image source={crown_icon} style={styles.crown_icon} />
                       )}
@@ -288,13 +325,15 @@ export default function GameLobby() {
                           {player.name}
                         </Text>
                       </View>
-                      {isHost && (
+                      {isHost && !isHostPlayer && !isTeamLeader ? (
                         <Button 
                           imageSource={remove_button} 
                           imageStyle={styles.remove_button} 
                           onPress={() => handleRemovePlayer(team.teamName, player.id)}
                         />
-                      )}
+                      ) : isHost && (isHostPlayer || isTeamLeader) ? (
+                        <View style={{ width: 40, height: 40 }} />
+                      ) : null}
                     </View>
                   );
                 })}
@@ -323,6 +362,16 @@ export default function GameLobby() {
               </View>
             </View>
           ))
+        )}
+        
+        {isHost && (
+          <View style={styles.shuffleContainer}>
+            <Button 
+              label="Shuffle lag" 
+              style={styles.shuffle_button}
+              onPress={handleRandomizePlayers}
+            />
+          </View>
         )}
       </ScrollView>
       
@@ -395,6 +444,17 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'transparent'
   },
+  shuffleContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  shuffle_button: {
+    width: 250,
+    height: 50,
+    backgroundColor: '#333',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
   // Containers //
 
 
@@ -413,7 +473,6 @@ const styles = StyleSheet.create({
   },
   hostName: {
     color: '#D49712',
-    marginRight: 40
   },
   codeText: {
     fontSize: 30,
@@ -429,8 +488,9 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     resizeMode: 'contain',
-    marginLeft: 15,
-    marginTop: 3
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
 
   // Buttons //

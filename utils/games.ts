@@ -339,6 +339,62 @@ export async function updateBalances(gameId: string, balances: Record<string, nu
     .from('games')
     .update({ balances })
     .eq('id', gameId);
+
   return { error };
+}
+
+export async function randomizePlayers(gameId: string, teams: Team[]) {
+  if (teams.length < 2) {
+    return { error: 'Trenger minst 2 lag for å fordele spillere' };
+  }
+
+  try {
+    // Samle alle spillere som ikke er lagledere
+    const nonTeamLeaders: { player: any; originalTeam: string }[] = [];
+    teams.forEach(team => {
+      team.players.slice(1).forEach(player => { // slice(1) hopper over laglederen
+        nonTeamLeaders.push({ player, originalTeam: team.teamName });
+      });
+    });
+
+    if (nonTeamLeaders.length === 0) {
+      return { error: 'Ingen spillere å fordele' };
+    }
+
+    // Bland spillere tilfeldig
+    const shuffledPlayers = [...nonTeamLeaders].sort(() => Math.random() - 0.5);
+
+    // Opprett nye lag med lagledere + tilfeldig fordelte spillere
+    const newTeams = teams.map(team => {
+      const teamLeader = team.players[0]; // Behold laglederen
+      const playersPerTeam = Math.ceil(shuffledPlayers.length / teams.length);
+      const teamIndex = teams.indexOf(team);
+      const startIndex = teamIndex * playersPerTeam;
+      const endIndex = Math.min(startIndex + playersPerTeam, shuffledPlayers.length);
+      
+      const assignedPlayers = shuffledPlayers.slice(startIndex, endIndex).map(item => item.player);
+      
+      return {
+        ...team,
+        players: [teamLeader, ...assignedPlayers] // Lagleder først, deretter tilfeldige spillere
+      };
+    });
+
+    // Oppdater databasen
+    const { error } = await supabase
+      .from('games')
+      .update({ teams: newTeams })
+      .eq('id', gameId);
+
+    if (error) {
+      console.error('Feil ved randomisering av spillere:', error);
+      return { error: 'Kunne ikke oppdatere lagene' };
+    }
+
+    return { data: newTeams, error: null };
+  } catch (error) {
+    console.error('Feil ved randomisering av spillere:', error);
+    return { error: 'Uventet feil ved randomisering' };
+  }
 }
 
