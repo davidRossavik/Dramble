@@ -208,6 +208,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
+    alignSelf: 'stretch',
+    marginHorizontal: 16,
   },
   disabledButton: {
     backgroundColor: '#666',

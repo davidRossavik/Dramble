@@ -125,8 +125,21 @@ export default function ChallengeScreen() {
                 return;
               }
               if (payload.new.status === 'waiting') {
-                const gameCode = code;
-                router.replace({ pathname: '/startGame', params: { code: gameCode } });
+                // Hent gameCode fra AsyncStorage eller database
+                const storedCode = await AsyncStorage.getItem('gameCode');
+                if (storedCode) {
+                  router.replace({ pathname: '/startGame', params: { code: storedCode } });
+                } else {
+                  // Fallback: hent fra database
+                  const { data } = await supabase
+                    .from('games')
+                    .select('code')
+                    .eq('id', gameId)
+                    .single();
+                  if (data?.code) {
+                    router.replace({ pathname: '/startGame', params: { code: data.code } });
+                  }
+                }
                 return;
               }
             }

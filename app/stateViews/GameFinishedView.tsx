@@ -2,7 +2,6 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { supabase } from '@/supabase';
 import { getGameById } from '@/utils/games';
-import { initializeGame } from '@/utils/status';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Text, View } from 'react-native';
@@ -67,7 +66,6 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
       selected_teams: null,
       status: 'waiting',
     }).eq('id', gameId);
-    await initializeGame(gameId);
     router.replace({ pathname: '/startGame', params: { code: gameCode } });
   };
 
