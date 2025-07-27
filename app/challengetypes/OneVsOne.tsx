@@ -1,3 +1,4 @@
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { Runde } from '@/utils/types';
@@ -327,7 +328,7 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
                   </View>
                 ))
               ) : (
-                <Text style={styles.noBets}>Ingen veddemål ennå</Text>
+                <AppText style={styles.noBets}>Ingen veddemål ennå</AppText>
               )}
             </View>
           </ScrollView>

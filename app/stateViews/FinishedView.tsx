@@ -4,8 +4,10 @@ import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { supabase } from '../../supabase';
+
+import AppText from '@/components/AppText';
 
 type Props = {
   runde: Runde;
@@ -62,36 +64,15 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
     return null; // Returner ingenting, la parent håndtere loading
   }
 
-  const getChallengeDescription = () => {
-    switch (runde.challenge.type) {
-      case '1v1':
-        const [player1, player2] = runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
-        return `${player1} vs ${player2}: ${runde.challenge.description}`;
-      
-      case 'Team-vs-Team':
-        const team1 = runde.selectedTeams[0]?.teamName || 'Lag 1';
-        const team2 = runde.selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1} vs ${team2}: ${runde.challenge.description}`;
-      
-      case 'Team-vs-itself':
-        // For Team-vs-itself skal laget utføre utfordringen internt
-        const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
-        return `${teamName} skal: ${runde.challenge.description}`;
-      
-      default:
-        return runde.challenge.description;
-    }
-  };
-
   const getWinnerDisplay = () => {
     if (!runde.winner) return 'Ingen vinner valgt';
     
     switch (runde.challenge.type) {
       case '1v1':
-        return `${runde.winner} vant!`;
+        return `${runde.winner}`;
       
       case 'Team-vs-Team':
-        return `${runde.winner} vant!`;
+        return `${runde.winner}`;
       
       case 'Team-vs-itself':
         // For Team-vs-itself viser vi om laget klarte utfordringen
@@ -101,33 +82,29 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
           : `${teamName} klarte det ikke!`;
       
       default:
-        return `${runde.winner} vant!`;
+        return `${runde.winner}`;
     }
   };
 
   return (
     <BackgroundWrapper>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Challenge fullført!</Text>
-        
-        <View style={styles.challengeContainer}>
-          <Text style={styles.description}>{getChallengeDescription()}</Text>
-        </View>
+      <View style={styles.contentContainer}>
+        <AppText style={styles.title}>Challenge fullført!</AppText>
 
         <View style={styles.winnerContainer}>
-          <Text style={styles.winnerLabel}>Vinner:</Text>
-          <Text style={styles.winnerText}>{getWinnerDisplay()}</Text>
+          <AppText style={styles.winnerLabel}>Vinner:</AppText>
+          <AppText style={styles.winnerText}>{getWinnerDisplay()}</AppText>
         </View>
 
         {/* Vis gøy melding om hvem som må drikke */}
         <View style={styles.drinkingContainer}>
-          <Text style={styles.drinkingTitle}>🍺 Drikke-resultater 🍺</Text>
+          <AppText style={styles.drinkingTitle}>🍺 Drikke-resultater 🍺</AppText>
           
           {runde.betResults && runde.betResults.length > 0 ? (
             runde.betResults.map((result, index) => (
               <View key={index} style={styles.drinkingResult}>
-                <Text style={styles.teamName}>{result.teamName}</Text>
-                <Text style={[
+                <AppText style={styles.teamName}>{result.teamName}</AppText>
+                <AppText style={[
                   styles.drinkingMessage,
                   result.isCorrect ? styles.correctDrinking : styles.incorrectDrinking
                 ]}>
@@ -135,23 +112,25 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
                     ? `🎉 GRATULERER! Dere kan dele ut ${result.amount} slurker til andre! 🎉`
                     : `😅 OOPS! Dere må drikke ${result.amount} slurker selv! 😅`
                   }
-                </Text>
+                </AppText>
               </View>
             ))
           ) : (
-            <Text style={styles.noBets}>🍺 Ingen veddemål ble plassert denne runden - alle slipper unna! 🍺</Text>
+            <AppText style={styles.noBets}>🍺 Ingen veddemål ble plassert denne runden - alle slipper unna! </AppText>
           )}
         </View>
 
         {/* Vis oppdaterte balances */}
         <View style={styles.balancesContainer}>
-          <Text style={styles.balancesTitle}>💰 Nye balances etter runde:</Text>
+          <AppText style={styles.balancesTitle}>💰 Nye balances etter runde:</AppText>
+          <ScrollView>
           {Object.entries(balances).map(([teamName, balance]) => (
             <View key={teamName} style={styles.balanceItem}>
-              <Text style={styles.teamName}>{teamName}</Text>
-              <Text style={styles.balanceText}>{balance} slurker</Text>
+              <AppText style={styles.teamName}>{teamName}</AppText>
+              <AppText style={styles.balanceText}>{balance} slurker</AppText>
             </View>
           ))}
+          </ScrollView>
         </View>
 
         {isHost && (
@@ -162,27 +141,101 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
             textStyle={styles.nextButtonText}
           />
         )}
-      </ScrollView>
+      </View>
     </BackgroundWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  // TEXT //
   title: {
-    fontSize: 28,
+    fontSize: 40,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  winnerLabel: {
+    fontSize: 30,
+    // fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#159cebff',
+    marginBottom: 10,
+  },
+  winnerText: {
+    fontSize: 35,
+    // fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#159cebff',
+  },
+  drinkingTitle: {
+    fontSize: 25,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#FAF0DE',
-    marginBottom: 30,
+    marginBottom: 20,
   },
+  drinkingMessage: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  correctDrinking: {
+    color: '#4CAF50',
+  },
+  incorrectDrinking: {
+    color: '#F44336',
+  },
+  noBets: {
+    fontSize: 20,
+    textAlign: 'center',
+    color: '#FAF0DE',
+    fontStyle: 'italic',
+  },
+  balancesTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#FAF0DE',
+    marginBottom: 20,
+  },
+  balanceText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+  },
+  teamName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FAF0DE',
+    marginBottom: 5,
+  },
+  nextButtonText: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+  },
+  // TEXT //
+
+
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+    marginTop: 55
+  },
+  winnerContainer: {
+    marginBottom: 30,
+    padding: 10,
+    backgroundColor: 'rgba(21, 156, 235, 0.3)',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#159cebff',
+  },
+  
   challengeContainer: {
     marginBottom: 30,
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -190,48 +243,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#FAF0DE',
-    lineHeight: 22,
-  },
-  winnerContainer: {
-    marginBottom: 30,
-    padding: 20,
-    backgroundColor: 'rgba(255, 69, 0, 0.2)',
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FF4500',
-  },
-  winnerLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FF4500',
-    marginBottom: 10,
-  },
-  winnerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FF4500',
-  },
-  noBets: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#FAF0DE',
-    fontStyle: 'italic',
-  },
+  
   balancesContainer: {
     marginBottom: 30,
-  },
-  balancesTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FAF0DE',
-    marginBottom: 20,
   },
   balanceItem: {
     flexDirection: 'row',
@@ -248,11 +262,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  balanceText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-  },
   drinkingContainer: {
     marginBottom: 30,
     padding: 20,
@@ -263,13 +272,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 8,
-  },
-  drinkingTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#FAF0DE',
-    marginBottom: 20,
   },
   drinkingResult: {
     marginBottom: 15,
@@ -282,33 +284,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  drinkingMessage: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  correctDrinking: {
-    color: '#4CAF50',
-  },
-  incorrectDrinking: {
-    color: '#F44336',
-  },
-  teamName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    marginBottom: 5,
-  },
   nextButton: {
     backgroundColor: '#EEB90E',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
-  },
-  nextButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
   },
 });

@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
+
 import { addPlayerToTeam, getGameByCode, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { subscribeToGameUpdates } from '@/utils/realtime';
 import { initializeGame, updateGameStatus } from '@/utils/status';
@@ -195,7 +197,7 @@ export default function GameLobby() {
       <ScrollView contentContainerStyle={styles.container}>
 
         {/* Spillkode */}
-        <Text style={styles.codeText}>SPILLKODE: {code}</Text>
+        <AppText style={styles.codeText}>SPILLKODE: {code}</AppText>
 
         {/* Lagnavn Og Øverste Kolonne */}
         {teams.map(team => (
@@ -203,9 +205,9 @@ export default function GameLobby() {
 
             <View style={styles.teamHeader}>
               <View style={styles.centeredTextWrapper}>
-                <Text style={styles.teamName}>
+                <AppText style={styles.teamName}>
                   {team.teamName} 
-                </Text>
+                </AppText>
               </View>
               {isHost && (<Button imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
             </View>
@@ -223,7 +225,7 @@ export default function GameLobby() {
                     )}
 
                     <View style={styles.centeredTextWrapper}>
-                      <Text style={[styles.playerName, isHostPlayer && styles.hostName ]}> {player.name}</Text>
+                      <AppText style={[styles.playerName, isHostPlayer && styles.hostName ]}> {player.name}</AppText>
                     </View>
                     <Button imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
                   </View>
@@ -254,7 +256,7 @@ export default function GameLobby() {
       {/* Start Spill */}
       {isHost && (
         <View style={styles.startGameContainer}>
-          <Button label="Start spill" style={styles.startGame_button}
+          <Button label="Start spill" style={styles.startGame_button} textStyle={styles.startGameText}
             onPress={async () => {
               await initializeGame(gameId);
               await updateGameStatus(gameId, 'playing');
@@ -311,7 +313,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: 10,
     marginBottom: 5,
-    width: 260
+    width: 260,
+    fontFamily: 'CherryBombOne-Regular'
   },
   centeredTextWrapper: {
     flex: 1,
@@ -331,13 +334,13 @@ const styles = StyleSheet.create({
 
   // Text //
   teamName: {
-    fontSize: 22,
+    fontSize: 27,
     fontWeight: 'bold',
     color: '#F0E3C0',
     marginLeft: 20,
   },
   playerName: {
-    fontSize: 20,
+    fontSize: 25,
     marginLeft: 10,
     fontWeight: 'bold',
     color: '#F0E3C0',
@@ -347,11 +350,14 @@ const styles = StyleSheet.create({
     marginRight: 40
   },
   codeText: {
-    fontSize: 30,
+    fontSize: 35,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
     color: '#D49712',
+  },
+  startGameText: {
+    fontSize: 20
   },
   // Text //
 
