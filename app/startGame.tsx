@@ -196,14 +196,44 @@ export default function GameLobby() {
 
   const handleRemovePlayer = async (teamName: string, playerId: string) => {
     if (!gameId) return;
-    const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
-    if (error) console.log("Feil ved fjerning:", error);
+    
+    try {
+      // Optimistisk oppdatering
+      const updatedTeams = teams.map(t => 
+        t.teamName === teamName 
+          ? { ...t, players: t.players.filter(p => p.id !== playerId) }
+          : t
+      );
+      setTeams(updatedTeams);
+
+      const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
+      if (error) {
+        setTeams(teams); // Revert ved feil
+        console.log("Feil ved fjerning:", error);
+      }
+    } catch (error) {
+      setTeams(teams); // Revert ved feil
+      console.error('Feil ved fjerning av spiller:', error);
+    }
   };
 
   const handleRemoveTeam = async (teamName: string) => {
     if (!gameId) return;
-    const { error } = await removeTeam(gameId, teamName);
-    if (error) console.log("Feil ved fjerning av lag:", error);
+    
+    try {
+      // Optimistisk oppdatering
+      const updatedTeams = teams.filter(t => t.teamName !== teamName);
+      setTeams(updatedTeams);
+
+      const { error } = await removeTeam(gameId, teamName);
+      if (error) {
+        setTeams(teams); // Revert ved feil
+        console.log("Feil ved fjerning av lag:", error);
+      }
+    } catch (error) {
+      setTeams(teams); // Revert ved feil
+      console.error('Feil ved fjerning av lag:', error);
+    }
   };
 
   const handleStartGame = async () => {

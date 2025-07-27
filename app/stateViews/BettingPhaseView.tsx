@@ -130,12 +130,12 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
   };
 
   // Legg til en hjelpefunksjon for å oppdatere balances lokalt
-  function optimisticUpdateBalance(teamName: string, amount: number) {
-    setBalances(prev => ({
-      ...prev,
-      [teamName]: (prev[teamName] || 0) - amount
-    }));
-  }
+  // function optimisticUpdateBalance(teamName: string, amount: number) {
+  //   setBalances(prev => ({
+  //     ...prev,
+  //     [teamName]: (prev[teamName] || 0) - amount
+  //   }));
+  // }
 
   // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
   const handlePlaceBet = async (bet: { teamName: string; betOn: string; amount: number }) => {
@@ -147,7 +147,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
         console.error('Feil ved innsending av bet:', result.error);
       } else {
         // Optimistisk oppdatering av balance lokalt
-        optimisticUpdateBalance(bet.teamName, bet.amount);
+        // optimisticUpdateBalance(bet.teamName, bet.amount);
       }
     } catch (err) {
       console.error('Uventet feil i handlePlaceBet:', err);
