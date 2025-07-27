@@ -13,114 +13,137 @@ import { supabase } from '../supabase';
 
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
+  console.log('startGame.tsx mounted with code:', code);
   const router = useRouter();
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-
-  // Bilder // 
+  // Bilder
   const x_button = require('@/assets/images/X-button.png');
   const remove_button = require('@/assets/images/removeButton.png');
   const add_button = require('@/assets/images/addButton.png');
   const crown_icon = require('@/assets/images/hostCrown.png');
-  // Bilder // 
 
-
-  // State og referanser //
+  // State
   const [teams, setTeams] = useState<Team[]>([]);
   const [gameId, setGameId] = useState<string>('');
   const [newPlayers, setNewPlayers] = useState<Record<string, string>>({});
   const [localTeamName, setLocalTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
-  const [startSlurks, setStartSlurks] = useState<number>(50); // Ny state for startverdi
-  const statusChannelRef = useRef<any>(null);
   const [isHost, setIsHost] = useState(false);
   const [hostName, setHostName] = useState<string | null>(null);
-  // State og Referanser //
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Refs for cleanup
+  const statusChannelRef = useRef<any>(null);
+  const teamsChannelRef = useRef<any>(null);
 
-
-  // Last inn lagret info fra AsyncStorage ved første lasting //
+  // HoveduseEffect som håndterer alt
   useEffect(() => {
-    const loadTeamInfo = async () => {
-      const storedCode = await AsyncStorage.getItem('gameCode');
-      const storedTeam = await AsyncStorage.getItem('teamName');
-      const storedPlayer = await AsyncStorage.getItem('playerName');
-      const hostBoolean = await AsyncStorage.getItem('isHost');
+    if (!code) return;
 
-      if (!storedCode || !storedTeam || !storedPlayer) {
+    const setupGame = async () => {
+      setIsLoading(true);
+      
+      try {
+        // 1. Last brukerinfo fra AsyncStorage
+        const storedCode = await AsyncStorage.getItem('gameCode');
+        const storedTeam = await AsyncStorage.getItem('teamName');
+        const storedPlayer = await AsyncStorage.getItem('playerName');
+        const hostBoolean = await AsyncStorage.getItem('isHost');
+
+        if (!storedCode || !storedTeam || !storedPlayer) {
+          router.replace('/');
+          return;
+        }
+
+        setLocalTeamName(storedTeam);
+        setPlayerName(storedPlayer);
+        setIsHost(hostBoolean === 'true');
+
+        // 2. Hent spilldata fra Supabase
+        const { data, error } = await getGameByCode(code);
+        if (error || !data) {
+          console.error('Fant ikke spill:', error);
+          router.replace('/');
+          return;
+        }
+
+        // 3. Sett state
+        setTeams(data.teams || []);
+        setGameId(data.id);
+        setHostName(data.hostName);
+
+        // 4. Sett opp realtime listeners
+        await setupRealtimeListeners(data.id);
+
+      } catch (error) {
+        console.error('Feil ved oppsett av spill:', error);
         router.replace('/');
-        return;
+      } finally {
+        setIsLoading(false);
       }
-
-      setLocalTeamName(storedTeam);
-      setPlayerName(storedPlayer);
-      setIsHost(hostBoolean === 'true');
     };
 
-    loadTeamInfo();
-  }, []);
-  // Last inn lagret info fra AsyncStorage ved første lasting //
+    setupGame();
 
+    // Cleanup
+    return () => {
+      if (statusChannelRef.current) {
+        supabase.removeChannel(statusChannelRef.current);
+      }
+      if (teamsChannelRef.current) {
+        supabase.removeChannel(teamsChannelRef.current);
+      }
+    };
+  }, [code]);
 
-  // Setter opp sanntids-abonnement //
-  const subscribeToGameStatus = (id: string) => {
-    const channel = supabase
-      .channel(`game-status-${id}`)
+  // Sett opp realtime listeners
+  const setupRealtimeListeners = async (gameId: string) => {
+    // Cleanup eksisterende listeners først
+    if (statusChannelRef.current) {
+      supabase.removeChannel(statusChannelRef.current);
+    }
+    if (teamsChannelRef.current) {
+      supabase.removeChannel(teamsChannelRef.current);
+    }
+
+    // Status listener
+    const statusChannel = supabase
+      .channel(`game-status-${gameId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'games',
-          filter: `id=eq.${id}`,
+          filter: `id=eq.${gameId}`,
         },
         (payload) => {
           const newStatus = payload.new.status;
           if (newStatus === 'playing' && !isHost) {
             router.replace({
               pathname: '/challengeScreen',
-              params: {
-                gameId: id.toString(),
-              },
+              params: { gameId: gameId.toString() },
             });
           }
         }
       )
       .subscribe();
 
-    return channel;
-  };
-  // Setter opp sanntids-abonnement //
+    statusChannelRef.current = statusChannel;
 
-  // henter hostNavn for visning av host //
-  useEffect(() => {
-    const fetchGameHost = async () => {
-      const { data } = await getGameByCode(code);
-      if (data) {
-      setHostName(data.hostName); // lagres fra supabase
-      }
-    };
-    if (code) fetchGameHost();
-  }, [code]);
-  // henter hostNavn for visning av host //
-
-  // Henter lagene fra Supabase + gameId + setter opp status-lytter
-  
-  // OPPDATERER AKTIVE LAG//
-  const fetchTeams = async () => {
-    const { data, error } = await getGameByCode(code);
-    if (data) {
-      setTeams(data.teams);
-      setGameId(data.id);
-      const channel = subscribeToGameStatus(data.id);
-      statusChannelRef.current = channel;
+    // Teams listener - bruk storedCode fra AsyncStorage
+    const storedCode = await AsyncStorage.getItem('gameCode');
+    if (storedCode) {
+      const teamsChannel = subscribeToGameUpdates(storedCode, (updatedTeams) => {
+        setTeams(updatedTeams || []);
+      });
+      teamsChannelRef.current = teamsChannel;
     }
   };
 
-  useEffect(() => { // Henter lag og gameId fra database når spillkoden blir tilgjengelig
-    if (code) fetchTeams();
-  }, [code]);
-
-  useEffect(() => { // Sjekker at ditt lag fortsatt finnes i spillet
+  // Sjekk at ditt lag fortsatt finnes
+  useEffect(() => {
     if (localTeamName && teams.length > 0) {
       const found = teams.find(t => t.teamName === localTeamName);
       if (!found) {
@@ -130,29 +153,7 @@ export default function GameLobby() {
     }
   }, [teams, localTeamName]);
 
-  useEffect(() => { // Setter opp sanntids-abonnement for oppdateringer i laglisten
-    if (!code) return;
-
-    const channel = subscribeToGameUpdates(code as string, (updatedTeams) => {
-      setTeams(updatedTeams);
-    });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [code]);
-
-  useEffect(() => { // Fjerner sanntids-abonnement på spillstatus når komponenten avmonteres
-    return () => {
-      if (statusChannelRef.current) {
-        supabase.removeChannel(statusChannelRef.current);
-      }
-    };
-  }, []);
-  // OPPDATERER AKTIVE LAG //
-
-
-  // LEGG TIL SPILLER //
+  // Handlers
   const handleAddPlayer = async (teamName: string) => {
     const name = newPlayers[teamName]?.trim();
     if (!name) return;
@@ -166,17 +167,33 @@ export default function GameLobby() {
       return;
     }
 
-    await addPlayerToTeam(gameId, teamName, {
-      id: generateId(), // eller crypto.randomUUID()
-      name,
-    });
+    try {
+      // Oppdater lokal state umiddelbart for bedre UX
+      const newPlayer = { id: generateId(), name };
+      const updatedTeams = teams.map(t => 
+        t.teamName === teamName 
+          ? { ...t, players: [...t.players, newPlayer] }
+          : t
+      );
+      setTeams(updatedTeams);
+      
+      // Tøm input-feltet umiddelbart
+      setNewPlayers(prev => ({ ...prev, [teamName]: '' }));
 
-    setNewPlayers(prev => ({ ...prev, [teamName]: '' }));
+      // Oppdater databasen
+      const result = await addPlayerToTeam(gameId, teamName, newPlayer);
+      
+      if (result?.error) {
+        // Hvis database oppdatering feiler, revert lokal state
+        setTeams(teams);
+        setNewPlayers(prev => ({ ...prev, [teamName]: name }));
+        console.error('Feil ved legging til av spiller:', result.error);
+      }
+    } catch (error) {
+      console.error('Feil ved legging til av spiller:', error);
+    }
   };
-  // LEGG TIL SPILLER //
 
-
-  // FJERN SPILLER //
   const handleRemovePlayer = async (teamName: string, playerId: string) => {
     if (!gameId) return;
     const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
@@ -188,81 +205,103 @@ export default function GameLobby() {
     const { error } = await removeTeam(gameId, teamName);
     if (error) console.log("Feil ved fjerning av lag:", error);
   };
-  // FJERN SPILLER //
 
+  const handleStartGame = async () => {
+    try {
+      await initializeGame(gameId);
+      await updateGameStatus(gameId, 'playing');
+      router.push({
+        pathname: '/challengeScreen',
+        params: { gameId: gameId.toString() },
+      });
+    } catch (error) {
+      console.error('Feil ved start av spill:', error);
+    }
+  };
+
+  // Render
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
-
-        {/* Spillkode */}
         <Text style={styles.codeText}>SPILLKODE: {code}</Text>
 
-        {/* Lagnavn Og Øverste Kolonne */}
-        {teams.map(team => (
-          <View key={team.teamName} style={styles.teamBox}>
-
-            <View style={styles.teamHeader}>
-              <View style={styles.centeredTextWrapper}>
-                <Text style={styles.teamName}>
-                  {team.teamName} 
-                </Text>
-              </View>
-              {isHost && (<Button imageSource={x_button} imageStyle={styles.x_button} onPress={() => handleRemoveTeam(team.teamName)}/>)}
-            </View>
-            
-            {/* Lagmedlemmer */}
-            <View style={styles.teamContent}>
-              {team.players.map(player => {
-                const isHostPlayer = player.name === hostName;
-              
-                return (
-                  <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5}} >
-
-                    {isHostPlayer && (
-                      <Image source={crown_icon} style={styles.crown_icon} />
-                    )}
-
-                    <View style={styles.centeredTextWrapper}>
-                      <Text style={[styles.playerName, isHostPlayer && styles.hostName ]}> {player.name}</Text>
-                    </View>
-                    <Button imageSource={remove_button} imageStyle={styles.remove_button} onPress={() => handleRemovePlayer(team.teamName, player.id)} />
-                  </View>
-                );
-              })}
-
-              {/* Legg Til Spiller */}
-              <View style={{flexDirection: 'row'}}>
-                <View style={styles.centeredTextWrapper}>
-                  <TextInput
-                    placeholder="Legg til spiller..."
-                    placeholderTextColor="rgba(240, 227, 192, 0.6)"
-                    value={newPlayers[team.teamName] || ''}
-                    onChangeText={text =>
-                      setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
-                    }
-                    style={[styles.input, {color: 'rgba(240, 227, 192, 0.6)'}]}
-                  />
-                </View>
-                <Button imageSource={add_button} imageStyle={styles.remove_button} onPress={() => handleAddPlayer(team.teamName)} />
-              </View>
-
-            </View>
+        {isLoading ? (
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <Text style={{ color: '#F0E3C0', fontSize: 16 }}>Laster lag...</Text>
           </View>
-        ))}
+        ) : (
+          teams.map(team => (
+            <View key={team.teamName} style={styles.teamBox}>
+              <View style={styles.teamHeader}>
+                <View style={styles.centeredTextWrapper}>
+                  <Text style={styles.teamName}>{team.teamName}</Text>
+                </View>
+                {isHost && (
+                  <Button 
+                    imageSource={x_button} 
+                    imageStyle={styles.x_button} 
+                    onPress={() => handleRemoveTeam(team.teamName)}
+                  />
+                )}
+              </View>
+              
+              <View style={styles.teamContent}>
+                {team.players.map(player => {
+                  const isHostPlayer = player.name === hostName;
+                  return (
+                    <View key={player.id} style={{ flexDirection: 'row', paddingVertical: 5 }}>
+                      {isHostPlayer && (
+                        <Image source={crown_icon} style={styles.crown_icon} />
+                      )}
+                      <View style={styles.centeredTextWrapper}>
+                        <Text style={[styles.playerName, isHostPlayer && styles.hostName]}>
+                          {player.name}
+                        </Text>
+                      </View>
+                      {isHost && (
+                        <Button 
+                          imageSource={remove_button} 
+                          imageStyle={styles.remove_button} 
+                          onPress={() => handleRemovePlayer(team.teamName, player.id)}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
+
+                {/* Legg til spiller - kun for host */}
+                {isHost && (
+                  <View style={{flexDirection: 'row'}}>
+                    <View style={styles.centeredTextWrapper}>
+                      <TextInput
+                        placeholder="Legg til spiller..."
+                        placeholderTextColor="rgba(240, 227, 192, 0.6)"
+                        value={newPlayers[team.teamName] || ''}
+                        onChangeText={text =>
+                          setNewPlayers(prev => ({ ...prev, [team.teamName]: text }))
+                        }
+                        style={[styles.input, {color: 'rgba(240, 227, 192, 0.6)'}]}
+                      />
+                    </View>
+                    <Button 
+                      imageSource={add_button} 
+                      imageStyle={styles.remove_button} 
+                      onPress={() => handleAddPlayer(team.teamName)} 
+                    />
+                  </View>
+                )}
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
       
-      {/* Start Spill */}
       {isHost && (
         <View style={styles.startGameContainer}>
-          <Button label="Start spill" style={styles.startGame_button}
-            onPress={async () => {
-              await initializeGame(gameId);
-              await updateGameStatus(gameId, 'playing');
-              router.push({
-                pathname: '/challengeScreen',
-                params: { gameId: gameId.toString() },
-              });
-            }}
+          <Button 
+            label="Start spill" 
+            style={styles.startGame_button}
+            onPress={handleStartGame}
           /> 
         </View>
       )}
