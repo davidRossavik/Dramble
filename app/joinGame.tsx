@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
@@ -11,10 +11,29 @@ import { getRandomTeamName } from '@/utils/nameGenerator';
 export default function JoinGame() {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const generateRandomTeamName = async () => {
+    // Hvis vi har en spillkode, sjekk for duplikater
+    if (code.trim()) {
+      const { data, error: fetchError } = await getGameByCode(code.trim().toUpperCase());
+      if (!fetchError && data) {
+        const existingTeams = data.teams ?? [];
+        const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
+        const randomTeamName = getRandomTeamName(existingNames);
+        setTeamName(randomTeamName);
+        return;
+      }
+    }
+    
+    // Hvis ingen spillkode eller spill ikke funnet, generer tilfeldig navn
+    const randomTeamName = getRandomTeamName();
+    setTeamName(randomTeamName);
+  };
 
 //   const handleJoin = async () => {
 //     if (!code.trim()) {
@@ -78,6 +97,17 @@ const handleJoin = async () => {
   }
 
   const cleanName = name.trim();
+  if (!cleanName) {
+    setError('Skriv inn navn');
+    return;
+  }
+
+  const cleanTeamName = teamName.trim();
+  if (!cleanTeamName) {
+    setError('Velg et lagnavn');
+    return;
+  }
+
   console.log("🟢 Henter spill:", code.trim().toUpperCase());
 
   const { data, error: fetchError } = await getGameByCode(code.trim().toUpperCase());
@@ -87,8 +117,7 @@ const handleJoin = async () => {
     console.log("data:", data);
     setError('Fant ikke spill med denne koden');
     return;
-}
-
+  }
 
   console.log("✅ Fant spill:", data);
 
@@ -98,11 +127,15 @@ const handleJoin = async () => {
   const balanceValues = Object.values(balances);
   const startBalance = balanceValues.length > 0 ? Number(balanceValues[0]) : 100;
 
+  // Sjekk om lagnavnet allerede finnes
   const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
-  const randomTeamName = getRandomTeamName(existingNames);
+  if (existingNames.includes(cleanTeamName)) {
+    setError('Lagnavnet finnes allerede');
+    return;
+  }
 
   const newTeam = {
-    teamName: randomTeamName,
+    teamName: cleanTeamName,
     players: [{
       id: generateId(),
       name: cleanName,
@@ -121,7 +154,7 @@ const handleJoin = async () => {
   console.log("✅ Lag lagt til. Lagrer info i AsyncStorage");
 
   await AsyncStorage.setItem('gameCode', code);
-  await AsyncStorage.setItem('teamName', randomTeamName);
+  await AsyncStorage.setItem('teamName', cleanTeamName);
   await AsyncStorage.setItem('playerName', cleanName);
   await AsyncStorage.setItem('isHost', 'false');
 
@@ -158,6 +191,19 @@ const handleJoin = async () => {
           value={name}
           onChangeText={setName}
         />
+
+        <View style={styles.teamNameContainer}>
+          <TextInput
+            style={styles.teamNameInput}
+            placeholder="Lagnavn"
+            placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
+            value={teamName}
+            onChangeText={setTeamName}
+          />
+          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
+            <Text style={styles.randomButtonText}>🎲</Text>
+          </Pressable>
+        </View>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -205,5 +251,33 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 14,
+  },
+  teamNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '80%',
+    gap: 10,
+  },
+  teamNameInput: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#D49712',
+    borderRadius: 15,
+    fontSize: 25,
+    backgroundColor: '#073510',
+    color: '#F0E3C0',
+  },
+  randomButton: {
+    backgroundColor: '#D49712',
+    borderRadius: 15,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  randomButtonText: {
+    fontSize: 20,
+    color: '#F0E3C0',
   },
 });
