@@ -414,8 +414,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#094314',
     alignItems: 'center',
     width: '100%',
-    padding: 18,
+    padding: 15,
     flexDirection: 'row',
+    minHeight: 60,
   },
   teamContent: {
     padding: 15,
@@ -435,6 +436,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   startGameContainer: {
     alignItems: 'center',
@@ -460,10 +462,11 @@ const styles = StyleSheet.create({
 
   // Text //
   teamName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#F0E3C0',
-    marginLeft: 20,
+    textAlign: 'center',
+    flexShrink: 1,
   },
   playerName: {
     fontSize: 20,
