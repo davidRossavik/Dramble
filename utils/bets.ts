@@ -2,6 +2,12 @@ import { supabase } from '../supabase';
 import { updateBalances } from './games';
 
 export async function submitBet(gameId: string, teamName: string, challengeIndex: number, amount: number, betOn: string) {
+  // Sjekk om laget allerede har plassert et bet
+  const hasPlacedBet = await hasTeamPlacedBet(gameId, teamName, challengeIndex);
+  if (hasPlacedBet) {
+    return { error: 'Du har allerede plassert et veddemål for denne runden' };
+  }
+
   // Først, hent nåværende balances
   const { data: game, error: gameError } = await supabase
     .from('games')
@@ -107,4 +113,21 @@ export async function updateBalancesAfterRound(gameId: string, challengeIndex: n
     console.error('Uventet feil ved oppdatering av balances:', error);
     return { error };
   }
+}
+
+// Ny funksjon for å sjekke om et lag allerede har plassert et bet
+export async function hasTeamPlacedBet(gameId: string, teamName: string, challengeIndex: number) {
+  const { data: bets, error } = await supabase
+    .from('bets')
+    .select('*')
+    .eq('game_id', gameId)
+    .eq('team_name', teamName)
+    .eq('challenge_index', challengeIndex);
+
+  if (error) {
+    console.error('Feil ved sjekking av eksisterende bet:', error);
+    return false;
+  }
+
+  return bets && bets.length > 0;
 }
