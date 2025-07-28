@@ -5,7 +5,7 @@ import { AppState, Image, ScrollView, StyleSheet, Text, TextInput, View } from '
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { addPlayerToTeam, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
+import { addPlayerToTeam, deleteGame, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
 import { supabase } from '../supabase';
@@ -101,21 +101,30 @@ export default function GameLobby() {
     }
   }, [gameId]);
 
-  // Håndter når spiller forlater appen
+  // Håndter når spiller forlater appen (lukker appen helt)
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: string) => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
+      if (nextAppState === 'inactive') {
         console.log('Spiller forlot appen');
         
         if (isHost && gameId) {
-          // Host forlot - slett spillet
+          // Host forlot - slett spillet fra Supabase
           console.log('Host forlot - sletter spillet');
-          // TODO: Implementer sletting av spill
-          // deleteGame(gameId).catch(console.error);
+          deleteGame(gameId).catch(console.error);
         } else if (gameId && localTeamName && playerName) {
-          // Vanlig spiller forlot - fjern fra lag
-          console.log('Spiller forlot - fjerner fra lag');
-          removePlayerFromTeam(gameId, localTeamName, playerName).catch(console.error);
+          // Sjekk om spilleren er lagleder (første spiller i laget)
+          const team = teams.find(t => t.teamName === localTeamName);
+          const isTeamLeader = team && team.players.length > 0 && team.players[0].name === playerName;
+          
+          if (isTeamLeader) {
+            // Lagleder forlot - fjern hele laget
+            console.log('Lagleder forlot - fjerner hele laget');
+            removeTeam(gameId, localTeamName).catch(console.error);
+          } else {
+            // Vanlig spiller forlot - fjern fra lag
+            console.log('Lagleder forlot - fjerner hele laget');
+            removeTeam(gameId, localTeamName).catch(console.error);
+          }
         }
       }
     };
