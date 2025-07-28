@@ -139,10 +139,8 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
 
   // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
   const handlePlaceBet = async (bet: { teamName: string; betOn: string; amount: number }) => {
-    console.log('Plasserer bet:', bet);
     try {
       const result = await submitBet(gameId, bet.teamName, runde.challengeIndex, bet.amount, bet.betOn);
-      console.log('Resultat fra submitBet:', result);
       if (result && result.error) {
         console.error('Feil ved innsending av bet:', result.error);
       } else {

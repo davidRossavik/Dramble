@@ -56,9 +56,7 @@ export async function initializeGame(gameId: string) {
     })
     .eq('id', gameId);
     
-  console.log("Starter initializeGame for", gameId);
-  console.log("Valgte utfordringer:", challenges);
-  console.log("Valgte lag:", teamsToSelect);
+
 
   if (error) {
     console.error('Feil ved start:', error.message);

@@ -88,10 +88,7 @@ export default function JoinGame() {
 //   };
 
 const handleJoin = async () => {
-  console.log("🔵 Start handleJoin");
-
   if (!code.trim()) {
-    console.log("❌ Mangler spillkode");
     setError('Skriv inn en spillkode');
     return;
   }
@@ -118,18 +115,11 @@ const handleJoin = async () => {
     return;
   }
 
-  console.log("🟢 Henter spill:", code.trim().toUpperCase());
-
   const { data, error: fetchError } = await getGameByCode(code.trim().toUpperCase());
   if (fetchError || !data) {
-    console.log("❌ Fant ikke spill");
-    console.log("fetchError:", fetchError);
-    console.log("data:", data);
     setError('Fant ikke spill med denne koden');
     return;
   }
-
-  console.log("✅ Fant spill:", data);
 
   const gameId = data.id;
   const existingTeams = data.teams ?? [];
@@ -152,16 +142,11 @@ const handleJoin = async () => {
     }],
   };
 
-  console.log("🟢 Legger til lag:", newTeam);
-
   const addResult = await addTeamToGame(gameId, newTeam, startBalance);
   if (addResult?.error) {
-    console.log("❌ Feil ved addTeamToGame:", addResult.error);
     setError('Klarte ikke legge til laget');
     return;
   }
-
-  console.log("✅ Lag lagt til. Lagrer info i AsyncStorage");
 
   await AsyncStorage.setItem('gameCode', code);
   await AsyncStorage.setItem('teamName', cleanTeamName);
@@ -169,7 +154,6 @@ const handleJoin = async () => {
   await AsyncStorage.setItem('isHost', 'false');
 
   const upperCode = code.trim().toUpperCase();
-  console.log("🚀 Navigerer til /startGame med kode:", upperCode);
 
   setError('');
   router.push({

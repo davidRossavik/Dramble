@@ -12,7 +12,7 @@ import { supabase } from '../supabase';
 
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
-  console.log('startGame.tsx mounted with code:', code);
+
   const router = useRouter();
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 

@@ -43,7 +43,7 @@ export default function ChallengeScreen() {
         duration: 2000,
         useNativeDriver: true,
       }).start(({finished}) => {
-        console.log('FadeOut completed:', finished);
+    
         resolve(true);});
     });
   };

@@ -16,7 +16,7 @@ type Props = {
 export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTransitioning }: Props) {
   const [localSelectedWinner, setLocalSelectedWinner] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
-  console.log('PlayingView mount/render', runde.challengeIndex);
+
 
   // Sjekk om bruker er host
   useEffect(() => {
