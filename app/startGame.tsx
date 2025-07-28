@@ -173,6 +173,11 @@ export default function GameLobby() {
     const name = newPlayers[teamName]?.trim();
     if (!name) return;
 
+    if (name.length > 20) {
+      alert('Spillernavnet kan ikke være lengre enn 20 tegn');
+      return;
+    }
+
     const team = teams.find(t => t.teamName === teamName);
     if (!team) return;
 
@@ -454,7 +459,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 50,
     backgroundColor: '#333',
-    borderRadius: 5,
+    borderRadius: 25,
     marginBottom: 20,
   },
   // Containers //
@@ -462,7 +467,7 @@ const styles = StyleSheet.create({
 
   // Text //
   teamName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#F0E3C0',
     textAlign: 'center',
@@ -511,7 +516,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 50,
     backgroundColor: '#66A05E',
-    borderRadius: 5,
+    borderRadius: 25,
     marginBottom: 20,
   },
   // Buttons //

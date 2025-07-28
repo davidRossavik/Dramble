@@ -102,9 +102,19 @@ const handleJoin = async () => {
     return;
   }
 
+  if (cleanName.length > 20) {
+    setError('Navnet kan ikke være lengre enn 20 tegn');
+    return;
+  }
+
   const cleanTeamName = teamName.trim();
   if (!cleanTeamName) {
     setError('Velg et lagnavn');
+    return;
+  }
+
+  if (cleanTeamName.length > 25) {
+    setError('Lagnavnet kan ikke være lengre enn 25 tegn');
     return;
   }
 
