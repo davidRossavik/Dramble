@@ -28,8 +28,18 @@ export default function StartGameSetup() {
       return;
     }
     
+    if (hostName.trim().length > 20) {
+      setError('Navnet kan ikke være lengre enn 20 tegn');
+      return;
+    }
+    
     if (!teamName.trim()) {
       setError('Velg et lagnavn');
+      return;
+    }
+    
+    if (teamName.trim().length > 25) {
+      setError('Lagnavnet kan ikke være lengre enn 25 tegn');
       return;
     }
     
