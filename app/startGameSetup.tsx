@@ -10,29 +10,41 @@ import { Team } from '@/utils/types';
 
 export default function StartGameSetup() {
   const [hostName, setHostName] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [startSlurks, setStartSlurks] = useState<number>(50);
   const [error, setError] = useState('');
   const router = useRouter();
 
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
+  const generateRandomTeamName = () => {
+    const randomName = getRandomTeamName();
+    setTeamName(randomName);
+  };
+
   const navigateToStartGame = async () => {
     if (!hostName.trim()) {
       setError('Skriv inn navn');
       return;
     }
+    
+    if (!teamName.trim()) {
+      setError('Velg et lagnavn');
+      return;
+    }
+    
     const code = generateId(); // f.eks. "XKW32P"
-    const teamName = getRandomTeamName(); // randomTeamName
+    const finalTeamName = teamName.trim();
 
     await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', teamName);
+    await AsyncStorage.setItem('teamName', finalTeamName);
     await AsyncStorage.setItem('playerName', hostName);
     await AsyncStorage.setItem('isHost', 'true');
 
     // Opprett lag-array med hostens lag og evt. testlag
     const teams: Team[] = [
       {
-        teamName: teamName,
+        teamName: finalTeamName,
         players: [
           {
             id: generateId(),
@@ -78,6 +90,19 @@ export default function StartGameSetup() {
           value={hostName}
           onChangeText={setHostName}
         />
+
+        <View style={styles.teamNameContainer}>
+          <TextInput
+            style={styles.teamNameInput}
+            placeholder="Lagnavn"
+            placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
+            value={teamName}
+            onChangeText={setTeamName}
+          />
+          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
+            <Text style={styles.randomButtonText}>🎲</Text>
+          </Pressable>
+        </View>
 
         <Text style={styles.subtitle}>Start Slurker:</Text>
         <View style={styles.modeRow}>
@@ -181,6 +206,34 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 14,
+  },
+  teamNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '80%',
+    gap: 10,
+  },
+  randomButton: {
+    backgroundColor: '#D49712',
+    borderRadius: 15,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  randomButtonText: {
+    fontSize: 20,
+    color: '#F0E3C0',
+  },
+  teamNameInput: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#D49712',
+    borderRadius: 15,
+    fontSize: 25,
+    backgroundColor: '#073510',
+    color: '#F0E3C0',
   },
 });
 
