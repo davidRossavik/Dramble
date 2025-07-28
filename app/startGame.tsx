@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppState, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { addPlayerToTeam, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
+import { addPlayerToTeam, deleteGame, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
 import { supabase } from '../supabase';
@@ -90,25 +90,65 @@ export default function GameLobby() {
       if (statusChannelRef.current) {
         supabase.removeChannel(statusChannelRef.current);
       }
-      if (teamsChannelRef.current) {
-        supabase.removeChannel(teamsChannelRef.current);
-      }
     };
   }, [code]);
 
+  // Sørg for at realtime listeners alltid er aktive når gameId endres
+  useEffect(() => {
+    if (gameId) {
+      console.log('GameId endret, setter opp realtime listeners på nytt:', gameId);
+      setupRealtimeListeners(gameId);
+    }
+  }, [gameId]);
+
+  // Håndter når spiller forlater appen (lukker appen helt)
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: string) => {
+      if (nextAppState === 'inactive') {
+        console.log('Spiller forlot appen');
+        
+        if (isHost && gameId) {
+          // Host forlot - slett spillet fra Supabase
+          console.log('Host forlot - sletter spillet');
+          deleteGame(gameId).catch(console.error);
+        } else if (gameId && localTeamName && playerName) {
+          // Sjekk om spilleren er lagleder (første spiller i laget)
+          const team = teams.find(t => t.teamName === localTeamName);
+          const isTeamLeader = team && team.players.length > 0 && team.players[0].name === playerName;
+          
+          if (isTeamLeader) {
+            // Lagleder forlot - fjern hele laget
+            console.log('Lagleder forlot - fjerner hele laget');
+            removeTeam(gameId, localTeamName).catch(console.error);
+          } else {
+            // Vanlig spiller forlot - fjern fra lag
+            console.log('Lagleder forlot - fjerner hele laget');
+            removeTeam(gameId, localTeamName).catch(console.error);
+          }
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    return () => {
+      subscription?.remove();
+    };
+  }, [isHost, gameId, localTeamName, playerName]);
+
   // Sett opp realtime listeners
   const setupRealtimeListeners = async (gameId: string) => {
-    // Cleanup eksisterende listeners først
+    console.log('Setter opp realtime listeners for gameId:', gameId);
+    
+    // Cleanup eksisterende listener først
     if (statusChannelRef.current) {
+      console.log('Fjerner eksisterende listener');
       supabase.removeChannel(statusChannelRef.current);
     }
-    if (teamsChannelRef.current) {
-      supabase.removeChannel(teamsChannelRef.current);
-    }
 
-    // Status listener
-    const statusChannel = supabase
-      .channel(`game-status-${gameId}`)
+    // Kombinert listener for både status og teams endringer
+    const gameChannel = supabase
+      .channel(`game-updates-${gameId}`)
       .on(
         'postgres_changes',
         {
@@ -118,43 +158,32 @@ export default function GameLobby() {
           filter: `id=eq.${gameId}`,
         },
         (payload) => {
-          const newStatus = payload.new.status;
-          if (newStatus === 'playing' && !isHost) {
+          console.log('Realtime game update:', payload);
+
+          // Håndter status endringer
+          if (payload.new.status === 'playing' && !isHost) {
             router.replace({
               pathname: '/challengeScreen',
               params: { gameId: gameId.toString() },
             });
           }
+
+          // Håndter teams endringer
+          if (payload.new.teams) {
+            console.log('Teams oppdatert via realtime:', payload.new.teams);
+            const updatedTeams = payload.new.teams.map((team: any) => ({
+              ...team,
+              players: team.players || [],
+            }));
+            console.log('Setter teams til:', updatedTeams);
+            setTeams(updatedTeams);
+          }
         }
       )
       .subscribe();
 
-    statusChannelRef.current = statusChannel;
-
-    // Teams listener - bruk storedCode fra AsyncStorage
-    const storedCode = await AsyncStorage.getItem('gameCode');
-    if (storedCode) {
-      const teamsChannel = supabase
-        .channel(`game-teams-${storedCode}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'teams',
-            filter: `game_id=eq.${gameId}`,
-          },
-          (payload) => {
-            const updatedTeams = payload.new.map((team: any) => ({
-              ...team,
-              players: team.players || [],
-            }));
-            setTeams(updatedTeams);
-          }
-        )
-        .subscribe();
-      teamsChannelRef.current = teamsChannel;
-    }
+    console.log('Realtime listener satt opp for gameId:', gameId);
+    statusChannelRef.current = gameChannel;
   };
 
   // Sjekk at ditt lag fortsatt finnes
@@ -276,7 +305,7 @@ export default function GameLobby() {
     if (!gameId) return;
 
     try {
-      const result = await randomizePlayers(gameId, teams);
+      const result = await randomizePlayers(gameId, []);
       
       if (result.error) {
         console.log(result.error);

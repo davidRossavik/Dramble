@@ -142,7 +142,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
     try {
       const result = await submitBet(gameId, bet.teamName, runde.challengeIndex, bet.amount, bet.betOn);
       if (result && result.error) {
-        console.error('Feil ved innsending av bet:', result.error);
+        alert(result.error);
       } else {
         // Optimistisk oppdatering av balance lokalt
         // optimisticUpdateBalance(bet.teamName, bet.amount);
