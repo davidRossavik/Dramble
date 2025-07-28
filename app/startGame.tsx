@@ -93,6 +93,14 @@ export default function GameLobby() {
     };
   }, [code]);
 
+  // Sørg for at realtime listeners alltid er aktive når gameId endres
+  useEffect(() => {
+    if (gameId) {
+      console.log('GameId endret, setter opp realtime listeners på nytt:', gameId);
+      setupRealtimeListeners(gameId);
+    }
+  }, [gameId]);
+
   // Håndter når spiller forlater appen
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: string) => {
@@ -288,7 +296,7 @@ export default function GameLobby() {
     if (!gameId) return;
 
     try {
-      const result = await randomizePlayers(gameId, teams);
+      const result = await randomizePlayers(gameId, []);
       
       if (result.error) {
         console.log(result.error);
