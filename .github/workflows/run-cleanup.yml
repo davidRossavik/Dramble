@@ -1,0 +1,24 @@
+name: Run cleanup_old_games every 6 hours
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Hver 6. time
+  workflow_dispatch:        # Manuell start i GitHub
+
+jobs:
+  run-cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: Run Supabase function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase login --access-token $SUPABASE_ACCESS_TOKEN
+          supabase functions invoke cleanup_old_games

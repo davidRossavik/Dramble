@@ -119,18 +119,15 @@ export default function ChallengeScreen() {
             if (payload.new.status !== payload.old?.status) {
               setGameStatus(payload.new.status);
               if (payload.new.status === 'finished') {
-                // Ikke returner tidlig - la oss håndtere dette som andre overganger
-                setRunde(null); // Fjern runde for å vise GameFinishedView
-                setIsTransitioning(false); // Slutt transition
+                setRunde(null);
+                setIsTransitioning(false);
                 return;
               }
               if (payload.new.status === 'waiting') {
-                // Hent gameCode fra AsyncStorage eller database
                 const storedCode = await AsyncStorage.getItem('gameCode');
                 if (storedCode) {
                   router.replace({ pathname: '/startGame', params: { code: storedCode } });
                 } else {
-                  // Fallback: hent fra database
                   const { data } = await supabase
                     .from('games')
                     .select('code')
@@ -146,14 +143,18 @@ export default function ChallengeScreen() {
 
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
+            
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
+              setIsTransitioning(false);
               return;
             }
+            
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
+              setIsTransitioning(false);
               return;
             }
 
@@ -172,6 +173,7 @@ export default function ChallengeScreen() {
   
   const handlePhaseAdvance = async () => {
     if (isTransitioning || !runde) return;
+    
     setIsTransitioning(true);
 
     // Ikke gå videre hvis spillet er ferdig
@@ -220,6 +222,8 @@ export default function ChallengeScreen() {
         console.error('Feil under overgang:', error);
         setIsTransitioning(false);
       }
+    } else {
+      setIsTransitioning(false);
     }
   };
 
@@ -262,6 +266,15 @@ export default function ChallengeScreen() {
               />
             )}
           </Animated.View>
+        )}
+
+        {/* Debug info */}
+        {!isLoading && !runde && (
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <Text style={{color: 'white'}}>Ingen runde data tilgjengelig</Text>
+            <Text style={{color: 'white'}}>Game Status: {gameStatus}</Text>
+            <Text style={{color: 'white'}}>Is Transitioning: {isTransitioning.toString()}</Text>
+          </View>
         )}
 
       </View>
