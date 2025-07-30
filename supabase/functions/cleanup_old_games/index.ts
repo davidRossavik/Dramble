@@ -1,32 +1,76 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+// ✅ Hardkodet Discord-webhook – beholdt som ønsket
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/xxx/yyy";
 
-console.log("Hello from Functions!")
+function sendDiscordLog(message: string) {
+  return fetch(DISCORD_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: message }),
+  });
+}
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+serve(async () => {
+  const supabase = createClient(
+    Deno.env.get("MY_SUPABASE_URL")!,
+    Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const cutoffTime = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  
+  let gamesDeleted = 0;
+  let betsDeleted = 0;
+  let errors: string[] = [];
+
+  try {
+    // Slett gamle bets
+    const { count: betsCount, error: betsError } = await supabase
+      .from("bets")
+      .delete()
+      .lt("created_at", cutoffTime)
+      .select("*", { count: "exact" });
+
+    if (betsError) {
+      errors.push(`Bets sletting feilet: ${betsError.message}`);
+      await sendDiscordLog(`❌ Feil under sletting av gamle bets: ${betsError.message}`);
+    } else {
+      betsDeleted = betsCount ?? 0;
+      console.log(`Slettet ${betsDeleted} gamle bets`);
+    }
+
+    // Slett gamle spill
+    const { count: gamesCount, error: gamesError } = await supabase
+      .from("games")
+      .delete()
+      .lt("created_at", cutoffTime)
+      .select("*", { count: "exact" });
+
+    if (gamesError) {
+      errors.push(`Games sletting feilet: ${gamesError.message}`);
+      await sendDiscordLog(`❌ Feil under sletting av gamle spill: ${gamesError.message}`);
+    } else {
+      gamesDeleted = gamesCount ?? 0;
+      console.log(`Slettet ${gamesDeleted} gamle spill`);
+    }
+
+    if (errors.length === 0) {
+      const message = `✅ Cleanup kjørt: ${gamesDeleted} spill og ${betsDeleted} bets slettet`;
+      await sendDiscordLog(message);
+      console.log(message);
+      return new Response(message, { status: 200 });
+    } else {
+      const errorMessage = `⚠️ Cleanup kjørt med feil: ${errors.join(", ")}`;
+      await sendDiscordLog(errorMessage);
+      console.error(errorMessage);
+      return new Response(errorMessage, { status: 500 });
+    }
+
+  } catch (error) {
+    const errorMessage = `❌ Uventet feil under cleanup: ${error.message}`;
+    await sendDiscordLog(errorMessage);
+    console.error(errorMessage);
+    return new Response(errorMessage, { status: 500 });
   }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/cleanup_old_games' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+});

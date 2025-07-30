@@ -21,4 +21,4 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase login --access-token $SUPABASE_ACCESS_TOKEN
-          supabase functions invoke cleanup_old_games
+          supabase functions invoke cleanup_old_games --no-verify-jwt
