@@ -17,7 +17,6 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
   const [localSelectedWinner, setLocalSelectedWinner] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
 
-
   // Sjekk om bruker er host
   useEffect(() => {
     AsyncStorage.getItem('isHost').then((hostValue) => {

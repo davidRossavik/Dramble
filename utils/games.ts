@@ -444,16 +444,36 @@ export async function hasTeamPlacedBet(gameId: string, teamName: string, challen
 
 // Ny funksjon for å slette et spill når host forlater
 export async function deleteGame(gameId: string) {
-  const { error } = await supabase
-    .from('games')
-    .delete()
-    .eq('id', gameId);
+  console.log('🗑️ Starting cleanup for game:', gameId);
+  
+  try {
+    // 1. Slett alle bets for dette spillet først
+    const { error: betsError } = await supabase
+      .from('bets')
+      .delete()
+      .eq('game_id', gameId);
 
-  if (error) {
-    console.error('Feil ved sletting av spill:', error);
-    return { error };
+    if (betsError) {
+      console.error('Feil ved sletting av bets:', betsError);
+      return { error: betsError };
+    }
+
+    console.log('✅ Bets deleted for game:', gameId);
+
+    // 2. Slett spillet fra games tabellen
+    const { error: gameError } = await supabase
+      .from('games')
+      .delete()
+      .eq('id', gameId);
+
+  if (gameError) {
+    console.error('Feil ved sletting av spill:', gameError);
+    return { gameError };
   }
 
   return { error: null };
 }
-
+catch (error) {
+  console.error('Feil ved sletting av spill:', error);
+  return { error };
+}}
