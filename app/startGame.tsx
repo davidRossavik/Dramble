@@ -138,7 +138,6 @@ export default function GameLobby() {
 
   // Sett opp realtime listeners
   const setupRealtimeListeners = async (gameId: string) => {
-    console.log('Setter opp realtime listeners for gameId:', gameId);
     
     // Cleanup eksisterende listener først
     if (statusChannelRef.current) {
@@ -158,7 +157,6 @@ export default function GameLobby() {
           filter: `id=eq.${gameId}`,
         },
         (payload) => {
-          console.log('Realtime game update:', payload);
 
           // Håndter status endringer
           if (payload.new.status === 'playing' && !isHost) {
