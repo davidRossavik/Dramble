@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ✅ Hardkodet Discord-webhook – beholdt som ønsket
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/xxx/yyy";
+// Hardkodet Discord-webhook 
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1400158217593684010/EARLQ9pBP526EmPG74RJcZcUT1GxwdCRV9J3kJjS-J15-79Rp9oS5sVb8DTWzreEQpW6";
 
 function sendDiscordLog(message: string) {
   return fetch(DISCORD_WEBHOOK_URL, {
