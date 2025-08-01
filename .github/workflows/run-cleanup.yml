@@ -2,8 +2,8 @@ name: Run cleanup_old_games every 6 hours
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Hver 6. time
-  workflow_dispatch:        # Manuell start i GitHub
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   run-cleanup:
@@ -16,14 +16,19 @@ jobs:
       - name: Install Supabase CLI
         run: |
           curl -L https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xz
-          sudo mv supabase /usr/local/bin/supabase
+          sudo mv supabase /usr/local/bin
 
-      - name: Run Supabase function
+      - name: Supabase login
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          MY_SUPABASE_URL: ${{ secrets.MY_SUPABASE_URL }}
-          MY_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MY_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           supabase login --token $SUPABASE_ACCESS_TOKEN
-          cd supabase-functions
-          supabase functions invoke cleanup_old_games --no-verify-jwt
+
+      - name: Invoke cleanup function
+        working-directory: ./supabase-functions
+        env:
+          SUPABASE_URL: ${{ secrets.MY_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MY_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -X POST "$SUPABASE_URL/functions/v1/cleanup_old_games" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
