@@ -25,5 +25,5 @@ jobs:
           MY_SUPABASE_URL: ${{ secrets.MY_SUPABASE_URL }}
           MY_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MY_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          supabase login --access-token $SUPABASE_ACCESS_TOKEN
+          supabase login --token $SUPABASE_ACCESS_TOKEN
           supabase functions invoke cleanup_old_games
