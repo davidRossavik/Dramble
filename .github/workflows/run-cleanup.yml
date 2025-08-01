@@ -25,5 +25,5 @@ jobs:
           MY_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MY_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           supabase login --token $SUPABASE_ACCESS_TOKEN
-          cd supabase-functions
-          supabase functions invoke cleanup_old_games
+          cd supabase-functions  # Her må du gå til mappen som inneholder supabase.json
+          supabase functions invoke cleanup_old_games --project-ref jsjliepluwxvrrtceghu --no-verify-jwt
