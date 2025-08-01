@@ -16,7 +16,7 @@ jobs:
       - name: Install Supabase CLI
         run: |
           curl -L https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xz
-          sudo mv supabase /usr/local/bin
+          sudo mv supabase_linux_amd64 /usr/local/bin/supabase
 
       - name: Run Supabase function
         env:
@@ -25,7 +25,4 @@ jobs:
           MY_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MY_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           supabase login --token $SUPABASE_ACCESS_TOKEN
-          supabase functions invoke cleanup_old_games \
-            --project-ref jsjliepluwxvrrtceghu \
-            --no-verify-jwt \
-            --headers MY_SUPABASE_URL:$MY_SUPABASE_URL,MY_SUPABASE_SERVICE_ROLE_KEY:$MY_SUPABASE_SERVICE_ROLE_KEY
+          supabase functions invoke cleanup_old_games
