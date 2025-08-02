@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase } from "../supabase-functions/supabase.js";
 import { Player, Team } from "./types";
 
 

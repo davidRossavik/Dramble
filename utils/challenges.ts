@@ -1,5 +1,5 @@
 import challenges from '@/assets/data/challenges.json';
-import { supabase } from '@/supabase';
+import { supabase } from '../supabase-functions/supabase.js';
 import { Challenge, Team } from './types';
 
 export async function getRandomChallengesWithPlayers(gameId: string, n: number = 10): Promise<Challenge[]> {

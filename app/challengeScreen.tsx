@@ -1,11 +1,11 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
-import { supabase } from '@/supabase';
 import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
+import { supabase } from '../supabase-functions/supabase.js';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import GameFinishedView from './stateViews/GameFinishedView';
