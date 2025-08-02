@@ -1,10 +1,10 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
-import { supabase } from '@/supabase';
 import { getGameById } from '@/utils/games';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Text, View } from 'react-native';
+import { supabase } from '../../supabase-functions/supabase.js';
 
 export default function GameFinishedView({ gameId, isHost }: { gameId: string, isHost: boolean }) {
   const [balances, setBalances] = useState<Record<string, number>>({});

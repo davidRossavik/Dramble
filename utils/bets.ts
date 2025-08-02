@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { supabase } from '../supabase-functions/supabase.js';
 import { updateBalances } from './games';
 
 export async function submitBet(gameId: string, teamName: string, challengeIndex: number, amount: number, betOn: string) {

@@ -1,4 +1,6 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Hardkodet Discord-webhook 
@@ -13,8 +15,11 @@ function sendDiscordLog(message: string) {
 }
 
 serve(async () => {
+  // @ts-ignore
   const supabase = createClient(
+    // @ts-ignore
     Deno.env.get("MY_SUPABASE_URL")!,
+    // @ts-ignore
     Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!
   );
 
@@ -68,6 +73,7 @@ serve(async () => {
     }
 
   } catch (error) {
+    // @ts-ignore
     const errorMessage = `❌ Uventet feil under cleanup: ${error.message}`;
     await sendDiscordLog(errorMessage);
     console.error(errorMessage);

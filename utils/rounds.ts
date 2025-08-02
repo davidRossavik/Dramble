@@ -1,7 +1,7 @@
-import { supabase } from '@/supabase';
 import { getBettingResults } from '@/utils/bets';
 import { getSelectedTeamsForChallenge, getWinnerForChallenge } from '@/utils/games';
 import { BetResult, Runde, RundeState, Team } from '@/utils/types';
+import { supabase } from '../supabase-functions/supabase.js';
 
 /**
  * Velger lag automatisk basert på challenge type

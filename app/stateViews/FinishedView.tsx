@@ -5,7 +5,7 @@ import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { supabase } from '../../supabase';
+import { supabase } from '../../supabase-functions/supabase.js';
 
 type Props = {
   runde: Runde;

@@ -8,7 +8,7 @@ import Button from '@/components/Button';
 import { addPlayerToTeam, deleteGame, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
 import { initializeGame, updateGameStatus } from '@/utils/status';
 import { Team } from '@/utils/types';
-import { supabase } from '../supabase';
+import { supabase } from '../supabase-functions/supabase.js';
 
 export default function GameLobby() {
   const { code } = useLocalSearchParams<{ code: string }>();
