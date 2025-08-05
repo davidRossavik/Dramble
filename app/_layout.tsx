@@ -23,7 +23,6 @@ export default function RootLayout() {
           require('@/assets/images/redButton.png'),
         ]),
           Font.loadAsync({
-            'CherryBombOne-Regular': require('@/assets/fonts/CherryBombOne-Regular.ttf'),
             'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
             'Fredoka': require('@/assets/fonts/Fredoka-VariableFont_wdth,wght.ttf')
           }),
