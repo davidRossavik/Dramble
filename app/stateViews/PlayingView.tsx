@@ -57,17 +57,17 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
     switch (runde.challenge.type) {
       case '1v1':
         const [player1, player2] = runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
-        return `${player1} vs ${player2}: ${runde.challenge.description}`;
+        return `${player1} vs ${player2}: \n ${runde.challenge.description}`;
       
       case 'Team-vs-Team':
         const team1 = runde.selectedTeams[0]?.teamName || 'Lag 1';
         const team2 = runde.selectedTeams[1]?.teamName || 'Lag 2';
-        return `${team1} vs ${team2}: ${runde.challenge.description}`;
+        return `${team1} vs ${team2}: \n ${runde.challenge.description}`;
       
       case 'Team-vs-itself':
         // For Team-vs-itself skal laget utføre utfordringen internt
         const teamName = runde.selectedTeams[0]?.teamName || 'Laget';
-        return `${teamName} skal: ${runde.challenge.description}`;
+        return `${teamName} utfører: \n ${runde.challenge.description}`;
       
       default:
         return runde.challenge.description;
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 40,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 50,
     textAlign: 'center',
@@ -173,17 +173,17 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(6px)', // web only
   },
   description: {
-    fontSize: 25,
-    textAlign: 'center',
+    fontSize: 16,
+    textAlign: 'left',
     color: '#FAF0DE',
     lineHeight: 24,
   },
   buttons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
+    justifyContent: 'center',
+    marginBottom: 25,
     flexWrap: 'wrap',
-    gap: 15,
+    gap: 20,
   },
   button: {
     minWidth: 120,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF4500',
   },
   buttonText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#666',
   },
   nextButtonText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#0F2D17',
     textAlign: 'center',
@@ -226,12 +226,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   waitingText: {
-    fontSize: 25,
+    fontSize: 20,
     textAlign: 'center',
     color: '#FAF0DE',
   },
   instruction: {
-    fontSize: 40,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#D49712',
     textAlign: 'center',

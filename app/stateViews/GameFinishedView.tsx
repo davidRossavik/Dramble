@@ -5,7 +5,9 @@ import { getGameById } from '@/utils/games';
 import { initializeGame } from '@/utils/status';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Text, View } from 'react-native';
+import { Alert, Animated, StyleSheet, View } from 'react-native';
+
+import AppText from '@/components/AppText';
 
 export default function GameFinishedView({ gameId, isHost }: { gameId: string, isHost: boolean }) {
   const [balances, setBalances] = useState<Record<string, number>>({});
@@ -74,12 +76,14 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
   return (
     <BackgroundWrapper>
       <Animated.View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, opacity: fadeAnim }}>
-        <Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 16, color: '#fff' }}>Spillet er ferdig!</Text>
-        <Text style={{ fontSize: 18, marginBottom: 24, color: '#fff' }}>Slurker igjen per lag (må tas!):</Text>
+        <AppText style={styles.title}>Spillet er ferdig!</AppText>
+        <AppText style={styles.underTitle}>Slurker igjen per lag (må tas!):</AppText>
         {teams.map(team => (
-          <Text key={team.teamName} style={{ fontSize: 20, marginBottom: 8, color: '#fff' }}>
-            {team.teamName}: {balances[team.teamName] ?? 0} slurker
-          </Text>
+          <View key={team.teamName} style={styles.balanceItem}>
+            <AppText style={{ fontSize: 20, marginBottom: 8, color: '#fff' }}>
+              {team.teamName}: {balances[team.teamName] ?? 0} slurker
+            </AppText>
+          </View>
         ))}
         {isHost && (
           <View style={{ flexDirection: 'row', marginTop: 32 }}>
@@ -123,3 +127,35 @@ export default function GameFinishedView({ gameId, isHost }: { gameId: string, i
     </BackgroundWrapper>
   );
 } 
+
+
+const styles = StyleSheet.create({
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    marginBottom: 16, 
+    color: '#fff' 
+  },
+  underTitle: { 
+    fontSize: 18, 
+    marginBottom: 24, 
+    color: '#D49712' 
+  },
+
+
+
+  balanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 8,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+})

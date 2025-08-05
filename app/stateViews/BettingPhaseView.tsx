@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../../supabase';
 
+import Button from '@/components/Button';
+
 type Props = {
   runde: Runde;
   gameId: string;
@@ -177,9 +179,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
       {/* {renderBalances()} Fjernet, vises kun i betting-komponentene */}
       {renderBettingComponent()}
       {isHost && runde.selectedTeams.length > 0 && (
-        <Text onPress={onNextPhaseRequested} style={styles.startButton}>
-          Start Challenge
-        </Text>
+        <Button onPress={onNextPhaseRequested} style={styles.startButton} label={"Start Challenge"} />
       )}
     </View>
   );
@@ -188,7 +188,7 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   startButton: {
     marginTop: 20,

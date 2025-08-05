@@ -327,20 +327,20 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
   // Containers //
 
 
   // Text //
   teamName: {
-    fontSize: 27,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#F0E3C0',
     marginLeft: 20,
   },
   playerName: {
-    fontSize: 25,
+    fontSize: 22,
     marginLeft: 10,
     fontWeight: 'bold',
     color: '#F0E3C0',
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     color: '#D49712',
   },
   startGameText: {
-    fontSize: 20
+    fontSize: 22
   },
   // Text //
 

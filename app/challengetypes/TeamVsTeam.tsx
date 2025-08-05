@@ -187,15 +187,15 @@ const styles = StyleSheet.create({
   gap: 0, // For spacing mellom elementene (bare støttet i nyere RN)
   },
   teamTitle: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
   },
 
   versusIcon: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     resizeMode: 'contain',
   },
 
@@ -203,14 +203,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 24,
     flexGrow: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 12,
   },
   descriptionBox: {
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -230,15 +222,11 @@ const styles = StyleSheet.create({
   },
   description: {
     color: '#FAF0DE',
-    fontSize: 20,
+    fontSize: 18,
     textAlign: 'center',
   },
-  bettingContainer: {
-    marginTop: 12,
-    marginBottom: 24,
-  },
   bettingTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
@@ -248,10 +236,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 25,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FAF0DE',
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: 'center',
   },
   buttons: {
@@ -291,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#666',
   },
   betButtonText: {
-    fontSize: 25,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'rgba(0,0,0,0.9)',
     textAlign: 'center',
@@ -361,13 +349,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   drinkCountImg: {
-    width: 40,
-    height: 40,
+    width: 35,
+    height: 35,
     marginLeft: 6,
   },
   drinkCountText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 25,
+    fontSize: 20,
   },
 });
