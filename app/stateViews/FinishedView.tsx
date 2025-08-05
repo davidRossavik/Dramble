@@ -4,10 +4,12 @@ import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
 import { supabase } from '../../supabase';
 
 import AppText from '@/components/AppText';
+
+const winnerBox = require('@/assets/images/winnerBox.png');
 
 type Props = {
   runde: Runde;
@@ -91,10 +93,18 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
       <View style={styles.contentContainer}>
         <AppText style={styles.title}>Challenge fullført!</AppText>
 
-        <View style={styles.winnerContainer}>
+        {/* <View style={styles.winnerContainer}>
           <AppText style={styles.winnerLabel}>Vinner:</AppText>
           <AppText style={styles.winnerText}>{getWinnerDisplay()}</AppText>
-        </View>
+        </View> */}
+        <ImageBackground
+          source={winnerBox}
+          style={styles.winnerContainer2}
+          resizeMode="stretch" // eller "cover" hvis du vil fylle hele containeren
+        >
+          {/* <AppText style={styles.winnerLabel}>Vinner:</AppText> */}
+          <AppText style={styles.winnerText}>{getWinnerDisplay()}</AppText>
+        </ImageBackground>
 
         {/* Vis gøy melding om hvem som må drikke */}
         <View style={styles.drinkingContainer}>
@@ -109,7 +119,7 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
                   result.isCorrect ? styles.correctDrinking : styles.incorrectDrinking
                 ]}>
                   {result.isCorrect 
-                    ? `🎉 GRATULERER! Dere kan dele ut ${result.amount} slurker til andre! 🎉`
+                    ? `🎉 Dere kan dele ut ${result.amount} slurker`
                     : `😅 OOPS! Dere må drikke ${result.amount} slurker selv! 😅`
                   }
                 </AppText>
@@ -152,20 +162,19 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 30,
   },
   winnerLabel: {
     fontSize: 30,
     // fontWeight: 'bold',
     textAlign: 'center',
-    color: '#159cebff',
     marginBottom: 10,
+    marginTop: 20
   },
   winnerText: {
     fontSize: 35,
     // fontWeight: 'bold',
     textAlign: 'center',
-    color: '#159cebff',
+    color: '#4B2E11'
   },
   drinkingTitle: {
     fontSize: 25,
@@ -231,17 +240,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#159cebff',
   },
-  
-  challengeContainer: {
-    marginBottom: 30,
-    padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 8,
+  winnerContainer2: {
+    width: 390, // tilpass bredden
+    // aspectRatio: 2, // tilpass etter formen på bildet
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    height: 150,
   },
   
   balancesContainer: {
@@ -272,6 +277,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 8,
+    borderColor: '#D49712',
+    borderWidth: 2,
   },
   drinkingResult: {
     marginBottom: 15,

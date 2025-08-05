@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import AppText from './AppText';
 
 type Props = {
     visible: boolean,
@@ -33,7 +34,7 @@ export default function InfoModal({ visible, onClose }: Props) {
                     <Text style={styles.text}>{infoText}</Text>
 
                     <Pressable onPress={onClose} style={styles.button}>
-                        <Text style={styles.buttonText}>Lukk</Text>
+                        <AppText style={styles.buttonText}>Lukk</AppText>
                     </Pressable>
                 </View> 
             </View>

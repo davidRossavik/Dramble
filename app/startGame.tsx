@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     marginRight: 40
   },
   codeText: {
-    fontSize: 35,
+    fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',

@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
+
 import { addTeamToGame, getGameByCode } from '@/utils/games';
 import { getRandomTeamName } from '@/utils/nameGenerator';
 
@@ -140,7 +142,7 @@ const handleJoin = async () => {
    return (
     <BackgroundWrapper>
       <View style={styles.container}>
-        <Text style={styles.title}>Bli med i spill</Text>
+        <AppText style={styles.title}>Bli med i spill</AppText>
 
         <TextInput
           style={[styles.input, {color: '#F0E3C0'}]}
@@ -159,7 +161,7 @@ const handleJoin = async () => {
           onChangeText={setName}
         />
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
         <Button style={styles.button} onPress={handleJoin} 
             textStyle={styles.buttonText} label={'Bli med'}/>
@@ -189,7 +191,8 @@ const styles = StyleSheet.create({
     borderColor: '#D49712',
     borderRadius: 15,
     fontSize: 25,
-    backgroundColor: '#073510'
+    backgroundColor: '#073510',
+    fontFamily: 'CherryBombOne-Regular'
   },
   button: {
     backgroundColor: '#D49712',

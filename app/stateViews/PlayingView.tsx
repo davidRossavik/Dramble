@@ -1,10 +1,11 @@
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { setWinnerForChallenge } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 type Props = {
   runde: Runde;
@@ -84,15 +85,15 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
   return (
     <BackgroundWrapper>
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Utfordring pågår!</Text>
+        <AppText style={styles.title}>Utfordring pågår!</AppText>
         
         <View style={styles.challengeContainer}>
-          <Text style={styles.description}>{getChallengeDescription()}</Text>
+          <AppText style={styles.description}>{getChallengeDescription()}</AppText>
         </View>
 
         {isHost ? (
           <>
-            <Text style={styles.instruction}>Velg vinner</Text>
+            <AppText style={styles.instruction}>Velg vinner</AppText>
             <View style={styles.buttons}>
               {winnerOptions.map((option, index) => (
                 <Button
@@ -109,7 +110,6 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
                   ]}
                 />
               ))}
-            </View>
 
             <Button
               label="Se resultat"
@@ -133,10 +133,11 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
               style={[styles.nextButton, !selectedWinner ? styles.disabledButton : {}]}
               textStyle={styles.nextButtonText}
             />
+            </View>
           </>
         ) : (
           <View style={styles.waitingContainer}>
-            <Text style={styles.waitingText}>Venter på at host velger vinner...</Text>
+            <AppText style={styles.waitingText}>Venter på at host velger vinner...</AppText>
           </View>
         )}
       </SafeAreaView>
@@ -151,16 +152,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 40,
     fontWeight: 'bold',
-    marginBottom: 30,
+    marginBottom: 50,
     textAlign: 'center',
-    color: '#FAF0DE',
+    color: '#D49712',
   },
   challengeContainer: {
-    marginBottom: 40,
+    marginBottom: 50,
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 10,
     marginHorizontal: 16,
     shadowColor: '#000',
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(6px)', // web only
   },
   description: {
-    fontSize: 18,
+    fontSize: 25,
     textAlign: 'center',
     color: '#FAF0DE',
     lineHeight: 24,
@@ -190,12 +191,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: '#2f7a4c',
     borderRadius: 8,
+    marginBottom: 50
   },
   selectedButton: {
     backgroundColor: '#FF4500',
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
@@ -213,9 +215,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#666',
   },
   nextButtonText: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#0F2D17',
     textAlign: 'center',
   },
   waitingContainer: {
@@ -224,16 +226,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   waitingText: {
-    fontSize: 18,
+    fontSize: 25,
     textAlign: 'center',
     color: '#FAF0DE',
   },
   instruction: {
-    fontSize: 20,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#FAF0DE',
+    color: '#D49712',
     textAlign: 'center',
-    marginBottom: 18,
+    marginBottom: 50,
     marginTop: 8,
     letterSpacing: 1,
   },

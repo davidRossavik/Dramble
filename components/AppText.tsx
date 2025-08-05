@@ -10,7 +10,7 @@ export default function AppText({ style, children, ...rest }: AppTextProps) {
   return (
     <Text
       {...rest}
-      style={[{ fontFamily: 'CherryBombOne-Regular' , color: '#FAF0DE'}, style]}
+      style={[{ fontFamily: 'Poppins-Bold' , color: '#FAF0DE'}, style]}
     >
       {children}
     </Text>
