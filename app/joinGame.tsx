@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
@@ -13,10 +13,29 @@ import { getRandomTeamName } from '@/utils/nameGenerator';
 export default function JoinGame() {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const generateRandomTeamName = async () => {
+    // Hvis vi har en spillkode, sjekk for duplikater
+    if (code.trim()) {
+      const { data, error: fetchError } = await getGameByCode(code.trim().toUpperCase());
+      if (!fetchError && data) {
+        const existingTeams = data.teams ?? [];
+        const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
+        const randomTeamName = getRandomTeamName(existingNames);
+        setTeamName(randomTeamName);
+        return;
+      }
+    }
+    
+    // Hvis ingen spillkode eller spill ikke funnet, generer tilfeldig navn
+    const randomTeamName = getRandomTeamName();
+    setTeamName(randomTeamName);
+  };
 
 //   const handleJoin = async () => {
 //     if (!code.trim()) {
@@ -71,28 +90,38 @@ export default function JoinGame() {
 //   };
 
 const handleJoin = async () => {
-  console.log("🔵 Start handleJoin");
-
   if (!code.trim()) {
-    console.log("❌ Mangler spillkode");
     setError('Skriv inn en spillkode');
     return;
   }
 
   const cleanName = name.trim();
-  console.log("🟢 Henter spill:", code.trim().toUpperCase());
+  if (!cleanName) {
+    setError('Skriv inn navn');
+    return;
+  }
+
+  if (cleanName.length > 20) {
+    setError('Navnet kan ikke være lengre enn 20 tegn');
+    return;
+  }
+
+  const cleanTeamName = teamName.trim();
+  if (!cleanTeamName) {
+    setError('Velg et lagnavn');
+    return;
+  }
+
+  if (cleanTeamName.length > 25) {
+    setError('Lagnavnet kan ikke være lengre enn 25 tegn');
+    return;
+  }
 
   const { data, error: fetchError } = await getGameByCode(code.trim().toUpperCase());
   if (fetchError || !data) {
-    console.log("❌ Fant ikke spill");
-    console.log("fetchError:", fetchError);
-    console.log("data:", data);
     setError('Fant ikke spill med denne koden');
     return;
-}
-
-
-  console.log("✅ Fant spill:", data);
+  }
 
   const gameId = data.id;
   const existingTeams = data.teams ?? [];
@@ -100,35 +129,33 @@ const handleJoin = async () => {
   const balanceValues = Object.values(balances);
   const startBalance = balanceValues.length > 0 ? Number(balanceValues[0]) : 100;
 
+  // Sjekk om lagnavnet allerede finnes
   const existingNames = existingTeams.map((team: { teamName: any; }) => team.teamName);
-  const randomTeamName = getRandomTeamName(existingNames);
+  if (existingNames.includes(cleanTeamName)) {
+    setError('Lagnavnet finnes allerede');
+    return;
+  }
 
   const newTeam = {
-    teamName: randomTeamName,
+    teamName: cleanTeamName,
     players: [{
       id: generateId(),
       name: cleanName,
     }],
   };
 
-  console.log("🟢 Legger til lag:", newTeam);
-
   const addResult = await addTeamToGame(gameId, newTeam, startBalance);
   if (addResult?.error) {
-    console.log("❌ Feil ved addTeamToGame:", addResult.error);
     setError('Klarte ikke legge til laget');
     return;
   }
 
-  console.log("✅ Lag lagt til. Lagrer info i AsyncStorage");
-
   await AsyncStorage.setItem('gameCode', code);
-  await AsyncStorage.setItem('teamName', randomTeamName);
+  await AsyncStorage.setItem('teamName', cleanTeamName);
   await AsyncStorage.setItem('playerName', cleanName);
   await AsyncStorage.setItem('isHost', 'false');
 
   const upperCode = code.trim().toUpperCase();
-  console.log("🚀 Navigerer til /startGame med kode:", upperCode);
 
   setError('');
   router.push({
@@ -160,9 +187,20 @@ const handleJoin = async () => {
           value={name}
           onChangeText={setName}
         />
+        <View style={styles.teamNameContainer}>
+          <TextInput
+            style={styles.teamNameInput}
+            placeholder="Lagnavn"
+            placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
+            value={teamName}
+            onChangeText={setTeamName}
+          />
+          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
+            <Text style={styles.randomButtonText}>🎲</Text>
+          </Pressable>
+        </View>
 
-        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
-
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <Button style={styles.button} onPress={handleJoin} 
             textStyle={styles.buttonText} label={'Bli med'}/>
 
@@ -208,5 +246,33 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 14,
+  },
+  teamNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '80%',
+    gap: 10,
+  },
+  teamNameInput: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#D49712',
+    borderRadius: 15,
+    fontSize: 25,
+    backgroundColor: '#073510',
+    color: '#F0E3C0',
+  },
+  randomButton: {
+    backgroundColor: '#D49712',
+    borderRadius: 15,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  randomButtonText: {
+    fontSize: 20,
+    color: '#F0E3C0',
   },
 });

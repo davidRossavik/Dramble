@@ -7,7 +7,7 @@ import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { supabase } from '../../supabase';
+import { supabase } from '../../supabase-functions/supabase.js';
 
 import Button from '@/components/Button';
 
@@ -132,24 +132,22 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
   };
 
   // Legg til en hjelpefunksjon for å oppdatere balances lokalt
-  function optimisticUpdateBalance(teamName: string, amount: number) {
-    setBalances(prev => ({
-      ...prev,
-      [teamName]: (prev[teamName] || 0) - amount
-    }));
-  }
+  // function optimisticUpdateBalance(teamName: string, amount: number) {
+  //   setBalances(prev => ({
+  //     ...prev,
+  //     [teamName]: (prev[teamName] || 0) - amount
+  //   }));
+  // }
 
   // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
   const handlePlaceBet = async (bet: { teamName: string; betOn: string; amount: number }) => {
-    console.log('Plasserer bet:', bet);
     try {
       const result = await submitBet(gameId, bet.teamName, runde.challengeIndex, bet.amount, bet.betOn);
-      console.log('Resultat fra submitBet:', result);
       if (result && result.error) {
-        console.error('Feil ved innsending av bet:', result.error);
+        alert(result.error);
       } else {
         // Optimistisk oppdatering av balance lokalt
-        optimisticUpdateBalance(bet.teamName, bet.amount);
+        // optimisticUpdateBalance(bet.teamName, bet.amount);
       }
     } catch (err) {
       console.error('Uventet feil i handlePlaceBet:', err);

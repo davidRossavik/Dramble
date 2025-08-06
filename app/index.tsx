@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   redButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#D49712',
     paddingVertical: Platform.OS === 'web' ? 20 : 28,
     paddingHorizontal: Platform.OS === 'web' ? 40 : 60,
     borderRadius: 100,

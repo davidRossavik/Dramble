@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase } from "../supabase-functions/supabase.js";
 import { getRandomChallengesWithPlayers } from './challenges';
 import { selectTeamsForChallenge } from './rounds';
 
@@ -56,9 +56,7 @@ export async function initializeGame(gameId: string) {
     })
     .eq('id', gameId);
     
-  console.log("Starter initializeGame for", gameId);
-  console.log("Valgte utfordringer:", challenges);
-  console.log("Valgte lag:", teamsToSelect);
+
 
   if (error) {
     console.error('Feil ved start:', error.message);

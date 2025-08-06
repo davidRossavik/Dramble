@@ -4,8 +4,8 @@ import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { supabase } from '../../supabase';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { supabase } from '../../supabase-functions/supabase.js';
 
 import AppText from '@/components/AppText';
 

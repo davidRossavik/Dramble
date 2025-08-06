@@ -1,4 +1,12 @@
 [
+    { 
+        "title": "", "tittelen til challengen":"",
+        "description": "", "beskrivelse av challengen":"",
+        "category": "", "kategorien til challengen,vi har: fysisk, muntlig, flertallet bestemmer, kategori, er alle enige, rygg mot rygg, ":"",
+        "type": "", "1v1, Team-vs-Team, Team-vs-itself":"",
+        "odds": "", "oddsen til challengen som ikke brukes nå":""
+
+    },
     {
         "title": "",
         "description": "",
@@ -12,72 +20,143 @@
     {
         "title": "Sokkekamp",
         "description": "Førstemann som klarer å ta av sokken til den andre vinner",
-        "category": "challenge",
+        "category": "fysisk",
         "type": "1v1",
         "odds": "2"
     },
     {
-        "title": "Russisk shot-roulette",
+        "title": "Shot-Roulette",
         "description": "En shot er vodka, resten er vann. Velg en spiller fra annet lag til å trekke først.",
-        "category": "challenge",
+        "category": "fysisk",
         "type": "1v1",
         "odds": "3"
     },
     {
         "title": "Klesstafett",
         "description": "Førstemann som klarer å ta på seg 5 plagg fra andre personer vinner",
-        "category": "challenge",
+        "category": "fysisk",
         "type": "1v1",
         "odds": "3"
     },
-
-
-
     {
         "title": "Hva har du i lomma bro?",
         "description": "Lagene sender en fra laget som må finne noe sykt rart i lomma. Beste Bidrag vinner.",
-        "category": "challenge",
+        "category": "fysisk",
         "type": "Team-vs-Team",
         "odds": "2"
     },
     {
         "title": "Løgn eller sannhet",
         "description": "Hvert lag sier 2 sanne og 1 falsk påstand om medlemmene. Vinnerlaget gjetter flest riktige",
-        "category": "",
+        "category": "muntlig",
         "type": "Team-vs-Team",
         "odds": "2"
     },
     {
-        "title": "LagKapteinens gamble",
+        "title": "Quiz Kamp",
         "description": "Hvert lag setter en innstats per person. Hver person går opp og svarer på et quiz-spørsmål. Rett = motstander drikker innsatsen. Feil = eget lag gjør det",
-        "category": "quiz",
+        "category": "muntlig",
         "type": "Team-vs-Team",
         "bettable": "false",
         "odds": "3"
     },
-
-
-
     {
         "title": "Taus Allianse / Slurkepotten / The Quiet Bet",
         "description": "Laget skal sammen drikke nøyaktig X antall slurker. Hver spiller bestemmer selv hvor mange slurker de vil ta uten å kommunisere med andre - i hemmelighet. Treffer de er potten stor!",
-        "category": "",
+        "category": "fysisk",
         "type": "Team-vs-itself",
         "odds": "5"
     },
     {
         "title": "Hovedstadskaos",
         "despcription": "Nevn så mange hovedsteder dere klarer på 15 sekunder.",
-        "category": "knowledge",
+        "category": "kategori",
         "type": "Team-vs-itself",
         "odds": "3"
     },
     {
-        "title": "Ord i Kjeften (Alias)",
-        "description": "En person får et ord hvis betydning de må forklare uten å bruke selve ordet. Motstanderlaget skal gjette hva det er. Laget som skal beskrive må vedde på om de klarer det på under 20 sekund",
-        "category": "knowledge",
-        "type": "Team-vs-itself",
+        "title": "Armbryting",
+        "description": "To spillere møtes i armbakk. Første som vinner runden får gevinsten.",
+        "category": "fysisk",
+        "type": "1v1",
         "odds": "2"
-    }
+      },
+      {
+        "title": "",
+        "description": "Se hverandre i øynene. Den som blunker eller ler først taper.",
+        "category": "fysisk",
+        "type": "1v1",
+        "odds": "2"
+      },
+      {
+        "title": "Pushup-Off",
+        "description": "Konkurrer om hvem som klarer flest pushups på 30 sekunder.",
+        "category": "fysisk",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Ikke lov å le",
+        "description": "Hold maska. Førstemann som ler, taper.",
+        "category": "muntlig",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Håndbak",
+        "description": "Klassisk håndbak. Vinneren får æren – og kanskje noen slurker å dele ut.",
+        "category": "fysisk",
+        "type": "1v1",
+        "odds": "2"
+      },
+      {
+        "title": "Beste trickshot",
+        "description": "Hvem klarer det kuleste trickshotet? Flertallet bestemmer vinneren.",
+        "category": "flertallet bestemmer",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Tørrdrikk uten hender",
+        "description": "Første til å tømme glasset sitt uten å bruke hendene vinner.",
+        "category": "fysisk",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Hold pusten lengst",
+        "description": "Konkurrer om hvem som holder pusten lengst.",
+        "category": "fysisk",
+        "type": "1v1",
+        "odds": "2"
+      },
+      {
+        "title": "Beste backshots",
+        "description": "Vis frem de villeste backshotsene på hverandre. Flertallet kårer vinneren.",
+        "category": "flertallet bestemmer",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Beste dancemove",
+        "description": "Hvem har kveldens villeste move? Flertallet bestemmer.",
+        "category": "flertallet bestemmer",
+        "type": "1v1",
+        "odds": "3"
+      },
+      {
+        "title": "Alfabet baklengs",
+        "description": "Første som klarer å si alfabetet baklengs korrekt vinner.",
+        "category": "muntlig",
+        "type": "1v1",
+        "odds": "4"
+      },
+      {
+        "title": "Syng med ordet",
+        "description": "Første som synger en kjent sang med det gitte ordet vinner.",
+        "category": "muntlig",
+        "type": "1v1",
+        "odds": "2"
+      }
 
 ]

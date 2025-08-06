@@ -1,5 +1,5 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from "../supabase";
+import { supabase } from "../supabase-functions/supabase.js";
 
 
 export function subscribeToGameUpdates(gameCode: string, onUpdate: (updatedTeams: any[]) => void): RealtimeChannel {

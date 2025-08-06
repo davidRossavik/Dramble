@@ -9,7 +9,7 @@ import BackgroundWrapper from '@/components/BackgroundWrapper';
 SplashScreen.preventAutoHideAsync(); //  ikke skjul splashscreen automatisk
 
 export default function RootLayout() {
-  console.log('RootLayout render');
+
   const [isReady, setIsReady] = useState(false); //  holder styr på om vi er klare
 
   useEffect(() => {

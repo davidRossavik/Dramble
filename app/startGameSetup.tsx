@@ -13,29 +13,51 @@ import { Team } from '@/utils/types';
 
 export default function StartGameSetup() {
   const [hostName, setHostName] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [startSlurks, setStartSlurks] = useState<number>(50);
   const [error, setError] = useState('');
   const router = useRouter();
 
   const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
+  const generateRandomTeamName = () => {
+    const randomName = getRandomTeamName();
+    setTeamName(randomName);
+  };
+
   const navigateToStartGame = async () => {
     if (!hostName.trim()) {
       setError('Skriv inn navn');
       return;
     }
+    
+    if (hostName.trim().length > 20) {
+      setError('Navnet kan ikke være lengre enn 20 tegn');
+      return;
+    }
+    
+    if (!teamName.trim()) {
+      setError('Velg et lagnavn');
+      return;
+    }
+    
+    if (teamName.trim().length > 25) {
+      setError('Lagnavnet kan ikke være lengre enn 25 tegn');
+      return;
+    }
+    
     const code = generateId(); // f.eks. "XKW32P"
-    const teamName = getRandomTeamName(); // randomTeamName
+    const finalTeamName = teamName.trim();
 
     await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', teamName);
+    await AsyncStorage.setItem('teamName', finalTeamName);
     await AsyncStorage.setItem('playerName', hostName);
     await AsyncStorage.setItem('isHost', 'true');
 
     // Opprett lag-array med hostens lag og evt. testlag
     const teams: Team[] = [
       {
-        teamName: teamName,
+        teamName: finalTeamName,
         players: [
           {
             id: generateId(),
@@ -81,8 +103,19 @@ export default function StartGameSetup() {
           value={hostName}
           onChangeText={setHostName}
         />
-
-        <AppText style={styles.subtitle}>Velg gamemode:</AppText>
+        <View style={styles.teamNameContainer}>
+          <TextInput
+            style={styles.teamNameInput}
+            placeholder="Lagnavn"
+            placeholderTextColor={"rgba(240, 227, 192, 0.6)"}
+            value={teamName}
+            onChangeText={setTeamName}
+          />
+          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
+            <AppText style={styles.randomButtonText}>🎲</AppText>
+          </Pressable>
+        </View>
+        <AppText style={styles.subtitle}>Velg antall startslurker:</AppText>
         <View style={styles.modeRow}>
           <Pressable
             style={[styles.modeButton, styles.modeButton_1, startSlurks === 20 && styles.modeButtonSelected]}
@@ -142,19 +175,18 @@ const styles = StyleSheet.create({
     fontFamily: 'CherryBombOne-Regular'
   },
   modeRow: {
-    flexDirection: 'column',
-    gap: 18,
-    width: '100%',
+    flexDirection: 'row',
+    gap: 10,
     justifyContent: 'center',
-    marginBottom: 30
+    flexWrap: 'wrap',
   },
   modeButton: {
     borderWidth: 2,
     borderRadius: 15,
     paddingVertical: 12,
-    paddingHorizontal: 18,
-    minWidth: 90,
-    marginHorizontal: 3,
+    paddingHorizontal: 15,
+    minWidth: 80,
+    marginHorizontal: 2,
   },
   modeButtonSelected: {
     borderColor: '#D49712',
@@ -195,6 +227,34 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 14,
+  },
+  teamNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '80%',
+    gap: 10,
+  },
+  randomButton: {
+    backgroundColor: '#D49712',
+    borderRadius: 15,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  randomButtonText: {
+    fontSize: 20,
+    color: '#F0E3C0',
+  },
+  teamNameInput: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#D49712',
+    borderRadius: 15,
+    fontSize: 25,
+    backgroundColor: '#073510',
+    color: '#F0E3C0',
   },
 });
 

@@ -1,0 +1,82 @@
+// @ts-ignore
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Hardkodet Discord-webhook 
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1400158217593684010/EARLQ9pBP526EmPG74RJcZcUT1GxwdCRV9J3kJjS-J15-79Rp9oS5sVb8DTWzreEQpW6";
+
+function sendDiscordLog(message: string) {
+  return fetch(DISCORD_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: message }),
+  });
+}
+
+serve(async () => {
+  // @ts-ignore
+  const supabase = createClient(
+    // @ts-ignore
+    Deno.env.get("MY_SUPABASE_URL")!,
+    // @ts-ignore
+    Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const cutoffTime = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  
+  let gamesDeleted = 0;
+  let betsDeleted = 0;
+  let errors: string[] = [];
+
+  try {
+    // Slett gamle bets
+    const { count: betsCount, error: betsError } = await supabase
+      .from("bets")
+      .delete()
+      .lt("created_at", cutoffTime)
+      .select("*", { count: "exact" });
+
+    if (betsError) {
+      errors.push(`Bets sletting feilet: ${betsError.message}`);
+      await sendDiscordLog(`❌ Feil under sletting av gamle bets: ${betsError.message}`);
+    } else {
+      betsDeleted = betsCount ?? 0;
+      console.log(`Slettet ${betsDeleted} gamle bets`);
+    }
+
+    // Slett gamle spill
+    const { count: gamesCount, error: gamesError } = await supabase
+      .from("games")
+      .delete()
+      .lt("created_at", cutoffTime)
+      .select("*", { count: "exact" });
+
+    if (gamesError) {
+      errors.push(`Games sletting feilet: ${gamesError.message}`);
+      await sendDiscordLog(`❌ Feil under sletting av gamle spill: ${gamesError.message}`);
+    } else {
+      gamesDeleted = gamesCount ?? 0;
+      console.log(`Slettet ${gamesDeleted} gamle spill`);
+    }
+
+    if (errors.length === 0) {
+      const message = `✅ Cleanup kjørt: ${gamesDeleted} spill og ${betsDeleted} bets slettet`;
+      await sendDiscordLog(message);
+      console.log(message);
+      return new Response(message, { status: 200 });
+    } else {
+      const errorMessage = `⚠️ Cleanup kjørt med feil: ${errors.join(", ")}`;
+      await sendDiscordLog(errorMessage);
+      console.error(errorMessage);
+      return new Response(errorMessage, { status: 500 });
+    }
+
+  } catch (error) {
+    // @ts-ignore
+    const errorMessage = `❌ Uventet feil under cleanup: ${error.message}`;
+    await sendDiscordLog(errorMessage);
+    console.error(errorMessage);
+    return new Response(errorMessage, { status: 500 });
+  }
+});

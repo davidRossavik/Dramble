@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase } from "../supabase-functions/supabase.js";
 import { Player, Team } from "./types";
 
 
@@ -139,6 +139,7 @@ export async function addTeamToGame(gameId: string, newTeam: Team, slurker: numb
     return { error: 'Kunne ikke legge til lag' };
   }
 
+  console.log('Lag lagt til i database:', newTeam.teamName);
   return { error: null };
 }
 
@@ -339,6 +340,140 @@ export async function updateBalances(gameId: string, balances: Record<string, nu
     .from('games')
     .update({ balances })
     .eq('id', gameId);
+
   return { error };
 }
 
+export async function randomizePlayers(gameId: string, teams: Team[] = []) {
+  // Hent fersk data fra databasen for å sikre at vi har alle lag
+  const { data: freshGame, error: fetchError } = await supabase
+    .from('games')
+    .select('teams')
+    .eq('id', gameId)
+    .single();
+
+  if (fetchError || !freshGame) {
+    console.error('Kunne ikke hente fersk spilldata:', fetchError);
+    return { error: 'Kunne ikke hente spilldata' };
+  }
+
+  const freshTeams = freshGame.teams as Team[];
+  console.log('Fersk teams data for randomisering:', freshTeams);
+
+  if (freshTeams.length < 2) {
+    return { error: 'Trenger minst 2 lag for å fordele spillere' };
+  }
+
+  try {
+    // Samle alle spillere som ikke er lagledere
+    const nonTeamLeaders: { player: any; originalTeam: string }[] = [];
+    freshTeams.forEach(team => {
+      team.players.slice(1).forEach(player => { // slice(1) hopper over laglederen
+        nonTeamLeaders.push({ player, originalTeam: team.teamName });
+      });
+    });
+
+    if (nonTeamLeaders.length === 0) {
+      return { error: 'Ingen spillere å fordele' };
+    }
+
+    // Bland spillere tilfeldig
+    const shuffledPlayers = [...nonTeamLeaders].sort(() => Math.random() - 0.5);
+
+    // Opprett nye lag med lagledere + balansert fordeling
+    const newTeams = freshTeams.map(team => ({
+      ...team,
+      players: [team.players[0]] // Start med kun laglederen
+    }));
+
+    // Beregn lag-størrelser (algoritmen du beskrev)
+    const totalPlayers = shuffledPlayers.length;
+    const totalTeams = freshTeams.length;
+    const base = Math.floor(totalPlayers / totalTeams);
+    const rest = totalPlayers % totalTeams;
+    
+    // Opprett array med antall spillere per lag
+    const teamSizes = new Array(totalTeams).fill(base);
+    for (let i = 0; i < rest; i++) {
+      teamSizes[i] += 1;
+    }
+    
+    // Fordel spillere til lagene
+    let playerIndex = 0;
+    teamSizes.forEach((size, teamIndex) => {
+      for (let i = 0; i < size; i++) {
+        newTeams[teamIndex].players.push(shuffledPlayers[playerIndex].player);
+        playerIndex++;
+      }
+    });
+    
+    // Oppdater databasen
+    const { error } = await supabase
+      .from('games')
+      .update({ teams: newTeams })
+      .eq('id', gameId);
+
+    if (error) {
+      console.error('Feil ved randomisering av spillere:', error);
+      return { error: 'Kunne ikke oppdatere lagene' };
+    }
+
+    return { data: newTeams, error: null };
+  } catch (error) {
+    console.error('Feil ved randomisering av spillere:', error);
+    return { error: 'Uventet feil ved randomisering' };
+  }
+}
+
+// Ny funksjon for å sjekke om et lag allerede har plassert et bet
+export async function hasTeamPlacedBet(gameId: string, teamName: string, challengeIndex: number) {
+  const { data: bets, error } = await supabase
+    .from('bets')
+    .select('*')
+    .eq('game_id', gameId)
+    .eq('team_name', teamName)
+    .eq('challenge_index', challengeIndex);
+
+  if (error) {
+    console.error('Feil ved sjekking av eksisterende bet:', error);
+    return false;
+  }
+
+  return bets && bets.length > 0;
+}
+
+// Ny funksjon for å slette et spill når host forlater
+export async function deleteGame(gameId: string) {
+  console.log('🗑️ Starting cleanup for game:', gameId);
+  
+  try {
+    // 1. Slett alle bets for dette spillet først
+    const { error: betsError } = await supabase
+      .from('bets')
+      .delete()
+      .eq('game_id', gameId);
+
+    if (betsError) {
+      console.error('Feil ved sletting av bets:', betsError);
+      return { error: betsError };
+    }
+
+    console.log('✅ Bets deleted for game:', gameId);
+
+    // 2. Slett spillet fra games tabellen
+    const { error: gameError } = await supabase
+      .from('games')
+      .delete()
+      .eq('id', gameId);
+
+  if (gameError) {
+    console.error('Feil ved sletting av spill:', gameError);
+    return { gameError };
+  }
+
+  return { error: null };
+}
+catch (error) {
+  console.error('Feil ved sletting av spill:', error);
+  return { error };
+}}

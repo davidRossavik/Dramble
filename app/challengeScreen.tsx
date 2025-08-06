@@ -1,11 +1,11 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
-import { supabase } from '@/supabase';
 import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
+import { supabase } from '../supabase-functions/supabase.js';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
 import GameFinishedView from './stateViews/GameFinishedView';
@@ -43,7 +43,7 @@ export default function ChallengeScreen() {
         duration: 2000,
         useNativeDriver: true,
       }).start(({finished}) => {
-        console.log('FadeOut completed:', finished);
+    
         resolve(true);});
     });
   };
@@ -119,28 +119,42 @@ export default function ChallengeScreen() {
             if (payload.new.status !== payload.old?.status) {
               setGameStatus(payload.new.status);
               if (payload.new.status === 'finished') {
-                // Ikke returner tidlig - la oss håndtere dette som andre overganger
-                setRunde(null); // Fjern runde for å vise GameFinishedView
-                setIsTransitioning(false); // Slutt transition
+                setRunde(null);
+                setIsTransitioning(false);
                 return;
               }
               if (payload.new.status === 'waiting') {
-                const gameCode = code;
-                router.replace({ pathname: '/startGame', params: { code: gameCode } });
+                const storedCode = await AsyncStorage.getItem('gameCode');
+                if (storedCode) {
+                  router.replace({ pathname: '/startGame', params: { code: storedCode } });
+                } else {
+                  const { data } = await supabase
+                    .from('games')
+                    .select('code')
+                    .eq('id', gameId)
+                    .single();
+                  if (data?.code) {
+                    router.replace({ pathname: '/startGame', params: { code: data.code } });
+                  }
+                }
                 return;
               }
             }
 
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
+            
             if (oldIndex !== undefined && newIndex !== oldIndex) {
               const newRunde = await fetchRunde(gameId, newIndex, 'index');
               setRunde(newRunde);
+              setIsTransitioning(false);
               return;
             }
+            
             if (payload.new.challenge_state !== payload.old?.challenge_state) {
               const newRunde = await fetchRunde(gameId, newIndex, 'state');
               setRunde(newRunde);
+              setIsTransitioning(false);
               return;
             }
 
@@ -159,6 +173,7 @@ export default function ChallengeScreen() {
   
   const handlePhaseAdvance = async () => {
     if (isTransitioning || !runde) return;
+    
     setIsTransitioning(true);
 
     // Ikke gå videre hvis spillet er ferdig
@@ -207,6 +222,8 @@ export default function ChallengeScreen() {
         console.error('Feil under overgang:', error);
         setIsTransitioning(false);
       }
+    } else {
+      setIsTransitioning(false);
     }
   };
 
@@ -249,6 +266,15 @@ export default function ChallengeScreen() {
               />
             )}
           </Animated.View>
+        )}
+
+        {/* Debug info */}
+        {!isLoading && !runde && (
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <Text style={{color: 'white'}}>Ingen runde data tilgjengelig</Text>
+            <Text style={{color: 'white'}}>Game Status: {gameStatus}</Text>
+            <Text style={{color: 'white'}}>Is Transitioning: {isTransitioning.toString()}</Text>
+          </View>
         )}
 
       </View>
