@@ -4,9 +4,9 @@ import { getGameById } from '@/utils/games';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Alert, Animated, Text, View } from 'react-native';
-import { supabase } from '../../supabase-functions/supabase.js';
 import AppText from '@/components/AppText';
+import { Alert, Animated, StyleSheet, View } from 'react-native';
+import { supabase } from '../../supabase-functions/supabase.js';
 
 export default function GameFinishedView({ gameId, isHost }: { gameId: string, isHost: boolean }) {
   const [balances, setBalances] = useState<Record<string, number>>({});
@@ -139,8 +139,6 @@ const styles = StyleSheet.create({
     marginBottom: 24, 
     color: '#D49712' 
   },
-
-
 
   balanceItem: {
     flexDirection: 'row',

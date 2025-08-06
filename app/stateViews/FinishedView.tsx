@@ -4,12 +4,10 @@ import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { supabase } from '../../supabase-functions/supabase.js';
 
 import AppText from '@/components/AppText';
-
-const winnerBox = require('@/assets/images/winnerBox.png');
 
 type Props = {
   runde: Runde;
