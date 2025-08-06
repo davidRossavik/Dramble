@@ -1,11 +1,12 @@
 import { useRouter } from "expo-router";
 
 import { useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import * as Animatable from 'react-native-animatable';
 
 
+import AppText from "@/components/AppText";
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import InfoModal from '@/components/InfoModal';
@@ -35,13 +36,13 @@ export default function Index() {
 
         <Animatable.View animation="slideInRight" duration={1200}>
           <Pressable style={styles.redButton} onPress={navigateToStartGameSetup}>
-            <Text style={styles.buttonText}>Start spill</Text>
+            <AppText style={styles.buttonText}>Start spill</AppText>
           </Pressable>
         </Animatable.View>
 
         <Animatable.View animation="slideInRight" duration={1600}>
           <Pressable style={styles.blackButton} onPress={navigateToJoinGame}>
-            <Text style={styles.buttonText}>Bli med i spill</Text>
+            <AppText style={styles.buttonText}>Bli med i spill</AppText>
           </Pressable>
         </Animatable.View>
         
@@ -84,9 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 25,
   },
   infoButton: {
     width: 50,

@@ -1,9 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
+
+import Button from '@/components/Button';
 import { createGame } from '@/utils/games';
 import { getRandomTeamName } from '@/utils/nameGenerator';
 import { Team } from '@/utils/types';
@@ -91,7 +94,7 @@ export default function StartGameSetup() {
   return (
     <BackgroundWrapper>
       <View style={styles.container}>
-        <Text style={styles.title}>Start nytt spill</Text>
+        <AppText style={styles.title}>Start nytt spill</AppText>
 
         <TextInput
           style={styles.input}
@@ -100,7 +103,6 @@ export default function StartGameSetup() {
           value={hostName}
           onChangeText={setHostName}
         />
-
         <View style={styles.teamNameContainer}>
           <TextInput
             style={styles.teamNameInput}
@@ -110,37 +112,34 @@ export default function StartGameSetup() {
             onChangeText={setTeamName}
           />
           <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
-            <Text style={styles.randomButtonText}>🎲</Text>
+            <AppText style={styles.randomButtonText}>🎲</AppText>
           </Pressable>
         </View>
-
-        <Text style={styles.subtitle}>Start Slurker:</Text>
+        <AppText style={styles.subtitle}>Velg antall startslurker:</AppText>
         <View style={styles.modeRow}>
           <Pressable
-            style={[styles.modeButton, startSlurks === 20 && styles.modeButtonSelected]}
+            style={[styles.modeButton, styles.modeButton_1, startSlurks === 20 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(20)}
           >
-            <Text style={styles.modeButtonText}>Småslurking (20)</Text>
+            <AppText style={styles.modeButtonText}>Småslurking (20)</AppText>
           </Pressable>
           <Pressable
-            style={[styles.modeButton, startSlurks === 50 && styles.modeButtonSelected]}
+            style={[styles.modeButton, styles.modeButton_2, startSlurks === 50 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(50)}
           >
-            <Text style={styles.modeButtonText}>Festmodus (50)</Text>
+            <AppText style={styles.modeButtonText}>Festmodus (50)</AppText>
           </Pressable>
           <Pressable
-            style={[styles.modeButton, startSlurks === 100 && styles.modeButtonSelected]}
+            style={[styles.modeButton, styles.modeButton_3, startSlurks === 100 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(100)}
           >
-            <Text style={styles.modeButtonText}>Blackout (100)</Text>
+            <AppText style={styles.modeButtonText}>Blackout (100)</AppText>
           </Pressable>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-        <Pressable style={styles.button} onPress={navigateToStartGame}>
-          <Text style={styles.buttonText}>Neste</Text>
-        </Pressable>
+        <Button style={styles.button} onPress={navigateToStartGame} label={'Neste'} textStyle={styles.buttonText} />
       </View>
     </BackgroundWrapper>
   );
@@ -155,14 +154,13 @@ const styles = StyleSheet.create({
     gap: 30,
   },
   title: {
-    fontSize: 30,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#F0E3C0',
+    // color: '#F0E3C0',
   },
   subtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F0E3C0',
+    fontSize: 30,
+    // color: '#F0E3C0',
     marginTop: 8,
   },
   input: {
@@ -173,7 +171,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     fontSize: 25,
     backgroundColor: '#073510',
-    color: '#F0E3C0',
+    color: '#FAF0DE',
+    fontFamily: 'CherryBombOne-Regular'
   },
   modeRow: {
     flexDirection: 'row',
@@ -182,8 +181,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   modeButton: {
-    backgroundColor: '#073510',
-    borderColor: '#D49712',
     borderWidth: 2,
     borderRadius: 15,
     paddingVertical: 12,
@@ -192,13 +189,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   modeButtonSelected: {
-    backgroundColor: '#D49712',
     borderColor: '#D49712',
+    borderWidth: 4,
   },
+
+  modeButton_1: {
+    backgroundColor: '#005274',
+    borderColor: '#005274',
+
+  },
+  modeButton_2: {
+    backgroundColor: '#AE201B',
+    borderColor: '#AE201B',
+
+  },
+  modeButton_3: {
+    backgroundColor: 'black',
+    borderColor: 'black'
+  },
+
   modeButtonText: {
-    color: '#F0E3C0',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#FAF0DE',
+    fontSize: 26,
     textAlign: 'center',
   },
   button: {
@@ -210,8 +222,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#F0E3C0',
-    fontWeight: 'bold',
-    fontSize: 25,
+    fontSize: 29,
   },
   errorText: {
     color: 'red',

@@ -1,64 +1,226 @@
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import { useEffect, useRef, useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 const drinkCountImg = require('@/assets/images/drinkCount.png');
+const versusImg = require('@/assets/images/VS_Image.png');
+
+type Props = {
+  runde: Runde;
+  balances: Record<string, number>;
+  onPlaceBet: (bet: { teamName: string; betOn: string; amount: number }) => void;
+};
+
+export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
+  const [playerName, setPlayerName] = useState<string>('');
+  const [teamName, setTeamName] = useState<string>('');
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('');
+  const [betAmount, setBetAmount] = useState<number>(0);
+  const [teamBalance, setTeamBalance] = useState<number | null>(null);
+  const [betError, setBetError] = useState<string | null>(null);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const isPlacingBetRef = useRef(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('playerName').then((name) => {
+      if (name) setPlayerName(name);
+    });
+    AsyncStorage.getItem('teamName').then((team) => {
+      if (team) {
+        setTeamName(team);
+        if (balances && balances[team]) setTeamBalance(balances[team]);
+      }
+    });
+  }, [balances]);
+
+  const handlePlaceBet = async () => {
+    if (!selectedPlayer || !playerName || !teamName) {
+      alert('Vennligst velg spiller og skriv inn betting-beløp');
+      return;
+    }
+
+    const amount = betAmount;
+    if (isNaN(amount) || amount <= 0) {
+      setBetError('Vennligst velg et gyldig beløp');
+      return;
+    }
+
+    if (teamBalance !== null && amount > teamBalance) {
+      setBetError('Du kan ikke vedde mer enn du har igjen!');
+      return;
+    }
+
+    setBetError(null);
+    setIsPlacingBet(true);
+
+    try {
+      await onPlaceBet({ teamName, betOn: selectedPlayer, amount });
+      setBetAmount(0);
+      setSelectedPlayer('');
+    } finally {
+      setIsPlacingBet(false);
+      isPlacingBetRef.current = false;
+    }
+  };
+
+  const getPlayerOptions = () => {
+    return runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
+  };
+
+  const playerOptions = getPlayerOptions();
+
+  const allBets = [...(runde.betResults || [])];
+
+  return (
+    <BackgroundWrapper>
+      <SafeAreaView style={{ flex: 1 }}>
+        {teamBalance !== null && (
+          <View style={styles.drinkCountCorner}>
+            <AppText style={styles.drinkCountText}>{teamBalance}</AppText>
+            <Image source={drinkCountImg} style={styles.drinkCountImg} />
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.contentContainer}>
+            <View style={styles.titleRow}>
+              <AppText style={styles.teamTitle}>{playerOptions[0]}</AppText>
+              <Image source={versusImg} style={styles.versusIcon} />
+              <AppText style={styles.teamTitle}>{playerOptions[1]}</AppText>
+            </View>
+
+            <View style={styles.descriptionBox}>
+              <AppText style={styles.description}>{runde.challenge.description}</AppText>
+            </View>
+
+            <View style={styles.playerSelection}>
+              <AppText style={styles.label}>Velg spiller:</AppText>
+              <View style={styles.buttons}>
+                {playerOptions.map((player, idx) => (
+                  <Button
+                    key={idx}
+                    label={player}
+                    onPress={() => setSelectedPlayer(player)}
+                    style={[
+                      styles.playerButton,
+                      selectedPlayer === player ? styles.selectedPlayerButton : {},
+                    ]}
+                    textStyle={[
+                      styles.playerButtonText,
+                      selectedPlayer === player ? styles.selectedPlayerButtonText : {},
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <AppText style={styles.sliderValue}>{betAmount}</AppText>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={10}
+              step={1}
+              value={betAmount}
+              onValueChange={(val) => {
+                setBetAmount(val);
+                setBetError(null);
+              }}
+              minimumTrackTintColor="#81AF24"
+              maximumTrackTintColor="#00471E"
+              thumbTintColor="#FF4500"
+            />
+            {betError && <AppText style={styles.errorText}>{betError}</AppText>}
+
+            <Button
+              label={isPlacingBet ? 'Sender inn...' : 'Plasser veddemål'}
+              onPress={handlePlaceBet}
+              disabled={isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError}
+              style={[
+                styles.betButton,
+                (isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError)
+                  ? styles.disabledButton
+                  : {},
+              ]}
+              textStyle={styles.betButtonText}
+            />
+
+            <View style={styles.currentBetsContainer}>
+              <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
+              {allBets.length > 0 ? (
+                allBets.map((bet, idx) => (
+                  <View key={idx} style={styles.betItem}>
+                    <AppText style={styles.betTeam}>{bet.teamName}</AppText>
+                    <AppText style={styles.betInfo}>
+                      Vedder {bet.amount} slurker på "{bet.betOn}"
+                    </AppText>
+                  </View>
+                ))
+              ) : (
+                <AppText style={styles.noBets}>Ingen veddemål ennå</AppText>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </BackgroundWrapper>
+  );
+}
 
 const styles = StyleSheet.create({
   contentContainer: {
     padding: 24,
     flexGrow: 1,
   },
-  title: {
-    fontSize: 28,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  teamTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 12,
+  },
+  versusIcon: {
+    width: 45,
+    height: 45,
+    resizeMode: 'contain',
+    marginHorizontal: 10,
   },
   descriptionBox: {
     backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
-    marginTop: 56, // Økt for å unngå overlap
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 8,
+    borderColor: '#D49712',
+    borderWidth: 2,
     // @ts-ignore
-    backdropFilter: 'blur(6px)', // web only
+    backdropFilter: 'blur(6px)',
   },
   description: {
     color: '#FAF0DE',
     fontSize: 18,
     textAlign: 'center',
   },
-  bettingContainer: {
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  bettingTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FAF0DE',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
   playerSelection: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FAF0DE',
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: 'center',
   },
   buttons: {
@@ -70,7 +232,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#FAF0DE',
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: 5,
     marginBottom: 0,
     fontWeight: 'bold',
   },
@@ -85,6 +247,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 8,
+    fontSize: 16,
   },
   betButton: {
     backgroundColor: '#EEB90E',
@@ -99,14 +262,14 @@ const styles = StyleSheet.create({
   betButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: 'rgba(0,0,0,0.9)',
     textAlign: 'center',
   },
   currentBetsContainer: {
     marginTop: 32,
   },
   currentBetsTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FAF0DE',
     textAlign: 'center',
@@ -156,184 +319,24 @@ const styles = StyleSheet.create({
   },
   drinkCountCorner: {
     position: 'absolute',
-    top: 16,
+    top: 60,
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(34,34,34,0.7)',
     borderRadius: 20,
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
     paddingVertical: 4,
     zIndex: 10,
   },
   drinkCountImg: {
-    width: 32,
-    height: 32,
-    marginRight: 6,
+    width: 35,
+    height: 35,
+    marginLeft: 6,
   },
   drinkCountText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
   },
 });
-
-type Props = {
-  runde: Runde;
-  balances: Record<string, number>;
-  onPlaceBet: (bet: { teamName: string; betOn: string; amount: number }) => void;
-  
-};
-
-export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
-  const [playerName, setPlayerName] = useState<string>('');
-  const [teamName, setTeamName] = useState<string>('');
-  const [selectedPlayer, setSelectedPlayer] = useState<string>('');
-  const [betAmount, setBetAmount] = useState<number>(0); // Endret til number for slider
-  const [teamBalance, setTeamBalance] = useState<number | null>(null);
-  const [betError, setBetError] = useState<string | null>(null);
-  const [isPlacingBet, setIsPlacingBet] = useState(false);
-  const isPlacingBetRef = useRef(false);
-
-  // Hent spiller-navn og lag-navn
-  useEffect(() => {
-    AsyncStorage.getItem('playerName').then((name) => {
-      if (name) setPlayerName(name);
-    });
-    AsyncStorage.getItem('teamName').then((team) => {
-      if (team) {
-        setTeamName(team);
-        if (balances && balances[team]) setTeamBalance(balances[team]);
-      }
-    });
-  }, [balances]);
-
-  const handlePlaceBet = async () => {
-    if (!selectedPlayer || !playerName || !teamName) {
-      alert('Vennligst velg spiller og skriv inn betting-beløp');
-      return;
-    }
-
-    const amount = betAmount;
-    if (isNaN(amount) || amount <= 0) {
-      setBetError('Vennligst velg et gyldig beløp');
-      return;
-    }
-
-    if (teamBalance !== null && amount > teamBalance) {
-      setBetError('Du kan ikke vedde mer enn du har igjen!');
-      return;
-    }
-    setBetError(null);
-
-    setIsPlacingBet(true);
-    try {
-      await onPlaceBet({ teamName, betOn: selectedPlayer, amount });
-      setBetAmount(0);
-      setSelectedPlayer('');
-    } finally {
-      setIsPlacingBet(false);
-      isPlacingBetRef.current = false;
-    }
-  };
-
-  const getPlayerOptions = () => {
-    return runde.challenge.participants || ['Spiller 1', 'Spiller 2'];
-  };
-
-  const getChallengeDescription = () => {
-    const [player1, player2] = getPlayerOptions();
-    return `${player1} vs ${player2}: ${runde.challenge.description}`;
-  };
-
-  const playerOptions = getPlayerOptions();
-
-  // Kombiner betResults og localBets
-  const allBets = [
-    ...(runde.betResults || [])
-    // ...(localBets || []) // Fjernet
-  ];
-
-  return (
-    <BackgroundWrapper>
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          {teamBalance !== null && (
-            <View style={styles.drinkCountCorner}>
-              <Image source={drinkCountImg} style={styles.drinkCountImg} />
-              <Text style={styles.drinkCountText}>{teamBalance}</Text>
-            </View>
-          )}
-          <ScrollView contentContainerStyle={styles.contentContainer}>
-            <View style={styles.descriptionBox}>
-              <Text style={styles.description}>{getChallengeDescription()}</Text>
-            </View>
-            <Text style={styles.bettingTitle}>Plasser ditt veddemål</Text>
-            <View style={styles.playerSelection}>
-              <Text style={styles.label}>Velg spiller:</Text>
-              <View style={styles.buttons}>
-                {playerOptions.map((player, idx) => (
-                  <Button
-                    key={idx}
-                    label={player}
-                    onPress={() => setSelectedPlayer(player)}
-                    style={[
-                      styles.playerButton,
-                      selectedPlayer === player ? styles.selectedPlayerButton : {},
-                    ]}
-                    textStyle={[
-                      styles.playerButtonText,
-                      selectedPlayer === player ? styles.selectedPlayerButtonText : {},
-                    ]}
-                  />
-                ))}
-              </View>
-            </View>
-            <Text style={styles.sliderValue}>{betAmount}</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={10}
-              step={1}
-              value={betAmount}
-              onValueChange={val => {
-                setBetAmount(val);
-                setBetError(null);
-              }}
-              minimumTrackTintColor="#81AF24"
-              maximumTrackTintColor="#00471E"
-              thumbTintColor="#FF4500"
-            />
-            {betError && <Text style={styles.errorText}>{betError}</Text>}
-            <Button
-              label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
-              onPress={handlePlaceBet}
-              disabled={isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError}
-              style={[
-                styles.betButton,
-                (isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
-              ]}
-              textStyle={styles.betButtonText}
-            />
-            <View style={styles.currentBetsContainer}>
-              <Text style={styles.currentBetsTitle}>Nåværende veddemål:</Text>
-              {allBets.length > 0 ? (
-                allBets.map((bet, idx) => (
-                  <View key={idx} style={styles.betItem}>
-                    <Text style={styles.betTeam}>{bet.teamName}</Text>
-                    <Text style={styles.betInfo}>
-                      Vedder {bet.amount} slurker på "{bet.betOn}"
-                    </Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noBets}>Ingen veddemål ennå</Text>
-              )}
-            </View>
-          </ScrollView>
-        </View>
-      </SafeAreaView>
-    </BackgroundWrapper>
-  );
-}
-
