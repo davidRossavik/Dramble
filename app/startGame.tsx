@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   shuffle_button: {
     width: 250,
     height: 50,
-    backgroundColor: '#333',
+    backgroundColor: '#c33a09ff',
     borderRadius: 25,
     marginBottom: 20,
   },
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     height: 30,
     resizeMode: 'contain',
     position: 'absolute',
-    top: 0,
+    top: 8,
     left: 0,
   },
 
