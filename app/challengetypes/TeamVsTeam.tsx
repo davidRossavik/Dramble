@@ -27,6 +27,8 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const isPlacingBetRef = useRef(false);
 
+  const lockImage = require('@/assets/images/lock.png');
+
   // Hent team-navn
   useEffect(() => {
     AsyncStorage.getItem('teamName').then((name) => {
@@ -156,6 +158,17 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
             ]}
             textStyle={styles.betButtonText}
           />
+          {/* <Button
+            imageSource={lockImage}
+            onPress={handlePlaceBet}
+              disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
+            style={[
+              styles.betButton,
+                (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
+            ]}
+            textStyle={styles.betButtonText}
+          /> */}
+
         <View style={styles.currentBetsContainer}>
           <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
           {allBets.length > 0 ? (
@@ -179,6 +192,13 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
 }
 
 const styles = StyleSheet.create({
+
+  lockStyle: {
+    height: 1,
+    width: 1,
+    resizeMode: 'contain',
+  },
+
   titleRow: {
   flexDirection: 'row',
   alignItems: 'center',
