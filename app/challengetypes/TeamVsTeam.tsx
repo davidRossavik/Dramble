@@ -103,7 +103,8 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
         <View style={{ flex: 1 }}>
           
           <ScrollView contentContainerStyle={styles.contentContainer}>
-            <View style={styles.titleRow}>
+            <AppText style={styles.titleStyle}>{runde.challenge.title}</AppText>
+            <View style={styles.matchupCard}>
               <AppText style={styles.teamTitle}>{runde.selectedTeams[0]?.teamName || 'Lag 1'}</AppText>
               <Image source={versusImg} style={styles.versusIcon} />
               <AppText style={styles.teamTitle}>{runde.selectedTeams[1]?.teamName || 'Lag 2'}</AppText>
@@ -113,7 +114,7 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
         </View>
           {/* <AppText style={styles.bettingTitle}>Plasser ditt veddemål</AppText> */}
           <View style={styles.teamSelection}>
-            <AppText style={styles.label}>Velg lag:</AppText>
+            <AppText style={styles.label}>Plasser ditt veddemål:</AppText>
             <View style={styles.buttons}>
                 {teamOptions.map((team, idx) => (
                 <Button
@@ -133,6 +134,7 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
             </View>
           </View>
             <AppText style={styles.sliderValue}>{betAmount}</AppText>
+          <View style={styles.sliderRow}>
             <Slider
               style={styles.slider}
               minimumValue={0}
@@ -148,7 +150,7 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
               thumbTintColor="#FF4500"
             />
             {betError && <AppText style={styles.errorText}>{betError}</AppText>}
-          <Button
+          {/* <Button
               label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
             onPress={handlePlaceBet}
               disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
@@ -157,17 +159,19 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
                 (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
             ]}
             textStyle={styles.betButtonText}
-          />
-          {/* <Button
+          /> */}
+          <Button
             imageSource={lockImage}
             onPress={handlePlaceBet}
+            imageStyle={styles.lockStyle}
               disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
             style={[
               styles.betButton,
                 (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
             ]}
             textStyle={styles.betButtonText}
-          /> */}
+          />
+          </View>
 
         <View style={styles.currentBetsContainer}>
           <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
@@ -193,23 +197,37 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
 
 const styles = StyleSheet.create({
 
+  matchupCard: { // FORRIGE ER TITLEROW
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 50,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+    marginTop: 10,
+    gap: 10,
+  },
+
+  titleStyle: {
+    fontSize: 35,
+    textAlign: 'center',
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   lockStyle: {
-    height: 1,
-    width: 1,
+    height: 24,
+    width: 24,
     resizeMode: 'contain',
   },
 
-  titleRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: 20,
-  gap: 0, // For spacing mellom elementene (bare støttet i nyere RN)
-  },
   teamTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FAF0DE',
     textAlign: 'center',
   },
 
@@ -270,7 +288,8 @@ const styles = StyleSheet.create({
   sliderValue: {
     fontSize: 28,
     color: '#FAF0DE',
-    textAlign: 'center',
+    // textAlign: 'center',
+    left: 130,
     marginTop: 5,
     marginBottom: 0,
     fontWeight: 'bold',
@@ -279,7 +298,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
     alignSelf: 'center',
-    marginBottom: 8,
+    flex: 1
   },
   errorText: {
     color: 'red',
@@ -291,9 +310,8 @@ const styles = StyleSheet.create({
   betButton: {
     backgroundColor: '#EEB90E',
     paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 16,
   },
   disabledButton: {
     backgroundColor: '#666',
@@ -333,8 +351,7 @@ const styles = StyleSheet.create({
   noBets: {
     fontSize: 14,
     textAlign: 'center',
-    color: '#FAF0DE',
-    fontStyle: 'italic',
+    opacity: 0.7,
   },
   teamButton: {
     minWidth: 100,

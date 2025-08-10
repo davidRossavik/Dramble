@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     color: '#D49712',
   },
   codeText: {
-    fontSize: 34,
+    fontSize: 33,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
