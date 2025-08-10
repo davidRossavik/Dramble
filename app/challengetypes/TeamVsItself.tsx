@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 const drinkCountImg = require('@/assets/images/drinkCount.png');
+const lockImage = require('@/assets/images/lock.png');
 
 type Props = {
   runde: Runde;
@@ -88,9 +89,11 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
 
         <View style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.contentContainer}>
-            <AppText style={styles.title}>
-              Challenge til: {runde.selectedTeams[0]?.teamName || 'Laget'}
-            </AppText>
+            <AppText style={styles.title}>{runde.challenge.title} </AppText>
+
+            <View style={styles.matchupCard}>
+              <AppText style={styles.teamTitle}>{runde.selectedTeams[0]?.teamName || 'Laget'}</AppText>
+            </View>
 
             <View style={styles.descriptionBox}>
               <AppText style={styles.description}>{getChallengeDescription()}</AppText>
@@ -118,34 +121,36 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
             </View>
 
             <AppText style={styles.sliderValue}>{betAmount}</AppText>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={10}
-              step={1}
-              value={betAmount}
-              onValueChange={(val) => {
-                setBetAmount(val);
-                setBetError(null);
-              }}
-              minimumTrackTintColor="#81AF24"
-              maximumTrackTintColor="#00471E"
-              thumbTintColor="#FF4500"
-            />
-            {betError && <AppText style={styles.errorText}>{betError}</AppText>}
+            
+            <View style={styles.sliderRow}>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={10}
+                step={1}
+                value={betAmount}
+                onValueChange={(val) => {
+                  setBetAmount(val);
+                  setBetError(null);
+                }}
+                minimumTrackTintColor="#81AF24"
+                maximumTrackTintColor="#00471E"
+                thumbTintColor="#FF4500"
+              />
+              {betError && <AppText style={styles.errorText}>{betError}</AppText>}
 
-            <Button
-              label={isPlacingBet ? 'Sender inn...' : 'Plasser veddemål'}
-              onPress={handlePlaceBet}
-              disabled={isPlacingBet || !selectedOutcome || betAmount <= 0 || !!betError}
-              style={[
-                styles.betButton,
-                (isPlacingBet || !selectedOutcome || betAmount <= 0 || !!betError)
-                  ? styles.disabledButton
-                  : {},
-              ]}
-              textStyle={styles.betButtonText}
-            />
+              <Button
+                imageSource={lockImage}
+                imageStyle={styles.lockStyle}
+                onPress={handlePlaceBet}
+                disabled={isPlacingBet || !selectedOutcome || betAmount <= 0 || !!betError}
+                style={[
+                  styles.betButton,
+                  (isPlacingBet || !selectedOutcome || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
+                ]}
+                textStyle={styles.betButtonText}
+              />
+            </View>
 
             <View style={styles.currentBetsContainer}>
               <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
@@ -170,6 +175,33 @@ export default function TeamVsItself({ runde, balances, onPlaceBet }: Props) {
 }
 
 const styles = StyleSheet.create({
+  matchupCard: { // FORRIGE ER TITLEROW
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 50,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+    marginTop: 10,
+    gap: 10,
+  },
+  teamTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  lockStyle: {
+    height: 24,
+    width: 24,
+    resizeMode: 'contain',
+  },
   contentContainer: {
     padding: 24,
     flexGrow: 1,
@@ -180,6 +212,9 @@ const styles = StyleSheet.create({
     color: '#FAF0DE',
     textAlign: 'center',
     marginBottom: 16,
+    textShadowColor: 'rgba(0,0,0,0.75)', // Fargen på skyggen
+    textShadowOffset: { width: 2, height: 2 }, // Offset for skyggen (bredde og høyde)
+    textShadowRadius: 3, // Radius for å gjøre skyggen litt uskarp
   },
   descriptionBox: {
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -218,17 +253,15 @@ const styles = StyleSheet.create({
   },
   sliderValue: {
     fontSize: 28,
-    color: '#FAF0DE',
-    textAlign: 'center',
+    left: 130,
     marginTop: 5,
     marginBottom: 0,
-    fontWeight: 'bold',
   },
   slider: {
     width: '100%',
     height: 40,
     alignSelf: 'center',
-    marginBottom: 8,
+    flex: 1
   },
   errorText: {
     color: 'red',
@@ -240,9 +273,8 @@ const styles = StyleSheet.create({
   betButton: {
     backgroundColor: '#EEB90E',
     paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 16,
   },
   disabledButton: {
     backgroundColor: '#666',

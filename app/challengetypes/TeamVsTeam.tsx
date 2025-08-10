@@ -9,6 +9,7 @@ import { Image, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 
 const drinkCountImg = require('@/assets/images/drinkCount.png');
 const versusImg = require('@/assets/images/VS_Image.png');
+const lockImage = require('@/assets/images/lock.png');
 
 
 type Props = {
@@ -26,8 +27,6 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
   const [betError, setBetError] = useState<string | null>(null);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const isPlacingBetRef = useRef(false);
-
-  const lockImage = require('@/assets/images/lock.png');
 
   // Hent team-navn
   useEffect(() => {
@@ -109,86 +108,80 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
               <Image source={versusImg} style={styles.versusIcon} />
               <AppText style={styles.teamTitle}>{runde.selectedTeams[1]?.teamName || 'Lag 2'}</AppText>
             </View>
-            <View style={styles.descriptionBox}>
-          <AppText style={styles.description}>{getChallengeDescription()}</AppText>
-        </View>
-          {/* <AppText style={styles.bettingTitle}>Plasser ditt veddemål</AppText> */}
-          <View style={styles.teamSelection}>
-            <AppText style={styles.label}>Plasser ditt veddemål:</AppText>
-            <View style={styles.buttons}>
-                {teamOptions.map((team, idx) => (
-                <Button
-                    key={idx}
-                  label={team}
-                  onPress={() => setSelectedTeam(team)}
-                  style={[
-                    styles.teamButton,
-                      selectedTeam === team ? styles.selectedTeamButton : {},
-                  ]}
-                  textStyle={[
-                    styles.teamButtonText,
-                      selectedTeam === team ? styles.selectedTeamButtonText : {},
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
-            <AppText style={styles.sliderValue}>{betAmount}</AppText>
-          <View style={styles.sliderRow}>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={10}
-              step={1}
-              value={betAmount}
-              onValueChange={val => {
-                setBetAmount(val);
-                setBetError(null);
-              }}
-              minimumTrackTintColor="#81AF24"
-              maximumTrackTintColor="#00471E"
-              thumbTintColor="#FF4500"
-            />
-            {betError && <AppText style={styles.errorText}>{betError}</AppText>}
-          {/* <Button
-              label={isPlacingBet ? "Sender inn..." : "Plasser veddemål"}
-            onPress={handlePlaceBet}
-              disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
-            style={[
-              styles.betButton,
-                (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
-            ]}
-            textStyle={styles.betButtonText}
-          /> */}
-          <Button
-            imageSource={lockImage}
-            onPress={handlePlaceBet}
-            imageStyle={styles.lockStyle}
-              disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
-            style={[
-              styles.betButton,
-                (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
-            ]}
-            textStyle={styles.betButtonText}
-          />
-          </View>
 
-        <View style={styles.currentBetsContainer}>
-          <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
-          {allBets.length > 0 ? (
-                allBets.map((bet, idx) => (
-                  <View key={idx} style={styles.betItem}>
-                <AppText style={styles.betTeam}>{bet.teamName}</AppText>
-                <AppText style={styles.betInfo}>
-                  Vedder {bet.amount} slurker på "{bet.betOn}"
-                </AppText>
+            <View style={styles.descriptionBox}>
+              <AppText style={styles.description}>{getChallengeDescription()}</AppText>
+            </View>
+
+            <View style={styles.teamSelection}>
+              <AppText style={styles.label}>Plasser ditt veddemål:</AppText>
+              <View style={styles.buttons}>
+                  {teamOptions.map((team, idx) => (
+                  <Button
+                      key={idx}
+                    label={team}
+                    onPress={() => setSelectedTeam(team)}
+                    style={[
+                      styles.teamButton,
+                        selectedTeam === team ? styles.selectedTeamButton : {},
+                    ]}
+                    textStyle={[
+                      styles.teamButtonText,
+                        selectedTeam === team ? styles.selectedTeamButtonText : {},
+                    ]}
+                  />
+                ))}
               </View>
-            ))
-          ) : (
-            <AppText style={styles.noBets}>Ingen veddemål ennå</AppText>
-          )}
-        </View>
-      </ScrollView>
+            </View>
+
+            <AppText style={styles.sliderValue}>{betAmount}</AppText>
+
+            <View style={styles.sliderRow}>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={10}
+                step={1}
+                value={betAmount}
+                onValueChange={val => {
+                  setBetAmount(val);
+                  setBetError(null);
+                }}
+                minimumTrackTintColor="#81AF24"
+                maximumTrackTintColor="#00471E"
+                thumbTintColor="#FF4500"
+              />
+              {betError && <AppText style={styles.errorText}>{betError}</AppText>}
+
+              <Button
+                imageSource={lockImage}
+                onPress={handlePlaceBet}
+                imageStyle={styles.lockStyle}
+                disabled={isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError}
+                style={[
+                  styles.betButton,
+                    (isPlacingBet || !selectedTeam || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
+                ]}
+                textStyle={styles.betButtonText}
+              />
+            </View>
+
+            <View style={styles.currentBetsContainer}>
+              <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
+              {allBets.length > 0 ? (
+                    allBets.map((bet, idx) => (
+                      <View key={idx} style={styles.betItem}>
+                    <AppText style={styles.betTeam}>{bet.teamName}</AppText>
+                    <AppText style={styles.betInfo}>
+                      Vedder {bet.amount} slurker på "{bet.betOn}"
+                    </AppText>
+                  </View>
+                ))
+              ) : (
+                <AppText style={styles.noBets}>Ingen veddemål ennå</AppText>
+              )}
+            </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     </BackgroundWrapper>
@@ -196,7 +189,10 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
 }
 
 const styles = StyleSheet.create({
-
+  contentContainer: {
+    padding: 24,
+    flexGrow: 1,
+  },
   matchupCard: { // FORRIGE ER TITLEROW
     flexDirection: 'row',
     alignItems: 'center',
@@ -213,6 +209,9 @@ const styles = StyleSheet.create({
   titleStyle: {
     fontSize: 35,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.75)', // Fargen på skyggen
+    textShadowOffset: { width: 2, height: 2 }, // Offset for skyggen (bredde og høyde)
+    textShadowRadius: 4, // Radius for å gjøre skyggen litt uskarp
   },
   sliderRow: {
     flexDirection: 'row',
@@ -236,12 +235,6 @@ const styles = StyleSheet.create({
     height: 45,
     resizeMode: 'contain',
   },
-
-
-  contentContainer: {
-    padding: 24,
-    flexGrow: 1,
-  },
   descriptionBox: {
     backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: 12,
@@ -259,7 +252,6 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(6px)', // web only
   },
   description: {
-    color: '#FAF0DE',
     fontSize: 18,
     textAlign: 'center',
   },
@@ -288,11 +280,9 @@ const styles = StyleSheet.create({
   sliderValue: {
     fontSize: 28,
     color: '#FAF0DE',
-    // textAlign: 'center',
     left: 130,
     marginTop: 5,
     marginBottom: 0,
-    fontWeight: 'bold',
   },
   slider: {
     width: '100%',
