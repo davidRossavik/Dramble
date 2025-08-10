@@ -9,6 +9,7 @@ import { Image, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 
 const drinkCountImg = require('@/assets/images/drinkCount.png');
 const versusImg = require('@/assets/images/VS_Image.png');
+const lockImage = require('@/assets/images/lock.png');
 
 type Props = {
   runde: Runde;
@@ -26,6 +27,7 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const isPlacingBetRef = useRef(false);
 
+  // Hent spillernavn
   useEffect(() => {
     AsyncStorage.getItem('playerName').then((name) => {
       if (name) setPlayerName(name);
@@ -87,7 +89,8 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
         )}
         <View style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.contentContainer}>
-            <View style={styles.titleRow}>
+            <AppText style={styles.titleStyle}>{runde.challenge.title}</AppText>
+            <View style={styles.matchupCard}>
               <AppText style={styles.teamTitle}>{playerOptions[0]}</AppText>
               <Image source={versusImg} style={styles.versusIcon} />
               <AppText style={styles.teamTitle}>{playerOptions[1]}</AppText>
@@ -98,7 +101,7 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
             </View>
 
             <View style={styles.playerSelection}>
-              <AppText style={styles.label}>Velg spiller:</AppText>
+              <AppText style={styles.label}>Plasser ditt veddemål:</AppText>
               <View style={styles.buttons}>
                 {playerOptions.map((player, idx) => (
                   <Button
@@ -117,36 +120,39 @@ export default function OneVsOne({ runde, balances, onPlaceBet }: Props) {
                 ))}
               </View>
             </View>
-
+            
+            
             <AppText style={styles.sliderValue}>{betAmount}</AppText>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={10}
-              step={1}
-              value={betAmount}
-              onValueChange={(val) => {
-                setBetAmount(val);
-                setBetError(null);
-              }}
-              minimumTrackTintColor="#81AF24"
-              maximumTrackTintColor="#00471E"
-              thumbTintColor="#FF4500"
-            />
-            {betError && <AppText style={styles.errorText}>{betError}</AppText>}
 
-            <Button
-              label={isPlacingBet ? 'Sender inn...' : 'Plasser veddemål'}
-              onPress={handlePlaceBet}
-              disabled={isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError}
-              style={[
-                styles.betButton,
-                (isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError)
-                  ? styles.disabledButton
-                  : {},
-              ]}
-              textStyle={styles.betButtonText}
-            />
+            <View style={styles.sliderRow}>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={10}
+                step={1}
+                value={betAmount}
+                onValueChange={(val) => {
+                  setBetAmount(val);
+                  setBetError(null);
+                }}
+                minimumTrackTintColor="#81AF24"
+                maximumTrackTintColor="#00471E"
+                thumbTintColor="#FF4500"
+              />
+              {betError && <AppText style={styles.errorText}>{betError}</AppText>}
+
+              <Button
+                imageSource={lockImage}
+                onPress={handlePlaceBet}
+                imageStyle={styles.lockStyle}
+                disabled={isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError}
+                style={[
+                  styles.betButton,
+                  (isPlacingBet || !selectedPlayer || betAmount <= 0 || !!betError) ? styles.disabledButton : {},
+                ]}
+                textStyle={styles.betButtonText}
+              />
+            </View>
 
             <View style={styles.currentBetsContainer}>
               <AppText style={styles.currentBetsTitle}>Nåværende veddemål:</AppText>
@@ -175,23 +181,44 @@ const styles = StyleSheet.create({
     padding: 24,
     flexGrow: 1,
   },
-  titleRow: {
+  matchupCard: { // FORRIGE ER TITLEROW
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 50,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
     marginBottom: 20,
+    marginTop: 10,
+    gap: 10,
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  lockStyle: {
+    height: 24,
+    width: 24,
+    resizeMode: 'contain',
+  },
+  titleStyle: {
+    fontSize: 35,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.75)', // Fargen på skyggen
+    textShadowOffset: { width: 2, height: 2 }, // Offset for skyggen (bredde og høyde)
+    textShadowRadius: 4, // Radius for å gjøre skyggen litt uskarp
   },
   teamTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FAF0DE',
     textAlign: 'center',
   },
   versusIcon: {
     width: 45,
     height: 45,
     resizeMode: 'contain',
-    marginHorizontal: 10,
   },
   descriptionBox: {
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -209,7 +236,6 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(6px)',
   },
   description: {
-    color: '#FAF0DE',
     fontSize: 18,
     textAlign: 'center',
   },
@@ -231,16 +257,15 @@ const styles = StyleSheet.create({
   sliderValue: {
     fontSize: 28,
     color: '#FAF0DE',
-    textAlign: 'center',
+    left: 130,
     marginTop: 5,
     marginBottom: 0,
-    fontWeight: 'bold',
   },
   slider: {
     width: '100%',
     height: 40,
     alignSelf: 'center',
-    marginBottom: 8,
+    flex: 1
   },
   errorText: {
     color: 'red',
@@ -252,9 +277,8 @@ const styles = StyleSheet.create({
   betButton: {
     backgroundColor: '#EEB90E',
     paddingVertical: 15,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 16,
   },
   disabledButton: {
     backgroundColor: '#666',

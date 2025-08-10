@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 50,
     textAlign: 'center',
-    color: '#D49712',
   },
   challengeContainer: {
     marginBottom: 50,
@@ -168,6 +167,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: '#D49712',
     // @ts-ignore
     backdropFilter: 'blur(6px)', // web only
   },
@@ -233,8 +234,6 @@ const styles = StyleSheet.create({
   },
   instruction: {
     fontSize: 30,
-    fontWeight: 'bold',
-    color: '#D49712',
     textAlign: 'center',
     marginBottom: 50,
     marginTop: 8,

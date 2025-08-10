@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button from '@/components/Button';
 import { createGame } from '@/utils/games';
 import { getRandomTeamName } from '@/utils/nameGenerator';
 import { Team } from '@/utils/types';
@@ -110,9 +111,8 @@ export default function StartGameSetup() {
             value={teamName}
             onChangeText={setTeamName}
           />
-          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
-            <Text style={styles.randomButtonText}>🎲</Text>
-          </Pressable>
+
+          <Button style={styles.randomButton} onPress={generateRandomTeamName} label={"🎲"} textStyle={styles.randomButtonText} />
         </View>
 
         <AppText style={styles.subtitle}>Start Slurker:</AppText>
@@ -139,9 +139,7 @@ export default function StartGameSetup() {
 
         {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-        <Pressable style={styles.button} onPress={navigateToStartGame}>
-          <AppText style={styles.buttonText}>Neste</AppText>
-        </Pressable>
+        <Button style={styles.button} onPress={navigateToStartGame} label={"Neste"} textStyle={styles.buttonText} />
       </View>
     </BackgroundWrapper>
   );
@@ -227,7 +225,7 @@ const styles = StyleSheet.create({
   randomButton: {
     backgroundColor: '#D49712',
     borderRadius: 15,
-    padding: 12,
+    padding: 9,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 50,
