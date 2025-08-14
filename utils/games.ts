@@ -176,10 +176,10 @@ export async function removePlayerFromTeam(gameId: string, teamName: string, pla
 
 
 export async function removeTeam(gameId: string, teamName: string) {
-  // Hent nåværende teams fra databasen
+  // Hent nåværende teams og balances fra databasen
   const { data, error } = await supabase
     .from('games')
-    .select('teams')
+    .select('teams, balances')
     .eq('id', gameId)
     .single();
 
@@ -190,10 +190,14 @@ export async function removeTeam(gameId: string, teamName: string) {
   // Typesikker transformasjon av teams
   const updatedTeams = (data.teams as Team[]).filter((team) => team.teamName !== teamName);
 
-  // Oppdater raden i Supabase med de nye teamene
+  // Fjern laget fra balances også
+  const currentBalances = data.balances || {};
+  const { [teamName]: removedBalance, ...updatedBalances } = currentBalances;
+
+  // Oppdater raden i Supabase med de nye teamene og balances
   const { error: updateError } = await supabase
     .from('games')
-    .update({ teams: updatedTeams })
+    .update({ teams: updatedTeams, balances: updatedBalances })
     .eq('id', gameId);
 
   return { error: updateError };
