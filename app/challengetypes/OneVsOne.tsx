@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
   titleStyle: {
     fontSize: 35,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.75)', // Fargen på skyggen
-    textShadowOffset: { width: 2, height: 2 }, // Offset for skyggen (bredde og høyde)
-    textShadowRadius: 4, // Radius for å gjøre skyggen litt uskarp
+    textShadowColor: 'rgba(131, 27, 27, 0.75)', // Fargen på skyggen
+    textShadowOffset: { width: 1.5, height: 1.5 }, // Offset for skyggen (bredde og høyde)
+    textShadowRadius: 1, // Radius for å gjøre skyggen litt uskarp
   },
   teamTitle: {
     fontSize: 18,
