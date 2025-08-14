@@ -30,6 +30,25 @@ const { width } = Dimensions.get('window');
 export default function SpinTheWheelScreen() {
   const rotation = useRef(new Animated.Value(0)).current;
   const [hasSpun, setHasSpun] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+React.useEffect(() => {
+  Animated.loop(
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ])
+  ).start();
+}, []);
+
   const [totalRotation, setTotalRotation] = useState(0);
 
   const spinWheel = () => {
@@ -81,7 +100,10 @@ export default function SpinTheWheelScreen() {
       <View style={styles.centerContainer}>
 
         {/* Tittel */}
-        <Text style={styles.title}>S P I N  T H E  W H E E L</Text>
+        <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>
+  S P I N  T H E  W H E E L
+</Animated.Text>
+
 
         {/* Hjul og pil i egen wrapper for nøyaktig plassering */}
         <View style={styles.wheelContainer}>

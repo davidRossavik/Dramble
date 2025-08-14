@@ -1,4 +1,6 @@
+import { router } from 'expo-router';
 import React, { useState } from 'react';
+
 import {
   Dimensions,
   Image,
@@ -18,20 +20,65 @@ const chipImage = require('../../assets/images/pokerChip.png');
 const { width } = Dimensions.get('window');
 
 export default function RouletteStartScreen() {
+  
   const [selected, setSelected] = useState<string | null>(null);
-const [chips, setChips] = useState<string[]>([]);
 const [chipCount, setChipCount] = useState<number>(0);
+const [chips, setChips] = useState<Record<string, number>>({});
+const [chipHistory, setChipHistory] = useState<string[]>([]);
+
+const handlePlaceBets = () => {
+  router.push({
+    pathname: '/vinn-slurker/rouletteGame',
+    params: {
+      chips: JSON.stringify(chips),
+      chipCount: chipCount.toString(),
+    },
+  });
+};
+
+
+
 
   const handleSelect = (value: string) => {
-  setSelected(value);
-  setChips((prev) => [...prev, value]);
+  const normalizedValue = value === '00' ? '0' : value; // 👈 behandle "00" som "0"
+  setSelected(normalizedValue);
+
+  setChips((prev) => {
+    const updated = { ...prev };
+    updated[normalizedValue] = (updated[normalizedValue] || 0) + 1;
+    return updated;
+  });
+
   setChipCount((prev) => prev + 1);
+  setChipHistory((prev) => [...prev, normalizedValue]);
 };
 
+
+
 const handleRemoveLastChip = () => {
-  setChips((prev) => prev.slice(0, -1));
-  setChipCount((prev) => (prev > 0 ? prev - 1 : 0));
+  setChipHistory((prevHistory) => {
+    if (prevHistory.length === 0) return prevHistory;
+
+    const last = prevHistory[prevHistory.length - 1];
+    const newHistory = prevHistory.slice(0, -1);
+
+    setChips((prevChips) => {
+      const updated = { ...prevChips };
+      if (updated[last] > 1) {
+        updated[last] -= 1;
+      } else {
+        delete updated[last];
+      }
+      return updated;
+    });
+
+    setChipCount((prev) => Math.max(prev - 1, 0));
+
+    return newHistory;
+  });
 };
+
+
 
 type ButtonDef = {
   label: string;
@@ -99,9 +146,13 @@ return (
     ]}
   >
     {/* Chip vises hvis valgt */}
-    {chips.includes(btn.label) && (
-      <Image source={chipImage} style={styles.chip} />
-    )}
+    {chips[btn.label] > 0 && (
+  <>
+    <Image source={chipImage} style={styles.chip} />
+    <Text style={styles.chipCount}>{chips[btn.label]}</Text>
+  </>
+)}
+
     <Text style={styles.buttonText}>{btn.label}</Text>
   </Pressable>
 ))}
@@ -109,9 +160,10 @@ return (
       </View>
 
       <View style={styles.actionRow}>
-  <Pressable style={styles.placeBetButton}>
-    <Text style={styles.placeBetText}>Plasser bets</Text>
-  </Pressable>
+  <Pressable style={styles.placeBetButton} onPress={handlePlaceBets}>
+  <Text style={styles.placeBetText}>Plasser bets</Text>
+</Pressable>
+
 
   <Pressable style={styles.clearBetButton} onPress={handleRemoveLastChip}>
     <Text style={styles.clearBetText}>Slett bet</Text>
@@ -135,6 +187,19 @@ const styles = StyleSheet.create({
   gap: 1, // Avstand mellom knappene
   marginBottom: 20,
 },
+chipCount: {
+  position: 'absolute',
+  top: 0,
+  right: 0,
+  fontSize: 12,
+  fontWeight: 'bold',
+  color: 'white',
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  paddingHorizontal: 4,
+  borderRadius: 8,
+  zIndex: 3,
+},
+
 slurkCount: {
   fontSize: 18,
   color: 'white',
