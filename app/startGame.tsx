@@ -455,7 +455,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 5,
     width: 260,
-    fontFamily: 'CherryBombOne-Regular'
   },
   centeredTextWrapper: {
     flex: 1,
@@ -478,7 +477,7 @@ const styles = StyleSheet.create({
   shuffle_button: {
     width: 250,
     height: 50,
-    backgroundColor: '#c33a09ff',
+    backgroundColor: '#853c21ff',
     borderRadius: 25,
     marginBottom: 20,
   },
@@ -503,7 +502,7 @@ const styles = StyleSheet.create({
     color: '#D49712',
   },
   codeText: {
-    fontSize: 33,
+    fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
@@ -520,7 +519,7 @@ const styles = StyleSheet.create({
     height: 30,
     resizeMode: 'contain',
     position: 'absolute',
-    top: 8,
+    top: 0,
     left: 0,
   },
 
