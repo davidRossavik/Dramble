@@ -101,13 +101,11 @@ export async function updateBalancesAfterRound(gameId: string, challengeIndex: n
     }
 
     if (!bets || bets.length === 0) {
-      console.log('Ingen bets funnet for denne runden');
       return { error: null };
     }
 
     // Balances er allerede oppdatert når bets ble sendt inn
     // Vi trenger ikke gjøre noe mer her siden balances oppdateres umiddelbart
-    console.log('Balances allerede oppdatert når bets ble sendt inn');
     return { error: null };
   } catch (error) {
     console.error('Uventet feil ved oppdatering av balances:', error);

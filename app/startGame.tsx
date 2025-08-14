@@ -96,7 +96,6 @@ export default function GameLobby() {
   // Sørg for at realtime listeners alltid er aktive når gameId endres
   useEffect(() => {
     if (gameId) {
-      console.log('GameId endret, setter opp realtime listeners på nytt:', gameId);
       setupRealtimeListeners(gameId);
     }
   }, [gameId]);
@@ -105,11 +104,9 @@ export default function GameLobby() {
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: string) => {
       if (nextAppState === 'inactive') {
-        console.log('Spiller forlot appen');
         
         if (isHost && gameId) {
           // Host forlot - slett spillet fra Supabase
-          console.log('Host forlot - sletter spillet');
           deleteGame(gameId).catch(console.error);
         } else if (gameId && localTeamName && playerName) {
           // Sjekk om spilleren er lagleder (første spiller i laget)
@@ -118,11 +115,9 @@ export default function GameLobby() {
           
           if (isTeamLeader) {
             // Lagleder forlot - fjern hele laget
-            console.log('Lagleder forlot - fjerner hele laget');
             removeTeam(gameId, localTeamName).catch(console.error);
           } else {
             // Vanlig spiller forlot - fjern fra lag
-            console.log('Lagleder forlot - fjerner hele laget');
             removeTeam(gameId, localTeamName).catch(console.error);
           }
         }
@@ -141,7 +136,6 @@ export default function GameLobby() {
     
     // Cleanup eksisterende listener først
     if (statusChannelRef.current) {
-      console.log('Fjerner eksisterende listener');
       supabase.removeChannel(statusChannelRef.current);
     }
 
@@ -168,19 +162,16 @@ export default function GameLobby() {
 
           // Håndter teams endringer
           if (payload.new.teams) {
-            console.log('Teams oppdatert via realtime:', payload.new.teams);
             const updatedTeams = payload.new.teams.map((team: any) => ({
               ...team,
               players: team.players || [],
             }));
-            console.log('Setter teams til:', updatedTeams);
             setTeams(updatedTeams);
           }
         }
       )
       .subscribe();
 
-    console.log('Realtime listener satt opp for gameId:', gameId);
     statusChannelRef.current = gameChannel;
   };
 
@@ -259,7 +250,7 @@ export default function GameLobby() {
       const { error } = await removePlayerFromTeam(gameId, teamName, playerId);
       if (error) {
         setTeams(teams); // Revert ved feil
-        console.log("Feil ved fjerning:", error);
+        console.error('Feil ved fjerning:', error);
       }
     } catch (error) {
       setTeams(teams); // Revert ved feil
@@ -278,7 +269,7 @@ export default function GameLobby() {
       const { error } = await removeTeam(gameId, teamName);
       if (error) {
         setTeams(teams); // Revert ved feil
-        console.log("Feil ved fjerning av lag:", error);
+        console.error('Feil ved fjerning av lag:', error);
       }
     } catch (error) {
       setTeams(teams); // Revert ved feil
@@ -306,7 +297,7 @@ export default function GameLobby() {
       const result = await randomizePlayers(gameId, []);
       
       if (result.error) {
-        console.log(result.error);
+        console.error(result.error);
         return;
       } else if (result.data) {
         setTeams(result.data);

@@ -143,7 +143,6 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
         .from('games')
         .update({ status: 'finished' })
         .eq('id', gameId);
-      console.log('Spillet er ferdig, status satt til finished');
       return;
     }
 
@@ -182,7 +181,7 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
       throw new Error(`Feil ved oppdatering til neste runde: ${updateError.message}`);
     }
 
-    console.log(`Gått til runde ${newIndex}, valgte lag:`, teamsToSelect);
+    // Debug: `teamsToSelect` kan logges ved behov
   } catch (error) {
     console.error('Feil ved advanceToNextRound:', error);
     throw error;

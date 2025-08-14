@@ -139,7 +139,7 @@ export async function addTeamToGame(gameId: string, newTeam: Team, slurker: numb
     return { error: 'Kunne ikke legge til lag' };
   }
 
-  console.log('Lag lagt til i database:', newTeam.teamName);
+  // Lag lagt til i database
   return { error: null };
 }
 
@@ -358,7 +358,6 @@ export async function randomizePlayers(gameId: string, teams: Team[] = []) {
   }
 
   const freshTeams = freshGame.teams as Team[];
-  console.log('Fersk teams data for randomisering:', freshTeams);
 
   if (freshTeams.length < 2) {
     return { error: 'Trenger minst 2 lag for å fordele spillere' };
@@ -444,7 +443,6 @@ export async function hasTeamPlacedBet(gameId: string, teamName: string, challen
 
 // Ny funksjon for å slette et spill når host forlater
 export async function deleteGame(gameId: string) {
-  console.log('🗑️ Starting cleanup for game:', gameId);
   
   try {
     // 1. Slett alle bets for dette spillet først
@@ -458,7 +456,7 @@ export async function deleteGame(gameId: string) {
       return { error: betsError };
     }
 
-    console.log('✅ Bets deleted for game:', gameId);
+    // Bets deleted for game
 
     // 2. Slett spillet fra games tabellen
     const { error: gameError } = await supabase
