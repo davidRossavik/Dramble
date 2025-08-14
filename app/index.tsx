@@ -1,16 +1,13 @@
-import { Team } from "@/utils/types";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 
 import { useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import * as Animatable from 'react-native-animatable';
 
-import { getRandomTeamName } from "@/utils/nameGenerator";
-import { createGame } from "../utils/games";
 
-import BackgroundWrapper from "@/components/BackgroundWrapper";
+import AppText from "@/components/AppText";
+import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import InfoModal from '@/components/InfoModal';
 
@@ -28,43 +25,8 @@ export default function Index() {
 
   // Navigation //
   const router = useRouter();
-  const generateId = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  const navigateToStartGame = async () => {
-    const code = generateId(); // f.eks. "XKW32P"
-    const teamName = getRandomTeamName(); // randomTeamName
-
-    await AsyncStorage.setItem('gameCode', code);
-    await AsyncStorage.setItem('teamName', teamName);
-    await AsyncStorage.setItem('playerName', "Host");
-    await AsyncStorage.setItem('isHost', 'true');
-
-    const teams: Team[] = [
-      {
-        teamName: teamName,
-        slurks: 100,
-        players: [
-          {
-            id: generateId(), // crypto.randomUUID()
-            name: "Host"
-          }
-        ]
-      }
-    ];
-
-    const { data, error } = await createGame(code, teams);
-
-    if (error) {
-      alert("Feil ved opprettelse av spill: " + error);
-      return;
-    }
-
-    // Naviger videre med spill-id og kode
-    router.push({
-      pathname: '/vinn-slurker/rouletteStart', //bytt denne
-      params: { gameId: data.id, code }
-    });
-  };
+  const navigateToStartGameSetup = () => router.push('/startGameSetup');
 
   const navigateToJoinGame = () => {router.push('/joinGame')};
   // Navigation //
@@ -75,14 +37,14 @@ export default function Index() {
         <Image source={logoImage} style={styles.logoImage} />
 
         <Animatable.View animation="slideInRight" duration={1200}>
-          <Pressable style={styles.redButton} onPress={navigateToStartGame}>
-            <Text style={styles.buttonText}>Start spill</Text>
+          <Pressable style={styles.redButton} onPress={navigateToStartGameSetup}>
+            <AppText style={styles.buttonText}>Start spill</AppText>
           </Pressable>
         </Animatable.View>
 
         <Animatable.View animation="slideInRight" duration={1600}>
           <Pressable style={styles.blackButton} onPress={navigateToJoinGame}>
-            <Text style={styles.buttonText}>Bli med i spill</Text>
+            <AppText style={styles.buttonText}>Bli med i spill</AppText>
           </Pressable>
         </Animatable.View>
         
@@ -109,7 +71,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   redButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#D49712',
     paddingVertical: Platform.OS === 'web' ? 20 : 28,
     paddingHorizontal: Platform.OS === 'web' ? 40 : 60,
     borderRadius: 100,
@@ -125,9 +87,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 25,
   },
   infoButton: {
     width: 50,

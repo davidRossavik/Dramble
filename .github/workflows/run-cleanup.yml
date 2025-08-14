@@ -1,0 +1,27 @@
+name: Cleanup Old Games
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Supabase CLI
+        run: |
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar xz
+          sudo mv supabase /usr/local/bin/supabase
+
+      - name: Supabase login
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase login --token $SUPABASE_ACCESS_TOKEN
+
+      - name: Call cleanup_old_games function directly
+        run: |
+          curl -X POST "https://jsjliepluwxvrrtceghu.supabase.co/functions/v1/cleanup_old_games" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzamxpZXBsdXd4dnJydGNlZ2h1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODk2NDQzNiwiZXhwIjoyMDY0NTQwNDM2fQ.j-eUShR1K-8dCPqBnqJc9zm0PTuQRR5kRPvxuKIocM4"

@@ -1,5 +1,6 @@
-import { supabase } from "../supabase";
-import { getRandomChallenges } from './challenges';
+import { supabase } from "../supabase-functions/supabase.js";
+import { getRandomChallengesWithPlayers } from './challenges';
+import { selectTeamsForChallenge } from './rounds';
 
 
 export async function updateGameStatus(gameId: string, status: 'waiting' | 'playing' | 'finished') {
@@ -17,51 +18,45 @@ export async function updateGameStatus(gameId: string, status: 'waiting' | 'play
 }
 
 
-export async function updateChallengeState(gameId: string, state: 'betting' | 'playing' | 'finished') {
-  const { error } = await supabase
-    .from('games')
-    .update({ challenge_state: state })
-    .eq('id', gameId);
-
-  if (error) console.error('Feil ved oppdatering av challenge_state:', error.message);
-}
 
 
-//bruker ikke denne
-export async function setInitialChallenge(gameId: string) {
-  const testChallenge = {
-    id: 'test_1',
-    text: '1v1: Steinsaks–papir mellom to lagledere. Vinneren slipper å drikke.',
-    type: '1v1',
-    };
 
-  const { error } = await supabase
-    .from('games')
-    .update({ challenge: testChallenge , challenge_status: "betting"})
-    .eq('id', gameId);
 
-  if (error) {
-    console.error('Feil ved oppstart av challenge:', error.message);
-    return { error: 'Kunne ikke starte challenge' };
-  }
-
-  return { error: null };
-}
 
 //kjøres når hosten trykker på start spill første gang
 export async function initializeGame(gameId: string) {
-  const challenges = getRandomChallenges(10);
+  const challenges = await getRandomChallengesWithPlayers(gameId, 1);
 
+  // Hent alle lag for å velge automatisk
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('teams')
+    .eq('id', gameId)
+    .single();
+
+  if (gameError || !game) {
+    console.error('Feil ved henting av lag:', gameError);
+    return { error: gameError };
+  }
+
+  const teams = game.teams || [];
+  
+  // Velg lag basert på første challenge type
+  const firstChallenge = challenges[0];
+  const teamsToSelect = selectTeamsForChallenge(teams, firstChallenge.type);
+
+  // Oppdater spill med challenges og valgte lag
   const { error } = await supabase
     .from('games')
     .update({
       challenges,
       current_challenge_index: 0,
-      challenge_state: 'betting'
+      challenge_state: 'betting',
+      selected_teams: JSON.stringify([teamsToSelect]) // Lagre valgte lag for første challenge
     })
     .eq('id', gameId);
-    console.log("Starter initializeGame for", gameId);
-    console.log("Valgte utfordringer:", challenges);
+    
+
 
   if (error) {
     console.error('Feil ved start:', error.message);

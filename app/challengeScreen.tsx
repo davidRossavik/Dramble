@@ -1,25 +1,68 @@
-import { supabase } from '@/supabase';
-import { Challenge } from '@/utils/types';
+import BackgroundWrapper from '@/components/BackgroundWrapper';
+import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
+import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
+import { supabase } from '../supabase-functions/supabase.js';
 import BettingPhaseView from './stateViews/BettingPhaseView';
 import FinishedView from './stateViews/FinishedView';
+import GameFinishedView from './stateViews/GameFinishedView';
 import PlayingView from './stateViews/PlayingView';
 
-type ChallengeState = 'betting' | 'playing' | 'finished';
-
 export default function ChallengeScreen() {
-  const { gameId } = useLocalSearchParams();
-  const [displayState, setDisplayState] = useState<ChallengeState>('betting');
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const router = useRouter();
+  const { gameId, code } = useLocalSearchParams();
+  const [runde, setRunde] = useState<Runde | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [isLoading, setIsLoading] = useState(true);
+  const [gameStatus, setGameStatus] = useState<string | null>(null);
+
+  // Animasjon (fade)
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const fadeIn = () => {
+  return new Promise((resolve) => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      resolve(true);
+    });
+  });
+};
+  
+  const fadeOut = () => {
+    return new Promise((resolve) => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 2000,
+        useNativeDriver: true,
+      }).start(({finished}) => {
+    
+        resolve(true);});
+    });
+  };
+
+  useEffect(() => {
+    if (runde) {
+      fadeIn();
+    }
+  }, [runde?.state]);
+  // Animasjon
 
   if (typeof gameId !== 'string') {
-    return <Text>Invalid game ID</Text>;
+    return (
+    <BackgroundWrapper>
+      <View style={{justifyContent: 'center', alignItems: 'center'}}>
+        <Text>Invalid game ID</Text>
+      </View>
+    </BackgroundWrapper>
+    )
   }
 
   // Hent ut om brukeren er host
@@ -31,29 +74,35 @@ export default function ChallengeScreen() {
     checkHostStatus();
   }, []);
 
-  // Initial game state
+  // Hent game status og initial game state
   useEffect(() => {
-    const fetchInitialGameState = async () => {
-      const { data, error } = await supabase
-        .from('games')
-        .select('challenge_state, current_challenge_index, challenges')
-        .eq('id', gameId)
-        .single();
+    const fetchInitialGame = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select('current_challenge_index, status, challenge_state')
+          .eq('id', gameId)
+          .single();
 
-      if (!error && data) {
-        const newChallenge = data.challenges?.[data.current_challenge_index];
-        if (newChallenge) {
-          transitionTo(data.challenge_state, newChallenge);
+        if (!error && data) {
+          setGameStatus(data.status);
+          if (data.status !== 'finished') {
+            const newRunde = await fetchRunde(gameId, data.current_challenge_index, 'initial');
+            setRunde(newRunde);
+          }
+        } else {
+          console.error('Feil ved henting av spilldata:', error);
         }
-      } else {
-        console.error('Feil ved henting av spilldata:', error);
+      } catch (error) {
+        console.error('Feil ved henting av initial game:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    fetchInitialGameState();
+    fetchInitialGame();
   }, [gameId]);
 
-  // Realtime oppdatering
+  // Realtime oppdatering for status og runde
   useEffect(() => {
     const channel = supabase
       .channel(`game-${gameId}`)
@@ -65,125 +114,170 @@ export default function ChallengeScreen() {
           table: 'games',
           filter: `id=eq.${gameId}`,
         },
-        (payload) => {
-          const newState: ChallengeState = payload.new.challenge_state;
-          const index = payload.new.current_challenge_index;
-          const challenges = payload.new.challenges;
+        async (payload) => {
+          try {
+            if (payload.new.status !== payload.old?.status) {
+              setGameStatus(payload.new.status);
+              if (payload.new.status === 'finished') {
+                setRunde(null);
+                setIsTransitioning(false);
+                return;
+              }
+              if (payload.new.status === 'waiting') {
+                const storedCode = await AsyncStorage.getItem('gameCode');
+                if (storedCode) {
+                  router.replace({ pathname: '/startGame', params: { code: storedCode } });
+                } else {
+                  const { data } = await supabase
+                    .from('games')
+                    .select('code')
+                    .eq('id', gameId)
+                    .single();
+                  if (data?.code) {
+                    router.replace({ pathname: '/startGame', params: { code: data.code } });
+                  }
+                }
+                return;
+              }
+            }
 
-          if (challenges && challenges[index]) {
-            const nextChallenge = challenges[index];
-            transitionTo(newState, nextChallenge);
-          } else {
-            console.warn('Ingen challenge funnet for index:', index);
+            const newIndex = payload.new.current_challenge_index;
+            const oldIndex = payload.old?.current_challenge_index;
+            
+            if (oldIndex !== undefined && newIndex !== oldIndex) {
+              const newRunde = await fetchRunde(gameId, newIndex, 'index');
+              setRunde(newRunde);
+              setIsTransitioning(false);
+              return;
+            }
+            
+            if (payload.new.challenge_state !== payload.old?.challenge_state) {
+              const newRunde = await fetchRunde(gameId, newIndex, 'state');
+              setRunde(newRunde);
+              setIsTransitioning(false);
+              return;
+            }
+
+          } catch (error) {
+            console.error('Feil ved oppdatering av runde:', error);
+            setIsTransitioning(false);
           }
         }
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [gameId]);
 
-  // Animasjon og oppdatering
-  const transitionTo = (newState: ChallengeState, newChallenge: Challenge) => {
-    Animated.timing(opacity, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: false,
-    }).start(() => {
-      setChallenge(newChallenge);
-      setDisplayState(newState);
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: false,
-      }).start(() => {
-        setIsTransitioning(false);
-      });
-    });
-  };
-
+  
   const handlePhaseAdvance = async () => {
-    if (isTransitioning) return;
+    if (isTransitioning || !runde) return;
+    
     setIsTransitioning(true);
 
-    // Start fade-out
-    await new Promise((resolve) =>
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start(resolve)
-    );
+    // Ikke gå videre hvis spillet er ferdig
+    if (gameStatus === 'finished') {
+      setIsTransitioning(false);
+      return;
+    }
 
     // Host oppdaterer state i DB
     if (isHost) {
       try {
-        if (displayState === 'betting') {
-          await supabase.from('games').update({ challenge_state: 'playing' }).eq('id', gameId);
-        } else if (displayState === 'playing') {
-          await supabase.from('games').update({ challenge_state: 'finished' }).eq('id', gameId);
-        } else if (displayState === 'finished') {
-          const { data, error: rpcError } = await supabase.rpc('increment_index', { gid: gameId });
-          if (rpcError || typeof data !== 'number') {
-            console.error('Feil ved RPC:', rpcError);
+        if (runde.state === 'betting') {
+          await updateRundeState(gameId, 'playing');
+        } else if (runde.state === 'playing') {
+          await updateRundeState(gameId, 'finished');
+        } else if (runde.state === 'finished') {
+          // Sjekk om dette er siste runde
+          const { data: gameData, error: gameError } = await supabase
+            .from('games')
+            .select('challenges, current_challenge_index')
+            .eq('id', gameId)
+            .single();
+            
+          if (gameError || !gameData) {
+            setIsTransitioning(false);
             return;
           }
-
-          const { error: updateError } = await supabase
-            .from('games')
-            .update({
-              challenge_state: 'betting',
-              current_challenge_index: data,
-            })
-            .eq('id', gameId);
-
-          if (updateError) {
-            console.error('Feil ved oppdatering til neste challenge:', updateError);
+          
+          const challenges = gameData.challenges || [];
+          const currentIndex = gameData.current_challenge_index;
+          const isLastRound = currentIndex >= challenges.length - 1;
+          
+          if (isLastRound) {
+            // Sett status til finished direkte for å unngå race condition
+            await supabase
+              .from('games')
+              .update({ status: 'finished' })
+              .eq('id', gameId);
+            // Ikke sett isTransitioning til false her - la realtime listener håndtere det
+            return;
+          } else {
+            await advanceToNextRound(gameId);
           }
         }
       } catch (error) {
         console.error('Feil under overgang:', error);
+        setIsTransitioning(false);
       }
+    } else {
+      setIsTransitioning(false);
     }
-
-    // Nå venter vi på at realtime skal kalle transitionTo()
   };
 
-  // Ikke vis noe mens vi bytter eller laster
-  if (isTransitioning || !challenge) {
+  if (gameStatus === 'finished') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Laster utfordring...</Text>
-      </View>
+      <GameFinishedView gameId={gameId} isHost={isHost} />
     );
   }
 
   return (
-    <Animated.View style={{ flex: 1, opacity }}>
-      {displayState === 'betting' && (
-        <BettingPhaseView
-          challenge={challenge}
-          gameId={gameId}
-          isHost={isHost}
-          onNextPhaseRequested={handlePhaseAdvance}
-        />
-      )}
-      {displayState === 'playing' && (
-        <PlayingView
-          challenge={challenge}
-          gameId={gameId}
-          onNextPhaseRequested={handlePhaseAdvance}
-        />
-      )}
-      {displayState === 'finished' && (
-        <FinishedView
-          challenge={challenge}
-          gameId={gameId}
-          onNextPhaseRequested={handlePhaseAdvance}
-        />
-      )}
-    </Animated.View>
+    <BackgroundWrapper>
+      <View style={{flex: 1}}>
+
+        {/* Hovedinnhold med fade */}
+        {!isLoading && runde && (
+          <Animated.View style={{flex: 1, opacity: fadeAnim }}>
+            {runde!.state === 'betting' && (
+              <BettingPhaseView
+                runde={runde!}
+                gameId={gameId}
+                isHost={isHost}
+                onNextPhaseRequested={handlePhaseAdvance}
+                isTransitioning={isTransitioning}
+              />
+            )}  
+            {runde!.state === 'playing' && (
+              <PlayingView
+                runde={runde!}
+                gameId={gameId}
+                onNextPhaseRequested={handlePhaseAdvance}
+                isTransitioning={isTransitioning}
+              />
+            )}
+            {runde!.state === 'finished' && (
+              <FinishedView
+                runde={runde!}
+                gameId={gameId}
+                onNextPhaseRequested={handlePhaseAdvance}
+                isTransitioning={isTransitioning}
+              />
+            )}
+          </Animated.View>
+        )}
+
+        {/* Debug info */}
+        {!isLoading && !runde && (
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <Text style={{color: 'white'}}>Ingen runde data tilgjengelig</Text>
+            <Text style={{color: 'white'}}>Game Status: {gameStatus}</Text>
+            <Text style={{color: 'white'}}>Is Transitioning: {isTransitioning.toString()}</Text>
+          </View>
+        )}
+
+      </View>
+    </BackgroundWrapper>
   );
 }

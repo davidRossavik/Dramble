@@ -1,4 +1,5 @@
-import { Image, ImageSourcePropType, ImageStyle, Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
+import { Image, ImageSourcePropType, ImageStyle, Pressable, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import AppText from './AppText';
 
 type Props = {
     imageSource?: ImageSourcePropType;
@@ -17,7 +18,7 @@ export default function Button({imageSource, onPress, imageStyle, label, textSty
         onPress={onPress}
         style={({pressed}) => [styles.button, style, (pressed || stayPressed) && styles.buttonPressed, stayPressed && styles.buttonActiveBorder, disabled && styles.buttonDisabled]}>
             {imageSource && <Image source={imageSource} style={imageStyle} />}
-            {label && <Text style={[styles.label, textStyle]}>{label}</Text>}
+            {label && <AppText style={[styles.label, textStyle]}>{label}</AppText>}
         </Pressable>
     )
 }
