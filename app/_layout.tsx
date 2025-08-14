@@ -64,6 +64,21 @@ export default function RootLayout() {
         animation: 'fade',
       }} />
 
+   <Stack.Screen name="flaks" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
+    <Stack.Screen name="spinTheWheel" options={{
+      title: '',
+      headerTransparent: true,
+      animation: 'fade',
+      presentation: 'card',
+    }} />
+  </Stack>
+
+
       <Stack.Screen name="challengeScreen" options={{
         title: '',
         headerTransparent: true,
@@ -79,4 +94,5 @@ export default function RootLayout() {
     </Stack>
   </BackgroundWrapper> 
   );
+
 }

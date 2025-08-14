@@ -25,7 +25,9 @@ export default function Index() {
 
   // Navigation //
   const router = useRouter();
+
   const navigateToStartGameSetup = () => router.push('/startGameSetup');
+
   const navigateToJoinGame = () => {router.push('/joinGame')};
   // Navigation //
 
