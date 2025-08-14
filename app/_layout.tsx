@@ -1,4 +1,5 @@
 import { Asset } from 'expo-asset';
+import * as Font from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
@@ -15,13 +16,20 @@ export default function RootLayout() {
     async function prepare() {
       try {
         //  last inn bildene du bruker med en gang
-        await Asset.loadAsync([
+        await Promise.all([
+          Asset.loadAsync([
           require('@/assets/images/background.png'),
           require('@/assets/images/textLogo.png'),
           require('@/assets/images/redButton.png'),
+        ]),
+          Font.loadAsync({
+            'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
+            'Fredoka': require('@/assets/fonts/Fredoka-VariableFont_wdth,wght.ttf')
+          }),
         ]);
+
       } catch (e) {
-        console.warn("Feil ved lasting av bilder", e);
+        console.warn("Feil ved lasting av assets", e);
       } finally {
         setIsReady(true);           // ✅ vi er klare!
         await SplashScreen.hideAsync(); // ✅ skjul splashscreen og vis app

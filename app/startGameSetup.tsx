@@ -1,9 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
+import Button from '@/components/Button';
 import { createGame } from '@/utils/games';
 import { getRandomTeamName } from '@/utils/nameGenerator';
 import { Team } from '@/utils/types';
@@ -91,7 +93,7 @@ export default function StartGameSetup() {
   return (
     <BackgroundWrapper>
       <View style={styles.container}>
-        <Text style={styles.title}>Start nytt spill</Text>
+        <AppText style={styles.title}>Start nytt spill</AppText>
 
         <TextInput
           style={styles.input}
@@ -109,38 +111,35 @@ export default function StartGameSetup() {
             value={teamName}
             onChangeText={setTeamName}
           />
-          <Pressable style={styles.randomButton} onPress={generateRandomTeamName}>
-            <Text style={styles.randomButtonText}>🎲</Text>
-          </Pressable>
+
+          <Button style={styles.randomButton} onPress={generateRandomTeamName} label={"🎲"} textStyle={styles.randomButtonText} />
         </View>
 
-        <Text style={styles.subtitle}>Start Slurker:</Text>
+        <AppText style={styles.subtitle}>Start Slurker:</AppText>
         <View style={styles.modeRow}>
           <Pressable
             style={[styles.modeButton, startSlurks === 20 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(20)}
           >
-            <Text style={styles.modeButtonText}>Småslurking (20)</Text>
+            <AppText style={styles.modeButtonText}>Småslurking (20)</AppText>
           </Pressable>
           <Pressable
             style={[styles.modeButton, startSlurks === 50 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(50)}
           >
-            <Text style={styles.modeButtonText}>Festmodus (50)</Text>
+            <AppText style={styles.modeButtonText}>Festmodus (50)</AppText>
           </Pressable>
           <Pressable
             style={[styles.modeButton, startSlurks === 100 && styles.modeButtonSelected]}
             onPress={() => setStartSlurks(100)}
           >
-            <Text style={styles.modeButtonText}>Blackout (100)</Text>
+            <AppText style={styles.modeButtonText}>Blackout (100)</AppText>
           </Pressable>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
 
-        <Pressable style={styles.button} onPress={navigateToStartGame}>
-          <Text style={styles.buttonText}>Neste</Text>
-        </Pressable>
+        <Button style={styles.button} onPress={navigateToStartGame} label={"Neste"} textStyle={styles.buttonText} />
       </View>
     </BackgroundWrapper>
   );
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
   modeButtonText: {
     color: '#F0E3C0',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
   },
   button: {
@@ -226,7 +225,7 @@ const styles = StyleSheet.create({
   randomButton: {
     backgroundColor: '#D49712',
     borderRadius: 15,
-    padding: 12,
+    padding: 9,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 50,

@@ -3,8 +3,10 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
+
 import { addTeamToGame, getGameByCode } from '@/utils/games';
 import { getRandomTeamName } from '@/utils/nameGenerator';
 
@@ -167,7 +169,7 @@ const handleJoin = async () => {
    return (
     <BackgroundWrapper>
       <View style={styles.container}>
-        <Text style={styles.title}>Bli med i spill</Text>
+        <AppText style={styles.title}>Bli med i spill</AppText>
 
         <TextInput
           style={[styles.input, {color: '#F0E3C0'}]}
@@ -185,7 +187,6 @@ const handleJoin = async () => {
           value={name}
           onChangeText={setName}
         />
-
         <View style={styles.teamNameContainer}>
           <TextInput
             style={styles.teamNameInput}
@@ -200,7 +201,6 @@ const handleJoin = async () => {
         </View>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
         <Button style={styles.button} onPress={handleJoin} 
             textStyle={styles.buttonText} label={'Bli med'}/>
 
@@ -229,7 +229,8 @@ const styles = StyleSheet.create({
     borderColor: '#D49712',
     borderRadius: 15,
     fontSize: 25,
-    backgroundColor: '#073510'
+    backgroundColor: '#073510',
+    fontFamily: 'CherryBombOne-Regular'
   },
   button: {
     backgroundColor: '#D49712',

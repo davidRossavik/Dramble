@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import AppText from '@/components/AppText';
 import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { addPlayerToTeam, deleteGame, getGameByCode, randomizePlayers, removePlayerFromTeam, removeTeam } from '@/utils/games';
@@ -312,18 +313,18 @@ export default function GameLobby() {
   return (
     <BackgroundWrapper>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.codeText}>SPILLKODE: {code}</Text>
+        <AppText style={styles.codeText}>SPILLKODE: {code}</AppText>
 
         {isLoading ? (
           <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <Text style={{ color: '#F0E3C0', fontSize: 16 }}>Laster lag...</Text>
+            <AppText style={{ color: '#F0E3C0', fontSize: 16 }}>Laster lag...</AppText>
           </View>
         ) : (
           teams.map(team => (
             <View key={team.teamName} style={styles.teamBox}>
               <View style={styles.teamHeader}>
                 <View style={styles.centeredTextWrapper}>
-                  <Text style={styles.teamName}>{team.teamName}</Text>
+                  <AppText style={styles.teamName}>{team.teamName}</AppText>
                 </View>
                 {isHost && !team.players.some(p => p.name === hostName) && (
                   <Button 
@@ -453,7 +454,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: 10,
     marginBottom: 5,
-    width: 260
+    width: 260,
+    fontFamily: 'CherryBombOne-Regular'
   },
   centeredTextWrapper: {
     flex: 1,
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   },
   shuffleContainer: {
     alignItems: 'center',
@@ -476,7 +478,7 @@ const styles = StyleSheet.create({
   shuffle_button: {
     width: 250,
     height: 50,
-    backgroundColor: '#333',
+    backgroundColor: '#c33a09ff',
     borderRadius: 25,
     marginBottom: 20,
   },
@@ -492,7 +494,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   playerName: {
-    fontSize: 20,
+    fontSize: 22,
     marginLeft: 10,
     fontWeight: 'bold',
     color: '#F0E3C0',
@@ -501,11 +503,14 @@ const styles = StyleSheet.create({
     color: '#D49712',
   },
   codeText: {
-    fontSize: 30,
+    fontSize: 33,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
     color: '#D49712',
+  },
+  startGameText: {
+    fontSize: 22
   },
   // Text //
 
@@ -515,7 +520,7 @@ const styles = StyleSheet.create({
     height: 30,
     resizeMode: 'contain',
     position: 'absolute',
-    top: 0,
+    top: 8,
     left: 0,
   },
 
