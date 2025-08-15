@@ -8,9 +8,11 @@
     "scheme": "dramble",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dramble.app"
+      "bundleIdentifier": "com.dramble.app",
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
