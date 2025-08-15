@@ -76,8 +76,6 @@ export default function RootLayout() {
       animation: 'fade',
       presentation: 'card',
     }} />
-  </Stack>
-
 
       <Stack.Screen name="challengeScreen" options={{
         title: '',

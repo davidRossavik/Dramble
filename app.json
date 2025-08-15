@@ -8,11 +8,13 @@
     "scheme": "dramble",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dramble.app",
-      "buildNumber": "4"
+      "buildNumber": "4",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -46,6 +48,12 @@
       "image": "./assets/images/textLogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bace5e82-a533-4642-86ff-d3fe5d84ef4d"
+      }
     }
   }
 }
