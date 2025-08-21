@@ -1,4 +1,3 @@
-import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
@@ -64,7 +63,6 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
   };
 
   return (
-    <BackgroundWrapper>
       <View style={styles.contentContainer}>
         <AppText style={styles.title}>Challenge fullført!</AppText>
 
@@ -121,7 +119,6 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
           />
         )}
       </View>
-    </BackgroundWrapper>
   );
 }
 
