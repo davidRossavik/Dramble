@@ -149,31 +149,13 @@ export async function advanceToNextRound(gameId: string): Promise<void> {
     // Velg lag basert på challenge type
     const teamsToSelect = selectTeamsForChallenge(teams, newChallenge.type);
 
-    // Hent eksisterende selected_teams og oppdater for ny runde
-    const { data: existingData } = await supabase
-      .from('games')
-      .select('selected_teams')
-      .eq('id', gameId)
-      .single();
-
-    const existingSelectedTeams = existingData?.selected_teams || [];
-    const updatedSelectedTeams = [...existingSelectedTeams];
-    
-    // Sørg for at array er lang nok
-    while (updatedSelectedTeams.length <= newIndex) {
-      updatedSelectedTeams.push([]);
-    }
-    
-    // Sett valgte lag for den nye runden
-    updatedSelectedTeams[newIndex] = teamsToSelect;
-
-    // Oppdater til betting state med ny index og valgte lag
+    // Oppdater til betting state med ny index og valgte lag i én operasjon
     const { error: updateError } = await supabase
       .from('games')
       .update({
         challenge_state: 'betting',
         current_challenge_index: newIndex,
-        selected_teams: JSON.stringify(updatedSelectedTeams)
+        selected_teams: JSON.stringify(teamsToSelect)
       })
       .eq('id', gameId);
 
@@ -213,4 +195,188 @@ export function isRundeReady(runde: Runde | null, isTransitioning: boolean): boo
   }
 
   return true;
+}
+
+/**
+ * Spesialisert fetch for nye runder (index endres, finished -> betting)
+ */
+export async function fetchNewRound(gameId: string, challengeIndex: number): Promise<Runde | null> {
+  try {
+    // Hent minimal data for ny runde
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('challenges, teams, selected_teams')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      throw new Error(`Kunne ikke hente spill: ${gameError?.message}`);
+    }
+
+    const challenge = game.challenges?.[challengeIndex];
+    if (!challenge) {
+      return null;
+    }
+
+    // Parse selected_teams - nå kun lagene for den nåværende runden
+    let selectedTeams: Team[] = [];
+    if (game.selected_teams) {
+      if (typeof game.selected_teams === 'string') {
+        selectedTeams = JSON.parse(game.selected_teams);
+      } else {
+        selectedTeams = game.selected_teams;
+      }
+    }
+
+    // Retry logic for race conditions
+    if (selectedTeams.length === 0) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const { data: retryData } = await supabase
+        .from('games')
+        .select('selected_teams')
+        .eq('id', gameId)
+        .single();
+      
+      if (retryData?.selected_teams) {
+        if (typeof retryData.selected_teams === 'string') {
+          selectedTeams = JSON.parse(retryData.selected_teams);
+        } else {
+          selectedTeams = retryData.selected_teams;
+        }
+      }
+    }
+
+    const runde: Runde = {
+      challenge,
+      challengeIndex,
+      teams: game.teams || [],
+      selectedTeams,
+      winner: null,
+      betResults: [],
+      state: 'betting',
+    };
+
+    return runde;
+  } catch (error) {
+    console.error('Feil ved fetchNewRound:', error);
+    throw error;
+  }
+}
+
+/**
+ * Spesialisert fetch for betting -> playing overgang
+ */
+export async function fetchBettingToPlaying(gameId: string, challengeIndex: number): Promise<Runde | null> {
+  try {
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('challenges, teams, selected_teams')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      throw new Error(`Kunne ikke hente spill: ${gameError?.message}`);
+    }
+
+    const challenge = game.challenges?.[challengeIndex];
+    if (!challenge) {
+      return null;
+    }
+
+    // Parse selected_teams - nå kun lagene for den nåværende runden
+    let selectedTeams: Team[] = [];
+    if (game.selected_teams) {
+      if (typeof game.selected_teams === 'string') {
+        selectedTeams = JSON.parse(game.selected_teams);
+      } else {
+        selectedTeams = game.selected_teams;
+      }
+    }
+
+    // Hent bets for denne runden
+    const { data: bets, error } = await supabase
+      .from('bets')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('challenge_index', challengeIndex);
+    
+    const betResults = bets?.map(bet => ({
+      teamName: bet.team_name,
+      betOn: bet.bet_on,
+      amount: bet.amount,
+      isCorrect: false,
+      delta: 0
+    })) || [];
+
+    const runde: Runde = {
+      challenge,
+      challengeIndex,
+      teams: game.teams || [],
+      selectedTeams,
+      winner: null,
+      betResults,
+      state: 'playing',
+    };
+
+    return runde;
+  } catch (error) {
+    console.error('Feil ved fetchBettingToPlaying:', error);
+    throw error;
+  }
+}
+
+/**
+ * Spesialisert fetch for playing -> finished overgang
+ */
+export async function fetchPlayingToFinished(gameId: string, challengeIndex: number): Promise<Runde | null> {
+  try {
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('challenges, teams, selected_teams')
+      .eq('id', gameId)
+      .single();
+
+    if (gameError || !game) {
+      throw new Error(`Kunne ikke hente spill: ${gameError?.message}`);
+    }
+
+    const challenge = game.challenges?.[challengeIndex];
+    if (!challenge) {
+      return null;
+    }
+
+    // Parse selected_teams - nå kun lagene for den nåværende runden
+    let selectedTeams: Team[] = [];
+    if (game.selected_teams) {
+      if (typeof game.selected_teams === 'string') {
+        selectedTeams = JSON.parse(game.selected_teams);
+      } else {
+        selectedTeams = game.selected_teams;
+      }
+    }
+
+    // Hent vinner først
+    const winner = await getWinnerForChallenge(gameId, challengeIndex);
+    
+    // Hent betResults basert på vinner
+    let betResults: BetResult[] = [];
+    if (winner) {
+      betResults = await getBettingResults(gameId, challengeIndex, winner);
+    }
+
+    const runde: Runde = {
+      challenge,
+      challengeIndex,
+      teams: game.teams || [],
+      selectedTeams,
+      winner,
+      betResults,
+      state: 'finished',
+    };
+
+    return runde;
+  } catch (error) {
+    console.error('Feil ved fetchPlayingToFinished:', error);
+    throw error;
+  }
 } 

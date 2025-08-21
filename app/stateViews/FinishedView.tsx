@@ -5,7 +5,6 @@ import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { supabase } from '../../supabase-functions/supabase.js';
 
 import AppText from '@/components/AppText';
 
@@ -26,7 +25,7 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
       setIsHost(hostValue === 'true');
     });
 
-    // Hent oppdaterte balances
+    // Hent oppdaterte balances (kun én gang - balances oppdateres ikke under finished)
     async function fetchBalances() {
       const { data } = await getGameById(gameId);
       if (data && data.balances) {
@@ -35,28 +34,6 @@ export default function FinishedView({ runde, gameId, onNextPhaseRequested, isTr
     }
     fetchBalances();
 
-    // Sett opp real-time listener for balance oppdateringer
-    const channel = supabase
-      .channel(`balances-finished-${gameId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'games',
-          filter: `id=eq.${gameId}`,
-        },
-        (payload: any) => {
-          if (payload.new.balances) {
-            setBalances(payload.new.balances);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [gameId]);
 
   // Ikke vis noen loading states hvis parent er i transition
