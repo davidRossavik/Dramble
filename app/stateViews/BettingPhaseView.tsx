@@ -42,17 +42,6 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
     );
   }
 
-  // Vis balances for alle lag
-  const renderBalances = () => {
-    if (!myTeamName || !balances[myTeamName]) return null;
-    return (
-      <View style={{marginBottom: 16}}>
-        <Text style={{fontWeight: 'bold', color: '#F0E3C0', marginBottom: 4}}>Slurker igjen:</Text>
-        <Text style={{color: '#F0E3C0'}}>{balances[myTeamName]}</Text>
-      </View>
-    );
-  };
-
   // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
   const handlePlaceBet = async (bet: { teamName: string; betOn: string; amount: number }) => {
     try {
