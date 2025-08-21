@@ -2,12 +2,10 @@ import OneVsOne from '@/app/challengetypes/OneVsOne';
 import TeamVsItself from '@/app/challengetypes/TeamVsItself';
 import TeamVsTeam from '@/app/challengetypes/TeamVsTeam';
 import { submitBet } from '@/utils/bets';
-import { getGameById } from '@/utils/games';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { supabase } from '../../supabase-functions/supabase.js';
 
 import Button from '@/components/Button';
 
@@ -17,44 +15,16 @@ type Props = {
   isHost: boolean;
   onNextPhaseRequested: () => void;
   isTransitioning?: boolean;
+  balances: Record<string, number>;
 };
 
-export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseRequested, isTransitioning }: Props) {
-  const [balances, setBalances] = useState<Record<string, number>>({});
+export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseRequested, isTransitioning, balances }: Props) {
   const [myTeamName, setMyTeamName] = useState<string | null>(null);
-  const [localBets, setLocalBets] = useState<any[]>([]); // Lokale bets
 
   useEffect(() => {
-    async function fetchBalances() {
-      const { data } = await getGameById(gameId); // runde.code hvis tilgjengelig, ellers gameId
-      if (data && data.balances) setBalances(data.balances);
-    }
-    fetchBalances();
     AsyncStorage.getItem('teamName').then(setMyTeamName);
+  }, [gameId]);
 
-    // Sett opp real-time listener for balance oppdateringer
-    const channel = supabase
-      .channel(`balances-${gameId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'games',
-          filter: `id=eq.${gameId}`,
-        },
-        (payload) => {
-          if (payload.new.balances) {
-            setBalances(payload.new.balances);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [gameId, runde]);
 
   // Ikke vis noen loading states hvis parent er i transition
   if (isTransitioning) {
@@ -82,14 +52,6 @@ export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseReq
       </View>
     );
   };
-
-  // Legg til en hjelpefunksjon for å oppdatere balances lokalt
-  // function optimisticUpdateBalance(teamName: string, amount: number) {
-  //   setBalances(prev => ({
-  //     ...prev,
-  //     [teamName]: (prev[teamName] || 0) - amount
-  //   }));
-  // }
 
   // Når et lag legger inn et bet (bruk denne i stedet for submitBet):
   const handlePlaceBet = async (bet: { teamName: string; betOn: string; amount: number }) => {

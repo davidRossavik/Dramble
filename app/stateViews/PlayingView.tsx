@@ -45,7 +45,7 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
       
       case 'Team-vs-itself':
         // For Team-vs-itself er det "Klarer" eller "Klarer ikke"
-        return ['Klarer', 'Klarer ikke'];
+        return ['Klarte', 'Klarte ikke'];
       
       default:
         return [];

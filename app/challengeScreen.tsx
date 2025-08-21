@@ -19,6 +19,7 @@ export default function ChallengeScreen() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
+  const [balances, setBalances] = useState<Record<string,number>>({});
 
   // Animasjon (fade)
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -71,12 +72,13 @@ export default function ChallengeScreen() {
       try {
         const { data, error } = await supabase
           .from('games')
-          .select('current_challenge_index, status, challenge_state')
+          .select('current_challenge_index, status, challenge_state, balances')
           .eq('id', gameId)
           .single();
 
         if (!error && data) {
           setGameStatus(data.status);
+          setBalances(data.balances || {});
           if (data.status !== 'finished') {
             const newRunde = await fetchRunde(gameId, data.current_challenge_index, 'initial');
             setRunde(newRunde);
@@ -138,6 +140,10 @@ export default function ChallengeScreen() {
             const oldIndex = payload.old?.current_challenge_index;
             const newState = payload.new.challenge_state;
             const oldState = payload.old?.challenge_state;
+
+            if (payload.new?.balances && payload.new.balances !== payload.old?.balances) {
+              setBalances(payload.new.balances);
+            }
             
             // Index endres (ny runde)
             if (oldIndex !== undefined && newIndex !== oldIndex) {
@@ -266,6 +272,7 @@ export default function ChallengeScreen() {
                 isHost={isHost}
                 onNextPhaseRequested={handlePhaseAdvance}
                 isTransitioning={isTransitioning}
+                balances={balances}
               />
             )}  
             {runde!.state === 'playing' && (
