@@ -206,42 +206,17 @@ export async function removeTeam(gameId: string, teamName: string) {
 // Nye funksjoner for å håndtere valgte teams for challenges
 
 export async function setSelectedTeamsForChallenge(gameId: string, challengeIndex: number, selectedTeams: Team[]) {
-  const { data, error } = await supabase
+  // Lagre kun lagene for den nåværende runden, ikke alle tidligere runder
+  const { error: updateError } = await supabase
     .from('games')
-    .select('selected_teams')
-    .eq('id', gameId)
-    .single();
+    .update({ selected_teams: JSON.stringify(selectedTeams) })
+    .eq('id', gameId);
 
-  if (error) {
-    console.error('Feil ved henting av selected_teams:', error);
-    return { error };
+  if (updateError) {
+    console.error('Feil ved oppdatering av selected_teams:', updateError);
   }
 
-  try {
-    // Parse JSON hvis det er en string, ellers bruk direkte
-    const currentSelectedTeams = typeof data?.selected_teams === 'string' 
-      ? JSON.parse(data.selected_teams) 
-      : (data?.selected_teams || {});
-    
-    const updatedSelectedTeams = {
-      ...currentSelectedTeams,
-      [challengeIndex]: selectedTeams
-    };
-
-    const { error: updateError } = await supabase
-      .from('games')
-      .update({ selected_teams: updatedSelectedTeams })
-      .eq('id', gameId);
-
-    if (updateError) {
-      console.error('Feil ved oppdatering av selected_teams:', updateError);
-    }
-
-    return { error: updateError };
-  } catch (parseError) {
-    console.error('Feil ved parsing av selected_teams:', parseError);
-    return { error: parseError };
-  }
+  return { error: updateError };
 }
 
 export async function getSelectedTeamsForChallenge(gameId: string, challengeIndex: number): Promise<Team[]> {
@@ -261,10 +236,12 @@ export async function getSelectedTeamsForChallenge(gameId: string, challengeInde
   }
 
   try {
-    const selectedTeams = typeof data.selected_teams === 'string'
-      ? JSON.parse(data.selected_teams)
-      : data.selected_teams;
-    return selectedTeams[challengeIndex] || [];
+    // selected_teams er nå kun lagene for den nåværende runden
+    if (typeof data.selected_teams === 'string') {
+      return JSON.parse(data.selected_teams);
+    } else {
+      return data.selected_teams;
+    }
   } catch (parseError) {
     console.error('Feil ved parsing av selected_teams:', parseError);
     return [];

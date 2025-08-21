@@ -1,5 +1,5 @@
 import BackgroundWrapper from '@/components/BackgroundWrapper';
-import { advanceToNextRound, fetchRunde, updateRundeState } from '@/utils/rounds';
+import { advanceToNextRound, fetchBettingToPlaying, fetchNewRound, fetchPlayingToFinished, fetchRunde, updateRundeState } from '@/utils/rounds';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -43,7 +43,7 @@ export default function ChallengeScreen() {
         duration: 2000,
         useNativeDriver: true,
       }).start(({finished}) => {
-    
+     
         resolve(true);});
     });
   };
@@ -52,18 +52,7 @@ export default function ChallengeScreen() {
     if (runde) {
       fadeIn();
     }
-  }, [runde?.state]);
-  // Animasjon
-
-  if (typeof gameId !== 'string') {
-    return (
-    <BackgroundWrapper>
-      <View style={{justifyContent: 'center', alignItems: 'center'}}>
-        <Text>Invalid game ID</Text>
-      </View>
-    </BackgroundWrapper>
-    )
-  }
+  }, [runde?.state, fadeIn]);
 
   // Hent ut om brukeren er host
   useEffect(() => {
@@ -76,6 +65,8 @@ export default function ChallengeScreen() {
 
   // Hent game status og initial game state
   useEffect(() => {
+    if (typeof gameId !== 'string') return;
+    
     const fetchInitialGame = async () => {
       try {
         const { data, error } = await supabase
@@ -104,6 +95,8 @@ export default function ChallengeScreen() {
 
   // Realtime oppdatering for status og runde
   useEffect(() => {
+    if (typeof gameId !== 'string') return;
+    
     const channel = supabase
       .channel(`game-${gameId}`)
       .on(
@@ -143,16 +136,33 @@ export default function ChallengeScreen() {
 
             const newIndex = payload.new.current_challenge_index;
             const oldIndex = payload.old?.current_challenge_index;
+            const newState = payload.new.challenge_state;
+            const oldState = payload.old?.challenge_state;
             
+            // Index endres (ny runde)
             if (oldIndex !== undefined && newIndex !== oldIndex) {
-              const newRunde = await fetchRunde(gameId, newIndex, 'index');
-              setRunde(newRunde);
-              setIsTransitioning(false);
+              // Legg til delay for å unngå race conditions
+              setTimeout(async () => {
+                const newRunde = await fetchNewRound(gameId, newIndex);
+                setRunde(newRunde);
+                setIsTransitioning(false);
+              }, 100);
               return;
             }
             
-            if (payload.new.challenge_state !== payload.old?.challenge_state) {
-              const newRunde = await fetchRunde(gameId, newIndex, 'state');
+            // State endres (samme runde)
+            if (newState !== oldState) {
+              let newRunde: Runde | null = null;
+              
+              if (oldState === 'betting' && newState === 'playing') {
+                newRunde = await fetchBettingToPlaying(gameId, newIndex);
+              } else if (oldState === 'playing' && newState === 'finished') {
+                newRunde = await fetchPlayingToFinished(gameId, newIndex);
+              } else {
+                // Fallback til full fetchRunde for andre tilstander
+                newRunde = await fetchRunde(gameId, newIndex, 'state');
+              }
+              
               setRunde(newRunde);
               setIsTransitioning(false);
               return;
@@ -168,8 +178,17 @@ export default function ChallengeScreen() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [gameId]);
+  }, [gameId, router]);
 
+  if (typeof gameId !== 'string') {
+    return (
+    <BackgroundWrapper>
+      <View style={{justifyContent: 'center', alignItems: 'center'}}>
+        <Text>Invalid game ID</Text>
+      </View>
+    </BackgroundWrapper>
+    )
+  }
   
   const handlePhaseAdvance = async () => {
     if (isTransitioning || !runde) return;
