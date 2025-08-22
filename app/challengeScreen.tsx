@@ -20,7 +20,8 @@ export default function ChallengeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string,number>>({});
-  // STARTER ENDRING HER //
+
+  
   // Animasjon (fade)
   const fadeAnim = useRef(new Animated.Value(1)).current;
 

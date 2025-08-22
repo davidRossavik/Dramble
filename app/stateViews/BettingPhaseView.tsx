@@ -3,8 +3,6 @@ import TeamVsItself from '@/app/challengetypes/TeamVsItself';
 import TeamVsTeam from '@/app/challengetypes/TeamVsTeam';
 import { submitBet } from '@/utils/bets';
 import { Runde } from '@/utils/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import Button from '@/components/Button';
@@ -19,12 +17,6 @@ type Props = {
 };
 
 export default function BettingPhaseView({ runde, gameId, isHost, onNextPhaseRequested, isTransitioning, balances }: Props) {
-  const [myTeamName, setMyTeamName] = useState<string | null>(null);
-
-  useEffect(() => {
-    AsyncStorage.getItem('teamName').then(setMyTeamName);
-  }, [gameId]);
-
 
   // Ikke vis noen loading states hvis parent er i transition
   if (isTransitioning) {
