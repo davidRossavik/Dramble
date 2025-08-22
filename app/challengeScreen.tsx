@@ -3,7 +3,7 @@ import { advanceToNextRound, fetchBettingToPlaying, fetchNewRound, fetchPlayingT
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
 import { supabase } from '../supabase-functions/supabase.js';
 import BettingPhaseView from './stateViews/BettingPhaseView';
@@ -20,22 +20,18 @@ export default function ChallengeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string,number>>({});
-
+  // STARTER ENDRING HER //
   // Animasjon (fade)
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const fadeIn = () => {
-  return new Promise((resolve) => {
+  const fadeIn = useCallback(() => {
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start(({ finished }) => {
-      resolve(true);
-    });
-  });
-};
+    }).start();
+  }, [fadeAnim]);
   
   const fadeOut = () => {
     return new Promise((resolve) => {
