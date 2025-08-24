@@ -1,5 +1,4 @@
 import AppText from '@/components/AppText';
-import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { setWinnerForChallenge } from '@/utils/games';
 import { Runde } from '@/utils/types';
@@ -45,7 +44,7 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
       
       case 'Team-vs-itself':
         // For Team-vs-itself er det "Klarer" eller "Klarer ikke"
-        return ['Klarer', 'Klarer ikke'];
+        return ['Klarte', 'Klarte ikke'];
       
       default:
         return [];
@@ -82,7 +81,6 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
   const winnerOptions = getWinnerOptions();
 
   return (
-    <BackgroundWrapper>
       <SafeAreaView style={styles.container}>
         <AppText style={styles.title}>Utfordring pågår!</AppText>
         
@@ -140,7 +138,6 @@ export default function PlayingView({ runde, gameId, onNextPhaseRequested, isTra
           </View>
         )}
       </SafeAreaView>
-    </BackgroundWrapper>
   );
 }
 

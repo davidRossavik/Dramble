@@ -3,7 +3,7 @@ import { advanceToNextRound, fetchBettingToPlaying, fetchNewRound, fetchPlayingT
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
 import { supabase } from '../supabase-functions/supabase.js';
 import BettingPhaseView from './stateViews/BettingPhaseView';
@@ -19,22 +19,18 @@ export default function ChallengeScreen() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
-
+  const [balances, setBalances] = useState<Record<string,number>>({});
   // Animasjon (fade)
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const fadeIn = () => {
-  return new Promise((resolve) => {
+  const fadeIn = useCallback(() => {
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start(({ finished }) => {
-      resolve(true);
-    });
-  });
-};
+    }).start();
+  }, [fadeAnim]);
   
   const fadeOut = () => {
     return new Promise((resolve) => {
@@ -71,12 +67,13 @@ export default function ChallengeScreen() {
       try {
         const { data, error } = await supabase
           .from('games')
-          .select('current_challenge_index, status, challenge_state')
+          .select('current_challenge_index, status, challenge_state, balances')
           .eq('id', gameId)
           .single();
 
         if (!error && data) {
           setGameStatus(data.status);
+          setBalances(data.balances || {});
           if (data.status !== 'finished') {
             const newRunde = await fetchRunde(gameId, data.current_challenge_index, 'initial');
             setRunde(newRunde);
@@ -138,6 +135,10 @@ export default function ChallengeScreen() {
             const oldIndex = payload.old?.current_challenge_index;
             const newState = payload.new.challenge_state;
             const oldState = payload.old?.challenge_state;
+
+            if (payload.new?.balances && payload.new.balances !== payload.old?.balances) {
+              setBalances(payload.new.balances);
+            }
             
             // Index endres (ny runde)
             if (oldIndex !== undefined && newIndex !== oldIndex) {
@@ -266,6 +267,7 @@ export default function ChallengeScreen() {
                 isHost={isHost}
                 onNextPhaseRequested={handlePhaseAdvance}
                 isTransitioning={isTransitioning}
+                balances={balances}
               />
             )}  
             {runde!.state === 'playing' && (

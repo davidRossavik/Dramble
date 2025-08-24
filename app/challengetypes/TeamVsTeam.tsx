@@ -1,5 +1,4 @@
 import AppText from '@/components/AppText';
-import BackgroundWrapper from '@/components/BackgroundWrapper';
 import Button from '@/components/Button';
 import { Runde } from '@/utils/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -90,7 +89,6 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
   ];
 
   return (
-    <BackgroundWrapper>
       <SafeAreaView style={{ flex: 1 }}>
         {teamBalance !== null && (
             <View style={styles.drinkCountCorner}>
@@ -184,7 +182,6 @@ export default function TeamVsTeam({ runde, balances, onPlaceBet }: Props) {
           </ScrollView>
         </View>
       </SafeAreaView>
-    </BackgroundWrapper>
   );
 }
 
